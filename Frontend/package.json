@@ -1,0 +1,16 @@
+{
+  "name": "pasuruan-info-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pasuruan Info - News & Travel Tech Platform (Frontend Phase)",
+  "scripts": {
+    "build:css": "tailwindcss -i ./src/input.css -o ./public/css/styles.css --minify",
+    "watch:css": "tailwindcss -i ./src/input.css -o ./public/css/styles.css --watch",
+    "build": "npm run build:css"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.19",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49"
+  }
+}
