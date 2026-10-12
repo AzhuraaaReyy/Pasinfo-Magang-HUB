@@ -24,10 +24,291 @@
     display: none;
   }
 
+  /* Pada mobile, lebar kolom teks kartu kategori terlalu sempit untuk
+     menampung tanggal + waktu dalam satu baris. Thumbnail dan gap antar
+     elemen dikecilkan sedikit hanya di dalam slider (<md), supaya meta
+     baris berita selalu sejajar. Tablet ke atas memakai ukuran standar. */
+  @media (max-width: 767.98px) {
+    [data-category-slider] li a {
+      gap: 8px;
+    }
+    [data-category-slider] li a > .w-24 {
+      width: 80px;
+    }
+  }
+
+  /* Pada tablet (md) navigasi kategori tampil seperti desktop, namun
+     tidak ada hover di layar sentuh. Panah dibuat selalu terlihat. */
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+    [data-nav-prev],
+    [data-nav-next] {
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
+  }
+
   /* Memusatkan item saat muat, tetapi tidak membuat overflow sisi kiri
      tidak terjangkau. Tailwind `justify-center` menyebabkan item pertama
      terpotong dan scrollLeft tidak pernah kembali ke 0. */
   .nav-list-center {
     justify-content: safe center;
+  }
+
+  /* ── Animasi homepage ─────────────────────────────────────── */
+
+  /* Reveal konten saat scroll (dipicu JS, sekali saja) */
+  [data-reveal] {
+    transition: opacity 0.65s ease-out, transform 0.65s ease-out;
+  }
+  [data-reveal].reveal-hidden {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  [data-reveal].reveal-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Gambar fade-in saat file dimuat (class dipasang JS) */
+  img[data-fade] {
+    transition: opacity 0.5s ease, transform 0.45s ease-out;
+  }
+  img[data-fade].img-fade {
+    opacity: 0;
+  }
+
+  /* Header menyembunyi saat scroll ke bawah */
+  header {
+    transition: transform 0.3s ease;
+  }
+  header.header-hide {
+    transform: translateY(-100%);
+  }
+
+  /* Garis bawah animasi pada link/judul */
+  .link-underline {
+    position: relative;
+  }
+  .link-underline::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 2px;
+    width: 100%;
+    height: 2px;
+    border-radius: 9999px;
+    background-color: #1d4ed8;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s ease;
+  }
+  .link-underline:hover::after,
+  .link-underline:focus-visible::after {
+    transform: scaleX(1);
+  }
+
+  /* Header overlay transparan (wisata/kuliner/budaya/acara):
+     menumpang di atas section pertama. Teks terang saat di atas
+     latar gelap; kembali solid setelah scroll melewati hero. */
+  body[data-header-overlay] header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: transparent;
+    border-bottom-color: transparent;
+    box-shadow: none;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  body[data-header-overlay] header .ph-nav-link {
+    color: #ffffff;
+  }
+  body[data-header-overlay] header .ph-nav-link:hover {
+    color: #ffffff;
+  }
+  body[data-header-overlay] header .ph-nav-link::after {
+    background-color: #ffffff;
+  }
+  body[data-header-overlay] header .ph-logo-dark {
+    display: none;
+  }
+  body[data-header-overlay] header .ph-logo-light {
+    display: block;
+  }
+  body[data-header-overlay] header .ph-search {
+    background-color: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+  }
+  body[data-header-overlay] header .ph-search::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  body[data-header-overlay] header .ph-auth {
+    background-color: #ffffff;
+    color: #0f172a;
+  }
+  body[data-header-overlay] header .ph-auth:hover {
+    background-color: #e2e8f0;
+  }
+  body[data-header-overlay] header .ph-menu-btn {
+    color: #ffffff;
+  }
+  body[data-header-overlay] header .ph-menu-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+  body[data-header-overlay] header.header-solid {
+    background-color: #ffffff;
+    border-bottom-color: #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+  }
+  body[data-header-overlay] header.header-solid .ph-nav-link {
+    color: #334155;
+  }
+  body[data-header-overlay] header.header-solid .ph-nav-link:hover {
+    color: #0284c9;
+  }
+  body[data-header-overlay] header.header-solid .ph-nav-link::after {
+    background-color: #1d4ed8;
+  }
+  body[data-header-overlay] header.header-solid .ph-nav-link[aria-current="page"] {
+    color: #1d4ed8;
+  }
+  body[data-header-overlay] header.header-solid .ph-logo-dark {
+    display: block;
+  }
+  body[data-header-overlay] header.header-solid .ph-logo-light {
+    display: none;
+  }
+  body[data-header-overlay] header.header-solid .ph-search {
+    background-color: #f3f4f6;
+    color: #111827;
+  }
+  body[data-header-overlay] header.header-solid .ph-search::placeholder {
+    color: #9ca3af;
+  }
+  body[data-header-overlay] header.header-solid .ph-auth {
+    background-color: #0f172a;
+    color: #ffffff;
+  }
+  body[data-header-overlay] header.header-solid .ph-auth:hover {
+    background-color: #1e293b;
+  }
+  body[data-header-overlay] header.header-solid .ph-menu-btn {
+    color: #374151;
+  }
+  body[data-header-overlay] header.header-solid .ph-menu-btn:hover {
+    background-color: #f3f4f6;
+  }
+}
+
+  /* Pin peta wisata (Leaflet DivIcon): merah untuk default,
+     brand + membesar untuk yang terpilih. */
+  .wisata-pin-wrap {
+    background: none;
+    border: none;
+  }
+  /* Pin peta acara (Leaflet DivIcon): warna region untuk default,
+     membesar untuk yang terpilih. */
+  .acara-pin-wrap {
+    background: none;
+    border: none;
+  }
+  /* Latar polos peta wisata (tanpa tile): potongan batas + marker saja. */
+  #wisata-map {
+    background-color: #edf1ef;
+  }
+  /* Latar polos peta acara (tanpa tile): potongan batas + marker saja. */
+  #acara-map {
+    background-color: #edf1ef;
+  }
+  /* Hilangkan kotak hitam bawaan browser saat marker/peta dipilih
+     (fokus klik & tap-highlight mobile); ganti ring fokus brand
+     agar posisi fokus keyboard tetap terlihat. */
+  #wisata-map,
+  #wisata-map * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  #wisata-map:focus {
+    outline: none;
+  }
+  #acara-map,
+  #acara-map * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  #acara-map:focus {
+    outline: none;
+  }
+  /* Pin peta wisata (Leaflet DivIcon): ikon lokasi SVG berwarna
+     per wilayah; membesar saat terpilih. */
+  .wisata-pin {
+    display: block;
+    transition: transform 0.2s ease;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+  }
+  .wisata-pin.active {
+    transform: scale(1.25);
+  }
+  /* Pin peta acara (Leaflet DivIcon): ikon lokasi SVG berwarna
+     per wilayah; membesar saat terpilih. */
+  .acara-pin {
+    display: block;
+    transition: transform 0.2s ease;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+  }
+  .acara-pin.active {
+    transform: scale(1.25);
+  }
+
+/* Ring fokus marker: top-level (BUKAN @layer utilities) karena class
+   .leaflet-marker-icon hanya muncul saat runtime dan akan ter-purge. */
+#wisata-map .leaflet-marker-icon:focus {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+#acara-map .leaflet-marker-icon:focus {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+/* Hero accordion (wisata): origin FLIP di tepi kiri agar kartu yang
+   melebar tumbuh ke kanan; deskripsi thumb hanya tampil saat aktif. */
+.hero-thumb {
+  transform-origin: 0 50%;
+}
+.hero-thumb .thumb-desc {
+  display: none;
+}
+.hero-thumb.active .thumb-desc {
+  display: block;
+  animation: thumb-desc-in 0.35s ease 0.05s both;
+}
+@keyframes thumb-desc-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Transisi antar halaman (CSS View Transitions API).
+   Harus top-level agar valid. */
+@view-transition {
+  navigation: auto;
+}
+
+/* Hormati preferensi reduced motion: matikan seluruh
+   transisi & animasi buatan di atas. */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal],
+  img[data-fade],
+  header,
+  .link-underline,
+  .link-underline::after,
+  .hero-thumb.active .thumb-desc {
+    transition: none !important;
+    animation: none !important;
   }
 }

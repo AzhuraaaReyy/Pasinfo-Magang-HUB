@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pasuruan Info - Jelajah Kuliner Pasuruan</title>
+    <link rel="icon" href="data:," />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../public/css/styles.css" />
+    <link rel="stylesheet" href="../../public/vendor/leaflet/leaflet.css" />
+    <script src="../../public/vendor/leaflet/leaflet.js" defer></script>
+  </head>
+  <body class="bg-gray-50 text-gray-800 font-sans" data-page-active="kuliner" data-asset-prefix="../../public" data-wisata-href="wisata.html" data-header-overlay="dark" data-hero-label="Galeri Kuliner Pasuruan" data-hero-bg-label="Latar hero kuliner" data-hero-badge-class="bg-blue-600" data-hero-badge="Kuliner" data-hero-location="Pasuruan Raya" data-hero-title-class="text-3xl sm:text-4xl md:text-5xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-extrabold text-white tracking-tight leading-[1.12] drop-shadow-md" data-hero-title="Temukan Kuliner&lt;br /&gt; Terbaik di Pasuruan" data-hero-desc="Jelajahi cita rasa khas Pasuruan. Dari kuliner tradisional hingga camilan oleh-oleh — semua informasi tempat makan terpercaya ada di sini." data-hero-cards-label="Thumbnail antrean kuliner" data-home-href="../../index.html">
+    <!-- HEADER / NAVBAR -->
+    <div data-layout-header></div>
+
+    <main>
+      <!-- HERO SECTION -->
+            <div data-listing-hero></div>
+      <script src="../../public/js/pages/listing-hero.js"></script>
+
+      <!-- MAP & FEATURED KULINER SECTION -->
+      <section id="map-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold text-gray-900">
+            Jelajah Kuliner Pasuruan Lebih Jauh Lagi
+          </h2>
+          <p class="text-sm text-gray-500 mt-1">
+            Lorem ipsum is simply dummy text of the printing and typesetting
+            industry. Lorem Ipsum has been the industry's standard dummy text
+            ever since the 1500s.
+          </p>
+        </div>
+
+
+
+        <p id="map-count-kuliner" class="mb-4 text-xs text-gray-500" aria-live="polite"></p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Map Area -->
+          <div class="lg:col-span-2 flex flex-col">
+            <span class="font-bold text-gray-700 text-sm"
+              >Peta Kuliner</span
+            >
+            <p class="text-[11px] text-gray-500 mt-1 mb-3">
+              Warna = wilayah berdasarkan batas kecamatan resmi. Klik
+              poligon untuk memilih wilayah, klik lagi untuk kembali.
+            </p>
+            <!-- Peta interaktif Leaflet -->
+            <div
+              id="kuliner-map"
+              class="relative z-0 w-full h-80 lg:h-[440px] rounded-xl overflow-hidden bg-white ring-1 ring-gray-200"
+              role="application"
+              aria-label="Peta interaktif kuliner Pasuruan (data placeholder)"
+            ></div>
+          </div>
+
+          <!-- Panel detail kuliner (dirender via JS dari data) -->
+          <div id="kul-detail" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- DAFTAR KULINER SECTION -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        <div class="mb-6 md:mb-8">
+          <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+            Daftar Kuliner
+          </h2>
+          <p class="text-xs sm:text-sm text-gray-500 mt-1">
+            Lorem ipsum is simply dummy text of the printing and typesetting
+            industry. Lorem Ipsum has been the industry's standard dummy text
+            ever since the 1500s.
+          </p>
+        </div>
+
+        <!-- Categories / Filter Tabs -->
+        <div
+          id="kul-filters"
+          class="flex space-x-2 overflow-x-auto no-scrollbar pb-4 mb-6"
+          role="group"
+          aria-label="Filter kategori kuliner"
+        >
+          <!-- Tombol filter dirender via JS dari data kategori -->
+        </div>
+
+        <p id="kul-count" class="mb-6 text-xs text-gray-500" aria-live="polite"></p>
+
+        <!-- Kuliner Grid (responsive: mobile 1 / sm 2 / tablet 3 / desktop 4 kolom) -->
+          <div
+            id="kul-grid"
+            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-6"
+         >
+          <!-- Kartu kuliner dirender via JS (mock data) -->
+        </div>
+        <p id="kul-empty" class="hidden text-sm text-gray-500">
+          Tidak ada kuliner yang cocok dengan pencarian atau kategori ini.
+        </p>
+        <nav
+          id="kul-pager"
+          class="mt-8 flex items-center justify-center gap-1.5"
+          aria-label="Pagination kuliner"
+        ></nav>
+
+        <!-- Horizontal Ad Banner (rendered by public/js/pages/layout-ad.js) -->
+        <div data-layout-ad></div>
+        <script src="../../public/js/pages/layout-ad.js"></script>
+      </section>
+
+      <!-- RECOMMENDATION CAROUSEL SECTION -->
+      <section
+        class="relative py-16 text-white bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900"
+      >
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <!-- Section Title -->
+          <div class="text-center max-w-xl mx-auto mb-10">
+            <h2 class="text-2xl font-bold">Rekomendasi Kuliner Khas Pasuruan</h2>
+            <p class="text-xs text-gray-300 mt-2">
+              Lorem ipsum is simply dummy text of the printing and typesetting
+              industry. Lorem Ipsum has been the industry's standard dummy text.
+            </p>
+          </div>
+
+          <!-- Slider Container -->
+          <div class="relative flex items-center justify-center">
+            <!-- Left Arrow -->
+            <button
+              type="button"
+              data-reco-prev
+              aria-label="Rekomendasi sebelumnya"
+              class="absolute -left-2 z-10 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white backdrop-blur-sm"
+            >
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+            </button>
+
+            <!-- Cards Slider Row -->
+            <div
+              id="reco-row"
+              class="flex items-center space-x-4 overflow-x-auto no-scrollbar scroll-smooth py-4 px-2"
+            >
+              <!-- Kartu rekomendasi dirender via JS (data mock featured) -->
+            </div>
+
+            <!-- Right Arrow -->
+            <button
+              type="button"
+              data-reco-next
+              aria-label="Rekomendasi berikutnya"
+              class="absolute -right-2 z-10 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white backdrop-blur-sm"
+            >
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+            </button>
+          </div>
+
+          <!-- Carousel Dots Indicator -->
+          <div
+            id="reco-dots"
+            class="flex justify-center items-center space-x-1.5 mt-6"
+          >
+            <span class="w-2 h-2 rounded-full bg-white/40"></span>
+            <span class="w-2 h-2 rounded-full bg-white/40"></span>
+            <span class="w-6 h-2 rounded-full bg-white"></span>
+            <span class="w-2 h-2 rounded-full bg-white/40"></span>
+            <span class="w-2 h-2 rounded-full bg-white/40"></span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <div data-layout-footer></div>
+    <script src="../../public/js/data-kuliner.js" defer></script>
+    <script src="../../public/js/kuliner-map.js" defer></script>
+    <!-- Hero carousel: vanilla JS, tanpa library animasi -->
+    <script src="../../public/js/pages/kuliner-hero.js"></script>
+
+    <script src="../../public/js/pages/kuliner-listing.js"></script>
+
+    <script src="../../public/js/pages/kuliner-reco.js"></script>
+
+        <script src="./partials/pasinfo-header.js" defer></script>
+    <script src="./partials/pasinfo-footer.js" defer></script>
+    <script src="./partials/pasinfo-layout.js" defer></script>
+<script src="../../public/js/main.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pasuruan Info - Eksplorasi Wisata Pasuruan Raya</title>
+    <link rel="icon" href="data:," />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../public/css/styles.css" />
+    <link rel="stylesheet" href="../../public/vendor/leaflet/leaflet.css" />
+
+    <!-- CSS KUSTOM: UKURAN CARD PERBESAR +3PX & PENYESUAIAN TEKS/RATING/PADDING -->
+    <style>
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      /* Section Background & Layout Container */
+      .reco-section-bg {
+        position: relative;
+        padding: 6rem 0 5rem 0;
+        color: #ffffff;
+
+        background-size: cover;
+        background-position: center;
+        background-image:
+          linear-gradient(
+            to bottom,
+            rgba(15, 23, 42, 0.65),
+            rgba(15, 23, 42, 0.8)
+          ),
+          url("../../public/images/bromo-placeholder.jpg");
+      }
+
+      .coverflow-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 1020px;
+        margin: 0 auto;
+      }
+
+      .coverflow-track {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow: visible !important;
+        scroll-behavior: smooth;
+        padding: 3.5rem 0 2rem 0;
+        width: 100%;
+      }
+
+      /* 1. KARTU TENGAH (LAYER 1): Ukuran +3px (198px x 278px), TranslateY: 22px, Z-Index Depan */
+      .ref-card-center {
+        width: 240px !important;
+        height: 300px !important;
+        border-radius: 1.1rem !important;
+        padding: 0.85rem !important;
+        flex-shrink: 0 !important;
+        border: 2px solid rgba(255, 255, 255, 0.95) !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.65) !important;
+        position: relative !important;
+        z-index: 30 !important; /* Z-Index PALING DEPAN */
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-end !important;
+        overflow: hidden !important;
+        background: linear-gradient(to bottom, #475569, #1e293b) !important;
+        margin: 0 -14px !important;
+        transform: translateY(40px) !important;
+      }
+
+      /* 2. KARTU SAMPING DALAM (LAYER 2 - Abu-Abu): Ukuran +3px (213px x 253px), TranslateY: -6px */
+      .ref-card-inner-side {
+        width: 240px !important;
+        height: 300px !important;
+        background-color: #e5e7eb !important;
+        color: #111827 !important;
+        border-radius: 1.1rem !important;
+        padding: 1.35rem 1.25rem !important;
+        flex-shrink: 0 !important;
+        z-index: 20 !important; /* Z-Index MENENGAH */
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-end !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35) !important;
+        margin: 0 -16px !important;
+        transform: translateY(-10px) !important;
+      }
+
+      /* 3. KARTU SAMPING LUAR (LAYER 3 - Cokelat): Ukuran +3px (198px x 238px), TranslateY: -28px */
+      .ref-card-outer-side {
+        width: 240px !important;
+        height: 300px !important;
+        background-color: #8c7370 !important;
+        color: #ffffff !important;
+        border-radius: 1.1rem !important;
+        padding: 1.35rem 1.25rem !important;
+        flex-shrink: 0 !important;
+        z-index: 10 !important; /* Z-Index PALING BELAKANG */
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-end !important;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3) !important;
+
+        transform: translateY(-50px) !important;
+        margin-bottom: 0 !important;
+      }
+      /* Penyesuaian Tombol Navigasi Carousel (Anak Panah) */
+      .reco-nav-btn {
+        position: absolute !important;
+        top: 50% !important;
+        /* Tetap berada tepat di tengah tinggi Layer 3 */
+        transform: translateY(calc(-50% - 25px)) !important;
+        z-index: 50 !important;
+        width: 2.5rem !important;
+        height: 2.5rem !important;
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+        border-radius: 9999px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease-in-out !important;
+      }
+
+      .reco-nav-btn:hover {
+        background-color: #f3f4f6 !important;
+        transform: translateY(calc(-50% - 25px)) scale(1.1) !important;
+      }
+
+      /* Menggeser penuh ke LUAR kartu Layer 3 */
+      .reco-nav-btn-prev {
+        left: -25px !important;
+      }
+
+      .reco-nav-btn-next {
+        right: -25px !important;
+      }
+
+      /* Layar Sedang & Desktop (Layar Lebar) */
+      @media (min-width: 640px) {
+        .reco-nav-btn-prev {
+          left: -60px !important; /* Geser keluar penuh dari kartu Layer 3 kiri */
+        }
+        .reco-nav-btn-next {
+          right: -60px !important; /* Geser keluar penuh dari kartu Layer 3 kanan */
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .reco-nav-btn-prev {
+          left: -70px !important; /* Jarak ekstra aman untuk monitor besar */
+        }
+        .reco-nav-btn-next {
+          right: -70px !important;
+        }
+      }
+      .coverflow-card {
+        transition:
+          transform 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+          z-index 0.4s ease,
+          opacity 0.4s ease,
+          box-shadow 0.4s ease !important;
+        will-change: transform, z-index;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      /* ===== RESPONSIVE COVERFLOW (Owner 2026-10-16) =====
+         UKURAN KARTU KONSISTEN: SEMUA kartu 240x300px di semua layar
+         (desktop, tablet, mobile). Yang berubah hanya JUMLAH kartu
+         yang terlihat + posisi panah, BUKAN ukuran kartu.
+
+         Desktop ≥1024px : 5 kartu 3D penuh (desain asli, tidak berubah).
+         Tablet 640–1023 : 3 kartu (center + 2 inner) 240x300;
+                          kartu luar disembunyikan agar tidak meluber;
+                          panah di dalam. Pada 640–767px tepi kartu sisi
+                          terpotong halus oleh overflow-x hidden (peek).
+         Mobile <640px   : 3 kartu 240x300 terpusat -> kartu tengah hampir
+                          memenuhi layar; kartu inner hanya tampil sebagai
+                          sliver tipis samar (blur + opacity rendah) di tepi
+                          sehingga konsep carousel tetap terbaca; panah
+                          disembunyikan (navigasi swipe sudah ada). */
+      @media (max-width: 1023px) {
+        .ref-card-outer-side {
+          display: none !important;
+        }
+        .reco-section-bg {
+          overflow-x: hidden;
+        }
+      }
+
+      @media (min-width: 640px) and (max-width: 1023px) {
+        .coverflow-track {
+          padding: 3rem 0 1.75rem 0;
+        }
+        .reco-nav-btn-prev {
+          left: 8px !important;
+        }
+        .reco-nav-btn-next {
+          right: 8px !important;
+        }
+      }
+
+      @media (max-width: 639px) {
+        /* Hanya POSISI (transform), BUKAN ukuran: kartu tetap 240x300.
+           Base desktop menurunkan kartu tengah 40px; di mobile tanpa kartu
+           sisi penyeimbang itu terlihat miring, jadi seimbangkan ke ~20px. */
+        .ref-card-center {
+          transform: translateY(20px) !important;
+        }
+        .ref-card-inner-side {
+          transform: translateY(0px) !important;
+          opacity: 0.35 !important;
+          filter: blur(2px) !important;
+        }
+        .coverflow-track {
+          padding: 2.5rem 0 1.5rem 0;
+        }
+        .reco-nav-btn {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="bg-white text-gray-800 font-sans"
+    data-page-active="wisata"
+    data-asset-prefix="../../public"
+    data-wisata-href="wisata.html"
+    data-header-overlay="dark"
+    data-hero-label="Galeri Wisata Pasuruan Raya"
+    data-hero-bg-label="Latar hero wisata"
+    data-hero-badge-class="bg-[#ef4444]"
+    data-hero-badge="Wisata"
+    data-hero-location="Pasuruan Raya"
+    data-hero-title-class="text-3xl sm:text-4xl md:text-5xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-extrabold text-white tracking-tight leading-[1.12] drop-shadow-md"
+    data-hero-title="Eksplorasi Wisata&lt;br /&gt; Pasuruan Raya"
+    data-hero-desc="Temukan keindahan alam, budaya, dan kuliner khas Pasuruan. Dari pegunungan Bromo hingga pantai berpasir putih — semua informasi wisata terpercaya ada di sini."
+    data-hero-cards-label="Thumbnail antrean destinasi"
+    data-home-href="../../index.html"
+  >
+    <!-- HEADER / NAVBAR -->
+    <div data-layout-header></div>
+
+    <main>
+      <!-- HERO SECTION -->
+      <div data-listing-hero></div>
+      <script src="../../public/js/pages/listing-hero.js"></script>
+      <!-- MAP & DESTINATION HIGHLIGHT SECTION -->
+      <section
+        id="map-section"
+        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10"
+      >
+        <div class="mb-6">
+          <h2 class="text-4xl font-bold text-gray-900">
+            Temukan Destinasi Wisata Pasuruan
+          </h2>
+          <p class="text-sm text-gray-500 mt-1">
+            Temukan berbagai destinasi wisata menarik di Kabupaten dan Kota
+            Pasuruan melalui peta interaktif. Jelajahi persebaran wisata
+            berdasarkan wilayah dan temukan informasi lokasi, jam operasional,
+            serta harga tiket. Pilih penanda pada peta untuk melihat detail
+            destinasi dan merencanakan perjalanan Anda.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Map Area -->
+          <div
+            class="lg:col-span-2 flex flex-col bg-white border-2 p-5 rounded-xl"
+          >
+            <span class="font-bold text-gray-700 text-2xl"
+              >Peta Destinasi Wisata</span
+            >
+            <p class="text-sm text-gray-500 mt-1 mb-3">
+              Warna = wilayah berdasarkan batas kecamatan resmi. Klik poligon
+              untuk memilih wilayah, klik lagi untuk kembali.
+            </p>
+            <!-- Peta interaktif Leaflet -->
+            <div
+              id="wisata-map"
+              class="relative z-0 w-full h-80 lg:h-[440px] rounded-xl overflow-hidden bg-white ring-1 ring-gray-200"
+              role="application"
+              aria-label="Peta interaktif destinasi wisata (data placeholder)"
+            ></div>
+          </div>
+
+          <!-- Panel detail destinasi (dirender via JS dari data) -->
+          <div id="dest-detail" aria-live="polite "></div>
+        </div>
+        <div
+          class="mt-8 bg-gray-100 rounded-xl p-8 text-center border border-gray-200"
+        >
+          <span class="text-2xl font-bold text-gray-700 tracking-wide"
+            >Space Iklan</span
+          >
+        </div>
+      </section>
+
+      <!-- DAFTAR DESTINASI WISATA SECTION -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="mb-4">
+          <h2 class="text-4xl font-bold text-gray-900">
+            Daftar Destinasi Wisata
+          </h2>
+          <p class="text-sm text-gray-500 mt-1">
+            Jelajahi beragam destinasi wisata terbaik di Pasuruan, mulai dari
+            keindahan alam hingga wisata sejarah dan budaya. Temukan informasi
+            lokasi, jam operasional, harga tiket, serta ulasan pengunjung untuk
+            setiap destinasi. Gunakan kategori wisata untuk menemukan tempat
+            yang sesuai dengan minat dan rencana perjalanan Anda.
+          </p>
+        </div>
+
+        <!-- Categories / Filter Tabs -->
+        <div
+          class="flex space-x-2 overflow-x-auto no-scrollbar pb-4 mb-2"
+          role="group"
+          aria-label="Filter kategori destinasi"
+        >
+          <button
+            type="button"
+            data-filter-btn
+            data-filter="Semua"
+            aria-pressed="true"
+            class="bg-red-600 text-white px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
+          >
+            Semua
+          </button>
+          <button
+            type="button"
+            data-filter-btn
+            data-filter="Wisata Alam"
+            aria-pressed="false"
+            class="bg-red-100 text-red-700 px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
+          >
+            Wisata Alam
+          </button>
+          <button
+            type="button"
+            data-filter-btn
+            data-filter="Keluarga"
+            aria-pressed="false"
+            class="bg-red-100 text-red-700 px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
+          >
+            Keluarga
+          </button>
+          <button
+            type="button"
+            data-filter-btn
+            data-filter="Sejarah & Budaya"
+            aria-pressed="false"
+            class="bg-red-100 text-red-700 px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
+          >
+            Sejarah & Budaya
+          </button>
+          <button
+            type="button"
+            data-filter-btn
+            data-filter="Wisata Religi"
+            aria-pressed="false"
+            class="bg-red-100 text-red-700 px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
+          >
+            Wisata Religi
+          </button>
+        </div>
+
+        <!-- Destination Grid -->
+        <div
+          id="dest-grid"
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+        >
+          <!-- Kartu destinasi dirender via JS (mock data) -->
+        </div>
+        <p id="dest-empty" class="hidden text-sm text-gray-500">
+          Tidak ada destinasi pada kategori ini.
+        </p>
+        <nav
+          id="dest-pager"
+          class="mt-6 flex items-center justify-center gap-1.5"
+          aria-label="Pagination destinasi"
+        ></nav>
+
+        <!-- Horizontal Ad Banner -->
+        <div
+          class="mt-8 bg-gray-100 rounded-xl p-8 text-center border border-gray-200"
+        >
+          <span class="text-2xl font-bold text-gray-700 tracking-wide"
+            >Space Iklan</span
+          >
+        </div>
+      </section>
+
+      <!-- TESTIMONIAL / RECOMMENDATION CAROUSEL SECTION -->
+      <section class="reco-section-bg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <!-- Section Title -->
+          <div class="text-center max-w-xl mx-auto mb-10">
+            <h2 class="text-2xl sm:text-3xl font-bold text-white">
+              Rekomendasi Wisata di Pasuruan
+            </h2>
+            <p
+              class="text-[11px] sm:text-xs text-gray-200 mt-2 leading-relaxed"
+            >
+              Lorem ipsum is simply dummy text of the printing and typesetting
+              industry. Lorem Ipsum has been the industry's standard dummy text
+              ever since 1966,
+            </p>
+          </div>
+
+          <!-- Slider Container -->
+          <div class="coverflow-container">
+            <!-- Left Arrow Button -->
+
+            <!-- Cards Slider Track -->
+            <div id="reco-row" class="coverflow-track no-scrollbar">
+              <!-- LAYER 3: Outer Left Card (Cokelat Mauve) -->
+              <div class="ref-card-outer-side">
+                <div class="text-yellow-400 text-sm mb-2.5 tracking-wider">
+                  ★★★★★
+                </div>
+                <p class="text-xs font-bold mb-1.5 text-white leading-snug">
+                  Lorem Ipsum is simply text of the
+                </p>
+                <p
+                  class="text-[11px] text-gray-100 line-clamp-3 leading-relaxed"
+                >
+                  Lorem ipsum is simply dummy text of the printing.
+                </p>
+              </div>
+
+              <!-- LAYER 2: Inner Left Card (Abu-Abu Terang) -->
+              <div class="ref-card-inner-side">
+                <div class="text-yellow-400 text-sm mb-2.5 tracking-wider">
+                  ★★★★★
+                </div>
+                <p class="text-xs font-bold mb-1.5 text-gray-900 leading-snug">
+                  Lorem Ipsum is simply text of the
+                </p>
+                <p
+                  class="text-[11px] text-gray-600 line-clamp-3 leading-relaxed"
+                >
+                  Lorem ipsum is simply dummy text of the printing.
+                </p>
+              </div>
+
+              <!-- LAYER 1: Center Card (Paling Bawah / Foto Background) -->
+              <div
+                class="ref-card-center"
+                role="img"
+                aria-label="Foto destinasi unggulan"
+              >
+                <!-- Background Image Simulation Layer -->
+                <div
+                  class="absolute inset-0 bg-cover bg-center"
+                  style="
+                    background-image: url(&quot;../../public/images/bromo-placeholder.jpg&quot;);
+                  "
+                ></div>
+                <div
+                  class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"
+                ></div>
+
+                <!-- Content Inside Center Card -->
+                <div class="relative z-10 p-1 text-white">
+                  <div class="text-yellow-400 text-xs mb-1.5 tracking-wider">
+                    ★★★★★
+                  </div>
+                  <p class="text-xs font-bold leading-snug mb-1 text-white">
+                    Lorem Ipsum is simply dummy text of the
+                  </p>
+                  <p
+                    class="text-[10px] text-gray-200 line-clamp-2 leading-tight"
+                  >
+                    Lorem ipsum is simply dummy text of the printing.
+                  </p>
+                </div>
+              </div>
+
+              <!-- LAYER 2: Inner Right Card (Abu-Abu Terang) -->
+              <div class="ref-card-inner-side">
+                <div class="text-yellow-400 text-sm mb-2.5 tracking-wider">
+                  ★★★★★
+                </div>
+                <p class="text-xs font-bold mb-1.5 text-gray-900 leading-snug">
+                  Lorem Ipsum is simply text of the
+                </p>
+                <p
+                  class="text-[11px] text-gray-600 line-clamp-3 leading-relaxed"
+                >
+                  Lorem ipsum is simply dummy text of the printing.
+                </p>
+              </div>
+
+              <!-- LAYER 3: Outer Right Card (Cokelat Mauve) -->
+              <div class="ref-card-outer-side">
+                <div class="text-yellow-400 text-sm mb-2.5 tracking-wider">
+                  ★★★★★
+                </div>
+                <p class="text-xs font-bold mb-1.5 text-white leading-snug">
+                  Lorem Ipsum is simply text of the
+                </p>
+                <p
+                  class="text-[11px] text-gray-100 line-clamp-3 leading-relaxed"
+                >
+                  Lorem ipsum is simply dummy text of the printing.
+                </p>
+              </div>
+            </div>
+
+            <!-- Right Arrow Button -->
+            <button
+              type="button"
+              data-reco-prev
+              aria-label="Rekomendasi sebelumnya"
+              class="reco-nav-btn reco-nav-btn-prev"
+            >
+              <svg
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15.75 19.5L8.25 12l7.5-7.5"
+                />
+              </svg>
+            </button>
+
+            <!-- Right Arrow Button -->
+            <button
+              type="button"
+              data-reco-next
+              aria-label="Rekomendasi berikutnya"
+              class="reco-nav-btn reco-nav-btn-next"
+            >
+              <svg
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Carousel Dots Indicator -->
+          <div
+            id="reco-dots"
+            class="flex justify-center items-center space-x-1.5 mt-6"
+          >
+            <span
+              class="w-2 h-2 rounded-full bg-white/40 cursor-pointer"
+            ></span>
+            <span
+              class="w-2 h-2 rounded-full bg-white/40 cursor-pointer"
+            ></span>
+            <span class="w-6 h-2 rounded-full bg-white shadow-sm"></span>
+            <span
+              class="w-2 h-2 rounded-full bg-white/40 cursor-pointer"
+            ></span>
+            <span
+              class="w-2 h-2 rounded-full bg-white/40 cursor-pointer"
+            ></span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <div data-layout-footer></div>
+    <script src="../../public/vendor/leaflet/leaflet.js"></script>
+    <script src="../../public/js/data-wisata.js"></script>
+    <script src="../../public/js/wisata-map.js"></script>
+    <!-- Hero carousel: vanilla JS, tanpa library animasi -->
+    <script src="../../public/js/pages/wisata-hero.js?v=20261016"></script>
+
+    <script src="../../public/js/pages/wisata-listing.js"></script>
+
+    <!-- <script src="../../public/js/pages/reco-carousel.js"></script> -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const track = document.getElementById("reco-row");
+        const prevBtn = document.querySelector("[data-reco-prev]");
+        const nextBtn = document.querySelector("[data-reco-next]");
+        const dotsContainer = document.getElementById("reco-dots");
+
+        if (!track) return;
+
+        // 1. Ambil data konten dari 5 elemen HTML awal kamu
+        const cardElements = Array.from(track.children);
+        if (cardElements.length < 5) return;
+
+        const cardData = cardElements.map((card) => ({
+          html: card.innerHTML,
+          ariaLabel: card.getAttribute("aria-label") || "",
+          role: card.getAttribute("role") || "",
+        }));
+
+        let currentIndex = 0; // Menunjukkan data mana yang sedang tampil di KARTU TENGAH
+        const total = cardData.length;
+
+        // 2. Kunci 5 slot kartu agar posisinya di DOM selalu konstan (Slot 0..4)
+        // Slot 0: Outer Left, Slot 1: Inner Left, Slot 2: Center, Slot 3: Inner Right, Slot 4: Outer Right
+        const slots = cardElements;
+
+        // Pasang class layer statis agar tata letak 3D di layar TIDAK PERNAH BERUBAH
+        slots[0].className = "coverflow-card ref-card-outer-side";
+        slots[1].className = "coverflow-card ref-card-inner-side";
+        slots[2].className = "coverflow-card ref-card-center"; // Selalu di tengah!
+        slots[3].className = "coverflow-card ref-card-inner-side";
+        slots[4].className = "coverflow-card ref-card-outer-side";
+
+        // Klik langsung pada slot mana saja untuk menggesernya ke tengah
+        slots.forEach((slot, slotIndex) => {
+          slot.addEventListener("click", () => {
+            const offsetMap = [-2, -1, 0, 1, 2];
+            const offset = offsetMap[slotIndex];
+            currentIndex = (currentIndex + offset + total) % total;
+            renderCarousel();
+          });
+        });
+
+        // 3. Fungsi Render: Hanya mengganti ISI KONTEN dari masing-masing slot
+        function renderCarousel() {
+          slots.forEach((slot, slotIndex) => {
+            // Hitung indeks data untuk slot ini berdasarkan currentIndex
+            const offsetMap = [-2, -1, 0, 1, 2];
+            const dataIndex =
+              (currentIndex + offsetMap[slotIndex] + total) % total;
+            const data = cardData[dataIndex];
+
+            // Berikan animasi fade transisi halus saat isi konten berganti
+            slot.style.opacity = "0.4";
+            setTimeout(() => {
+              slot.innerHTML = data.html;
+              if (data.ariaLabel)
+                slot.setAttribute("aria-label", data.ariaLabel);
+              if (data.role) slot.setAttribute("role", data.role);
+              slot.style.opacity = "1";
+            }, 150);
+          });
+
+          updateDots();
+        }
+
+        // Update indikator dots
+        function updateDots() {
+          if (!dotsContainer) return;
+          const dots = Array.from(dotsContainer.children);
+          dots.forEach((dot, idx) => {
+            if (idx === currentIndex) {
+              dot.className =
+                "w-6 h-2 rounded-full bg-white shadow-sm transition-all duration-300";
+            } else {
+              dot.className =
+                "w-2 h-2 rounded-full bg-white/40 cursor-pointer transition-all duration-300";
+            }
+          });
+        }
+
+        // Navigasi Tombol Prev & Next
+        if (prevBtn) {
+          prevBtn.addEventListener("click", () => {
+            currentIndex = (currentIndex - 1 + total) % total;
+            renderCarousel();
+          });
+        }
+
+        if (nextBtn) {
+          nextBtn.addEventListener("click", () => {
+            currentIndex = (currentIndex + 1) % total;
+            renderCarousel();
+          });
+        }
+
+        // Klik pada dots
+        if (dotsContainer) {
+          const dots = Array.from(dotsContainer.children);
+          dots.forEach((dot, idx) => {
+            dot.addEventListener("click", () => {
+              currentIndex = idx;
+              renderCarousel();
+            });
+          });
+        }
+
+        // Fitur Swipe / Drag Touch & Mouse
+        let startX = 0;
+        let isDragging = false;
+
+        track.addEventListener(
+          "touchstart",
+          (e) => {
+            startX = e.touches[0].clientX;
+            isDragging = true;
+          },
+          { passive: true },
+        );
+
+        track.addEventListener(
+          "touchend",
+          (e) => {
+            if (!isDragging) return;
+            const endX = e.changedTouches[0].clientX;
+            handleSwipe(startX, endX);
+            isDragging = false;
+          },
+          { passive: true },
+        );
+
+        track.addEventListener("mousedown", (e) => {
+          startX = e.clientX;
+          isDragging = true;
+        });
+
+        track.addEventListener("mouseup", (e) => {
+          if (!isDragging) return;
+          const endX = e.clientX;
+          handleSwipe(startX, endX);
+          isDragging = false;
+        });
+
+        function handleSwipe(start, end) {
+          const diff = start - end;
+          if (Math.abs(diff) > 40) {
+            if (diff > 0) {
+              currentIndex = (currentIndex + 1) % total;
+            } else {
+              currentIndex = (currentIndex - 1 + total) % total;
+            }
+            renderCarousel();
+          }
+        }
+
+        // Inisialisasi tampilan awal
+        renderCarousel();
+      });
+    </script>
+    <script src="./partials/pasinfo-header.js" defer></script>
+    <script src="./partials/pasinfo-footer.js" defer></script>
+    <script src="./partials/pasinfo-layout.js" defer></script>
+    <script src="../../public/js/main.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pasuruan Info - Jelajah Budaya Pasuruan</title>
+    <link rel="icon" href="data:," />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../public/css/styles.css" />
+    <link rel="stylesheet" href="../../public/vendor/leaflet/leaflet.css" />
+  </head>
+  <body class="bg-gray-50 text-gray-800 font-sans" data-page-active="budaya" data-asset-prefix="../../public" data-wisata-href="wisata.html" data-header-overlay="dark" data-hero-label="Galeri Budaya Pasuruan" data-hero-bg-label="Latar hero budaya" data-hero-badge-class="bg-blue-700" data-hero-badge="Budaya" data-hero-location="Pasuruan Raya" data-hero-title-class="text-3xl sm:text-4xl md:text-6xl lg:text-4xl xl:text-5xl 2xl:text-7xl font-extrabold text-white tracking-tight leading-[1.1] drop-shadow-md" data-hero-title="Eksplorasi Budaya&lt;br /&gt; Pasuruan" data-hero-desc="Kenali tradisi, kesenian, situs sejarah, dan museum khas Pasuruan dalam satu halaman jelajah budaya." data-hero-cards-label="Thumbnail antrean budaya" data-home-href="../../index.html">
+    <!-- HEADER / NAVBAR -->
+    <div data-layout-header></div>
+
+    <main>
+      <!-- HERO SECTION -->
+            <div data-listing-hero></div>
+      <script src="../../public/js/pages/listing-hero.js"></script>
+
+      <!-- MAP & FEATURED BUDAYA SECTION -->
+      <section id="map-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <div class="mb-8">
+          <h2 class="text-3xl font-bold text-gray-900">
+            Jelajah Budaya Pasuruan Lebih Dekat
+          </h2>
+          <p class="text-sm text-gray-500 mt-2">
+            Klik region di peta untuk melihat budaya di wilayah tersebut. Klik lagi untuk kembali ke daftar lengkap.
+          </p>
+        </div>
+
+        <p id="bud-map-count" class="mb-4 text-xs text-gray-500" aria-live="polite"></p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Map Area (Leaflet interaktif) -->
+          <div class="lg:col-span-2 flex flex-col">
+            <span class="font-bold text-gray-700 text-sm"
+              >Peta Budaya Pasuruan</span
+            >
+            <p class="text-[11px] text-gray-500 mt-1 mb-3">
+              Warna = wilayah berdasarkan region. Klik poligon untuk memilih wilayah, klik lagi untuk kembali.
+            </p>
+            <div
+              id="budaya-map"
+              class="relative z-0 w-full h-80 lg:h-[440px] rounded-xl overflow-hidden bg-white ring-1 ring-gray-200"
+              role="application"
+               aria-label="Peta interaktif budaya Pasuruan"
+            ></div>
+          </div>
+
+          <!-- Featured budaya (dirender via JS dari data mock) -->
+          <div id="bud-featured" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- DAFTAR BUDAYA SECTION -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <div class="mb-6">
+          <h2 class="text-3xl font-bold text-gray-900">
+            Daftar Budaya: Tradisi & Budaya Luhur Pasuruan Raya
+          </h2>
+          <p class="text-sm text-gray-500 mt-2">
+            Lorem ipsum is simply dummy text of the printing and typesetting
+            industry. Lorem Ipsum has been the industry's standard dummy text
+            ever since the 1500s.
+          </p>
+        </div>
+
+        <!-- Categories / Filter Tabs -->
+        <div
+          id="bud-filters"
+          class="flex space-x-2 overflow-x-auto no-scrollbar pb-4 mb-6"
+          role="group"
+          aria-label="Filter kategori budaya"
+        >
+          <!-- Tombol filter dirender via JS dari data kategori -->
+        </div>
+
+        <p id="bud-count" class="mb-6 text-xs text-gray-500" aria-live="polite"></p>
+
+        <!-- Budaya Grid (1 col mobile, 2 small, 3 tablet, 4 desktop) -->
+        <div
+          id="bud-grid"
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-4 md:gap-6 lg:gap-6"
+        >
+          <!-- Kartu budaya dirender via JS (mock data) -->
+        </div>
+        <p id="bud-empty" class="hidden text-sm text-gray-500">
+          Tidak ada budaya yang cocok dengan pencarian atau kategori ini.
+        </p>
+        <nav
+          id="bud-pager"
+          class="mt-8 flex items-center justify-center gap-1.5"
+          aria-label="Pagination budaya"
+        ></nav>
+
+        <!-- Horizontal Ad Banner (rendered by public/js/pages/layout-ad.js) -->
+        <div data-layout-ad></div>
+        <script src="../../public/js/pages/layout-ad.js"></script>
+      </section>
+
+      <!-- KALENDER BUDAYA TEASER (tanpa reminder backend) -->
+      <section id="bud-calendar-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <div class="mb-6 flex items-end justify-between gap-4">
+          <div>
+            <h2 class="text-3xl font-bold text-gray-900">Kalender Budaya</h2>
+            <p class="text-sm text-gray-500 mt-2">
+              Agenda budaya terdekat di wilayah Pasuruan Raya.
+            </p>
+          </div>
+          <a href="agenda_budaya.html" id="bud-calendar-toggle" class="shrink-0 text-xs font-bold text-blue-700 hover:text-blue-800">Lihat Semua Agenda &rarr;</a>
+        </div>
+        <div
+          id="bud-calendar"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+        >
+          <!-- Kartu agenda dirender via JS (statis) -->
+        </div>
+      </section>
+
+      <!-- GALERI BUDAYA TEASER -->
+      <section id="bud-gallery-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <div class="mb-6 flex items-end justify-between gap-4">
+          <div>
+            <h2 class="text-3xl font-bold text-gray-900">Cerita di Balik Budaya</h2>
+            <p class="text-sm text-gray-500 mt-2">
+              Cuplikan galeri budaya pilihan dari berbagai wilayah Pasuruan.
+            </p>
+          </div>
+          <a href="cerita_budaya.html" id="bud-gallery-toggle" class="shrink-0 text-xs font-bold text-blue-700 hover:text-blue-800">Lihat Semua Cerita &rarr;</a>
+        </div>
+        <div
+          id="bud-gallery"
+          class="grid grid-cols-2 md:grid-cols-4 gap-4"
+        >
+          <!-- Ubin galeri dirender via JS (placeholder) -->
+        </div>
+      </section>
+
+      <!-- RECOMMENDATION CAROUSEL SECTION -->
+      <section
+        class="relative py-16 md:py-20 text-white bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900"
+      >
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <!-- Section Title -->
+          <div class="text-center max-w-xl mx-auto mb-12">
+            <h2 class="text-3xl font-bold">Rekomendasi Budaya Populer Khas Pasuruan</h2>
+            <p class="text-sm text-gray-300 mt-2">
+              Lorem ipsum is simply dummy text of the printing and typesetting
+              industry. Lorem Ipsum has been the industry's standard dummy text.
+            </p>
+          </div>
+
+          <!-- Slider Container -->
+          <div class="relative flex items-center justify-center">
+            <!-- Left Arrow -->
+            <button
+              type="button"
+              data-reco-prev
+              aria-label="Rekomendasi sebelumnya"
+              class="absolute -left-2 z-10 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white backdrop-blur-sm"
+            >
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+            </button>
+
+            <!-- Cards Slider Row -->
+            <div
+              id="reco-row"
+              class="flex items-center space-x-4 overflow-x-auto no-scrollbar scroll-smooth py-4 px-2"
+            >
+              <!-- Kartu rekomendasi dirender via JS (data mock featured) -->
+            </div>
+
+            <!-- Right Arrow -->
+            <button
+              type="button"
+              data-reco-next
+              aria-label="Rekomendasi berikutnya"
+              class="absolute -right-2 z-10 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white backdrop-blur-sm"
+            >
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+            </button>
+          </div>
+
+          <!-- Carousel Dots Indicator -->
+          <div
+            id="reco-dots"
+            class="flex justify-center items-center space-x-1.5 mt-8"
+          >
+            <span class="w-2 h-2 rounded-full bg-white/40"></span>
+            <span class="w-2 h-2 rounded-full bg-white/40"></span>
+            <span class="w-6 h-2 rounded-full bg-white"></span>
+            <span class="w-2 h-2 rounded-full bg-white/40"></span>
+            <span class="w-2 h-2 rounded-full bg-white/40"></span>
+          </div>
+        </div>
+      </section>
+
+     <!-- FOOTER -->
+     <div data-layout-footer></div>
+     <script src="../../public/js/data-budaya.js"></script>
+     <script src="../../public/vendor/leaflet/leaflet.js"></script>
+     <script src="../../public/js/budaya-map.js"></script>
+    
+
+    
+    <!-- Hero carousel: vanilla JS, tanpa library animasi -->
+    <script src="../../public/js/pages/budaya-hero.js"></script>
+
+    <script src="../../public/js/pages/budaya-listing.js"></script>
+
+    <script src="../../public/js/pages/reco-carousel.js"></script>
+
+        <script src="./partials/pasinfo-header.js" defer></script>
+    <script src="./partials/pasinfo-footer.js" defer></script>
+    <script src="./partials/pasinfo-layout.js" defer></script>
+<script src="../../public/js/main.js" defer></script>
+  </body>
+</html>

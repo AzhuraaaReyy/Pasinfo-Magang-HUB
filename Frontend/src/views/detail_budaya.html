@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="id" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Detail Budaya - Pasuruan Info</title>
+
+    <link rel="icon" href="data:," />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../../public/css/styles.css" />
+    <script src="../../public/js/opening-hours-util.js" defer></script>
+    <script src="../../public/js/add-sources-data.js" defer></script>
+  </head>
+  <body class="bg-white text-gray-800 font-sans antialiased" data-page-active="budaya" data-asset-prefix="../../public" data-wisata-href="wisata.html" data-home-href="../../index.html">
+    <!-- HEADER / NAVBAR -->
+    <div data-layout-header></div>
+
+    <!-- 1. BREADCRUMB: home > Budaya > {nama} (biru, sesuai mockup) -->
+    <div class="bg-white py-3">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="flex items-center text-xs md:text-sm space-x-2" aria-label="Breadcrumb">
+          <a href="../../index.html" class="text-blue-700 hover:text-blue-800 transition-colors" aria-label="Beranda">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" /></svg>
+          </a>
+          <span aria-hidden="true" class="text-blue-700 font-bold">&gt;</span>
+          <a href="budaya.html" class="font-bold text-blue-700 hover:text-blue-800 transition-colors">Budaya</a>
+          <span aria-hidden="true" class="text-blue-700 font-bold">&gt;</span>
+          <span id="crumb-name" class="text-blue-700 font-bold truncate">Detail Budaya</span>
+        </nav>
+      </div>
+    </div>
+
+    <!-- 2. HERO foto full-width -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+      <div class="relative rounded-2xl overflow-hidden shadow-sm h-[340px] sm:h-[420px] lg:h-[440px]">
+        <!-- Hero Media (placeholder hingga foto tersedia) -->
+        <div
+          id="hero-media"
+          class="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-700 via-stone-800 to-slate-900"
+          role="img"
+           aria-label="Foto budaya"
+        >
+          <span class="text-white/40 text-sm font-semibold px-6 text-center">Foto budaya</span>
+        </div>
+
+        <!-- Dark Overlay Gradient -->
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20"></div>
+
+        <!-- Tombol Simpan + Bagikan (dummy visual) -->
+        <div class="absolute top-4 right-4 sm:top-6 sm:right-6 flex items-center gap-2">
+          <button
+            id="bookmarkBtn"
+            type="button"
+            aria-pressed="false"
+            class="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white hover:bg-gray-100 text-gray-800 text-xs sm:text-sm font-semibold shadow transition-all"
+          >
+            <svg id="bookmarkIcon" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.726 48.726 0 017.186 0z" /></svg>
+            <span id="bookmarkText">Simpan</span>
+          </button>
+          <button
+            id="shareBtn"
+            type="button"
+            class="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-blue-700 hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow transition-all"
+          >
+            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" /></svg>
+            <span>Bagikan</span>
+          </button>
+        </div>
+
+         <!-- Content Overlay Middle -->
+         <div class="absolute inset-0 flex flex-col justify-center px-5 sm:p-8 text-white">
+           <div class="mb-3">
+             <span
+               id="hero-cat"
+               class="inline-block px-3 py-1 bg-blue-700 text-white text-xs font-bold rounded-md shadow w-fit"
+               >Budaya</span
+             >
+           </div>
+           <h1
+             id="detail-title"
+             class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight mb-2 leading-tight drop-shadow-md"
+           >
+             Detail Budaya
+           </h1>
+           <p id="detail-desc" class="text-gray-200 text-xs sm:text-sm leading-relaxed max-w-2xl line-clamp-2 mb-3">
+             Warisan budaya Pasuruan yang diwariskan turun-temurun dan menjadi bagian dari identitas masyarakat setempat.
+           </p>
+           <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm">
+             <span class="flex items-center gap-1.5 text-gray-100">
+               <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
+               <span id="detail-location">Pasuruan</span>
+             </span>
+             <span class="flex items-center gap-1.5 text-gray-100">
+               <span class="text-amber-400 tracking-tight" aria-hidden="true">★★★★★</span>
+               <span id="detail-rating" class="font-semibold">4.7 (2 rb ulasan)</span>
+             </span>
+           </div>
+       </div>
+    </section>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 space-y-6">
+      <!-- 3. DUA KOLOM: Tentang (kiri) + Lokasi & Rute (kanan) -->
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 auto-rows-max lg:auto-rows-fr">
+        <!-- KIRI: Tentang + tabel berikon + tombol tiket -->
+         <section class="lg:col-span-3 bg-gray-100 rounded-2xl p-5 sm:p-7 h-full" aria-labelledby="tentang-title">
+           <h2 id="tentang-title" class="text-lg sm:text-xl font-bold text-gray-900 mb-4">
+             Tentang Budaya
+           </h2>
+           <p id="tentang-desc" class="text-xs sm:text-sm text-gray-600 leading-relaxed mb-6">
+             Warisan budaya Pasuruan yang diwariskan turun-temurun dan menjadi bagian dari identitas masyarakat setempat.
+           </p>
+
+          <dl class="text-xs sm:text-sm">
+            <div class="flex items-center justify-between gap-4 py-2.5 border-b border-gray-200">
+              <dt class="flex items-center gap-2 text-gray-500 font-medium">
+                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg>
+                Kategori
+              </dt>
+              <dd id="info-kategori" class="font-bold text-gray-800 text-right">-</dd>
+            </div>
+            <div class="flex items-center justify-between gap-4 py-2.5 border-b border-gray-200">
+              <dt class="flex items-center gap-2 text-gray-500 font-medium">
+                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" /></svg>
+                Harga Tiket
+              </dt>
+              <dd id="info-tiket" class="font-bold text-gray-800 text-right">-</dd>
+            </div>
+            <div class="flex items-center justify-between gap-4 py-2.5 border-b border-gray-200">
+              <dt class="flex items-center gap-2 text-gray-500 font-medium">
+                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Jam Operasional
+              </dt>
+              <dd class="font-bold text-gray-800 text-right flex flex-col items-end gap-1">
+                <span id="info-jadwal">-</span>
+                <span id="info-jadwal-status" class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700"></span>
+              </dd>
+            </div>
+            <div class="flex items-center justify-between gap-4 py-2.5 border-b border-gray-200">
+              <dt class="flex items-center gap-2 text-gray-500 font-medium">
+                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
+                Lokasi
+              </dt>
+              <dd id="info-lokasi" class="font-bold text-gray-800 text-right">-</dd>
+            </div>
+            <div class="flex items-center justify-between gap-4 py-2.5">
+              <dt class="flex items-center gap-2 text-gray-500 font-medium">
+                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
+                Makna
+              </dt>
+              <dd id="info-makna" class="font-bold text-gray-800 text-right">-</dd>
+            </div>
+          </dl>
+
+          <!-- Tombol dummy non-fungsional (visual saja, TANPA booking backend) -->
+          <button
+            id="pesanTiketBtn"
+            type="button"
+            title="Tombol visual — pemesanan belum tersedia"
+            class="mt-5 w-full py-2.5 px-4 bg-blue-700 hover:bg-blue-600 text-white rounded-lg font-bold text-xs sm:text-sm transition-colors"
+          >
+            Pesan Tiket Sekarang
+          </button>
+        </section>
+
+        <!-- KANAN: Lokasi & Rute -->
+        <section class="lg:col-span-2 bg-gray-100 rounded-2xl p-5 sm:p-7 h-full" aria-labelledby="lokasi-title">
+           <h2 id="lokasi-title" class="text-lg sm:text-xl font-bold text-gray-900 mb-3">
+             Lokasi &amp; Rute
+           </h2>
+          <p id="lokasi-desc" class="text-xs sm:text-sm text-gray-600 leading-relaxed mb-4">
+            Informasi lokasi dan rute menuju daya tarik budaya ini.
+          </p>
+
+          <!-- Peta STATIS placeholder (tanpa tile/backend peta) -->
+          <div
+            id="lokasi-map"
+            class="relative w-full h-44 rounded-xl overflow-hidden bg-gray-300 mb-4"
+            role="img"
+            aria-label="Peta lokasi budaya"
+          >
+            <div class="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-400" aria-hidden="true"></div>
+            <div class="absolute left-[18%] top-[38%]" aria-hidden="true">
+              <span class="block h-3 w-3 rounded-full bg-red-600 ring-2 ring-white shadow"></span>
+            </div>
+            <div class="absolute left-[46%] top-[55%]" aria-hidden="true">
+              <span class="block h-3 w-3 rounded-full bg-red-600 ring-2 ring-white shadow"></span>
+            </div>
+            <div class="absolute left-[68%] top-[30%]" aria-hidden="true">
+              <span class="block h-3 w-3 rounded-full bg-blue-700 ring-2 ring-white shadow"></span>
+            </div>
+            <span class="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-gray-500 bg-white/80 rounded px-2 py-0.5">Peta lokasi budaya</span>
+          </div>
+
+          <dl class="text-xs sm:text-sm space-y-2.5 mb-5">
+            <div class="flex items-start gap-2">
+              <dt class="flex items-center gap-1.5 text-gray-500 font-medium shrink-0">
+                <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
+                Lokasi
+              </dt>
+              <dd id="route-lokasi" class="text-gray-700 text-right ml-auto">-</dd>
+            </div>
+            <div class="flex items-start gap-2">
+              <dt class="flex items-center gap-1.5 text-gray-500 font-medium shrink-0">
+                <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.159.69.159 1.006 0z" /></svg>
+                Lokasi Anda
+              </dt>
+              <dd id="route-dari" class="text-gray-700 text-right ml-auto">-</dd>
+            </div>
+            <div class="flex items-start gap-2">
+              <dt class="flex items-center gap-1.5 text-gray-500 font-medium shrink-0">
+                <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+                Jarak
+              </dt>
+              <dd id="route-jarak" class="text-gray-700 text-right ml-auto">-</dd>
+            </div>
+            <div class="flex items-start gap-2">
+              <dt class="flex items-center gap-1.5 text-gray-500 font-medium shrink-0">
+                <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Estimasi
+              </dt>
+              <dd id="route-estimasi" class="text-gray-700 text-right ml-auto">-</dd>
+            </div>
+          </dl>
+
+          <!-- Tombol dummy non-fungsional (visual saja) -->
+          <button
+            id="ruteBtn"
+            type="button"
+            title="Tombol visual — navigasi belum tersedia"
+            class="w-full py-2.5 px-4 bg-blue-700 hover:bg-blue-600 text-white rounded-lg font-bold text-xs sm:text-sm transition-colors"
+          >
+            Dapatkan Arah &amp; Rute
+          </button>
+        </section>
+      </div>
+
+      <!-- 4. DUA KOLOM: galeri foto (kiri) + Sejarah & Nilai (kanan) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- KIRI: foto besar + 4 thumbs (3 foto + 1 panah, klik ganti) -->
+        <section class="bg-gray-100 rounded-2xl p-5 sm:p-7" aria-label="Galeri foto budaya">
+          <div
+            id="galeri-featured"
+            class="w-full h-60 sm:h-80 rounded-xl overflow-hidden mb-4 flex items-center justify-center bg-gradient-to-br from-stone-600 via-stone-700 to-slate-800"
+            role="img"
+            aria-label="Foto utama budaya"
+          >
+            <span id="galeri-featured-label" class="text-white/60 text-xs font-semibold px-6 text-center">Foto utama budaya</span>
+          </div>
+          <div id="galeri-thumbs" class="grid grid-cols-4 gap-4" role="group" aria-label="Thumbnail galeri">
+             <!-- Thumbnail dirender via JS -->
+           </div>
+        </section>
+
+         <!-- KANAN: Sejarah Singkat + Nilai Budaya -->
+         <section class="bg-gray-100 rounded-2xl p-5 sm:p-7">
+           <h2 class="text-lg sm:text-xl font-bold text-gray-900 text-center mb-4">Sejarah Singkat</h2>
+           <p id="sejarah-desc" class="text-xs sm:text-sm text-gray-600 leading-relaxed text-center mb-8">
+             Sejarah singkat warisan budaya ini diwariskan turun-temurun oleh masyarakat setempat sebagai bagian dari identitas daerah.
+           </p>
+           <h2 class="text-lg sm:text-xl font-bold text-gray-900 text-center mb-4">Nilai Budaya</h2>
+          <p id="nilai-desc" class="text-xs sm:text-sm text-gray-600 leading-relaxed text-center">
+            Nilai yang terkandung di dalamnya mencerminkan kebaikan, kebersamaan, dan kearifan lokal yang dijaga bersama.
+          </p>
+        </section>
+      </div>
+
+      <!-- SUMBER & VERIFIKASI (pola detail_wisata, Tier 1.7) -->
+      <section class="bg-gray-100 rounded-2xl p-5 sm:p-7" aria-label="Sumber dan verifikasi">
+        <h2 class="text-lg font-bold text-gray-900">Sumber &amp; Verifikasi</h2>
+        <p class="text-[11px] sm:text-xs text-gray-500 mt-1 mb-5">Asal informasi dan status verifikasi budaya ini.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl p-5">
+            <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <svg class="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Sumber Informasi
+            </h3>
+            <div id="source-info" class="space-y-3">
+              <p class="text-xs text-gray-500">Memuat sumber informasi...</p>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl p-5">
+            <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <svg class="h-5 w-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Status Verifikasi
+            </h3>
+            <div id="verification-info" class="space-y-3">
+              <p class="text-xs text-gray-500">Memuat status verifikasi...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5-7. REKOMENDASI (full width, no vertical ad) -->
+      <div class="space-y-6">
+        <!-- 5. Rekomendasi Budaya Serupa -->
+        <section class="bg-gray-100 rounded-2xl p-5 sm:p-7" aria-labelledby="serupa-title">
+          <div class="flex items-start justify-between gap-4 mb-2">
+            <h2 id="serupa-title" class="text-lg sm:text-lg font-bold text-gray-900">Rekomendasi Budaya Serupa</h2>
+            <a href="budaya.html" class="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 bg-white text-blue-700 rounded-full text-[11px] sm:text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors">
+              Jelajah Sekarang <span aria-hidden="true">&rarr;</span>
+            </a>
+          </div>
+          <p class="text-[11px] sm:text-xs text-gray-500 mb-5">Jelajahi ragam budaya lain dalam kategori yang sama.</p>
+          <div id="reco-serupa" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Kartu dirender via JS -->
+          </div>
+        </section>
+
+        <!-- 6. Rekomendasi Budaya Lainnya -->
+        <section class="bg-gray-100 rounded-2xl p-5 sm:p-7" aria-labelledby="lainnya-title">
+          <div class="flex items-start justify-between gap-4 mb-2">
+            <h2 id="lainnya-title" class="text-lg sm:text-lg font-bold text-gray-900">Rekomendasi Budaya Lainnya</h2>
+            <a href="budaya.html" class="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 bg-white text-blue-700 rounded-full text-[11px] sm:text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors">
+              Jelajah Sekarang <span aria-hidden="true">&rarr;</span>
+            </a>
+          </div>
+          <p class="text-[11px] sm:text-xs text-gray-500 mb-5">Jelajahi ragam budaya lain dari kategori berbeda.</p>
+          <div id="reco-lainnya" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Kartu dirender via JS -->
+          </div>
+        </section>
+
+        <!-- 7. Jelajah Destinasi Sekitar Budaya -->
+        <section class="bg-gray-100 rounded-2xl p-5 sm:p-7" aria-labelledby="sekitar-title">
+          <div class="flex items-start justify-between gap-4 mb-2">
+            <h2 id="sekitar-title" class="text-lg sm:text-lg font-bold text-gray-900">Jelajah Destinasi Sekitar Budaya</h2>
+            <a href="wisata.html" class="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 bg-white text-blue-700 rounded-full text-[11px] sm:text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors">
+              Jelajah Sekarang <span aria-hidden="true">&rarr;</span>
+            </a>
+          </div>
+          <p class="text-[11px] sm:text-xs text-gray-500 mb-5">Destinasi wisata terdekat dari lokasi ini.</p>
+          <div id="reco-sekitar" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Kartu dirender via JS -->
+          </div>
+        </section>
+      </div>
+
+      <!-- 8. SPACE IKLAN bawah -->
+      <section class="bg-gray-100 rounded-2xl p-10 sm:p-14 text-center" aria-label="Space iklan">
+        <span class="text-2xl sm:text-4xl font-medium text-gray-800">Space Iklan</span>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <div data-layout-footer></div>
+
+    <script src="./partials/pasinfo-header.js" defer></script>
+    <script src="./partials/pasinfo-footer.js" defer></script>
+    <script src="./partials/pasinfo-layout.js" defer></script>
+    <script src="../../public/js/data-budaya.js"></script>
+    <script src="../../public/js/data-wisata.js"></script>
+    <script src="../../public/js/pages/nearby.js"></script>
+    <script src="../../public/js/main.js" defer></script>
+    <script src="../../public/js/pages/detail-budaya.js"></script>
+  </body>
+</html>
