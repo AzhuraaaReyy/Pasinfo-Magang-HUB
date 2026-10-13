@@ -1,288 +1,600 @@
-/**
- * detail-wisata.js — dipindah VERBATIM dari inline <script> detail_wisata.html
- * (refactor A+B 2026-10-09, Owner approved). Isi tidak diubah;
- * timing eksekusi identik (script eksternal tanpa defer di posisi sama).
+﻿/**
+ * detail-wisata.js - halaman detail destinasi wisata.
+ * =====================================================================
+ * Riwayat:
+ * - 2026-10-09: dipindah VERBATIM dari inline <script> detail_wisata.html
+ *   (refactor A+B, Owner approved).
+ * - 2026-10-13 (TASK-WIS-DETAIL-SYNC-001, Owner): render data-driven supaya
+ *   halaman ini SINKRON dengan halaman listing wisata dan data-wisata.js:
+ *   hero memakai gambar yang sudah ada, "Tentang Wisata" memakai paragraf
+ *   `description` (3 paragraf), harga tiket + fasilitas + jam operasional
+ *   dari data, cuaca memakai nilai contoh (API cuaca menyusul), galeri dari
+ *   media[], dan "Jelajah Sekitar" kini lintas domain (kuliner + budaya +
+ *   acara terdekat) memakai jarak nyata dari nearby.js.
+ *
+ * Timing: file ini tetap dieksekusi tanpa defer (urutan script lama tidak
+ * berubah), tetapi render dijalankan setelah DOMContentLoaded supaya
+ * dependensi deferred (add-sources-data.js, opening-hours-util.js,
+ * leaflet.js) sudah tersedia. Sebelumnya render berjalan lebih dulu
+ * sehingga kartu Sumber Informasi dan status jam operasional kosong.
+ *
+ * Catatan anti-fabrikasi:
+ * - Tidak ada harga, tanggal, cuaca, atau titik peta yang dikarang di file
+ *   ini. Angka tiket & cuaca berasal dari field dummy di data-wisata.js
+ *   (sudah ditandai di sana); tanggal memakai tanggal nyata hari ini.
+ * - Tombol "Pesan Tiket" tetap tombol visual (booking = fitur masa depan,
+ *   PRD 16.3).
  */
-      // Detail destinasi: render dari dataset bersama via ?slug=.
-      // Tanpa slug → destinasi pertama. Tanpa backend: bookmark visual
-      // saja, bagikan via Web Share API/clipboard.
-      (function () {
-        "use strict";
-        function $(id) {
-          return document.getElementById(id);
-        }
-        var DATA = window.PASINFO_WISATA;
-        if (!DATA || !DATA.destinations.length) return;
+(function () {
+  "use strict";
 
-        // Enrich data dengan sources & verification
-        if (window.AddSourcesData && window.AddSourcesData.enrichWisata) {
-          window.AddSourcesData.enrichWisata(DATA);
-        }
+  function $(id) {
+    return document.getElementById(id);
+  }
 
-        function catName(id) {
-          var c = DATA.categories.filter(function (x) { return x.id === id; })[0];
-          return c ? c.name : "";
-        }
-        function regName(id) {
-          var r = DATA.regions.filter(function (x) { return x.id === id; })[0];
-          return r ? r.name : "";
-        }
-        function slugParam() {
-          try {
-            return new URLSearchParams(window.location.search).get("slug");
-          } catch (e) {
-            return null;
-          }
-        }
-        var dest =
-          DATA.destinations.filter(function (d) { return d.slug === slugParam(); })[0] ||
-          DATA.destinations[0];
-        if (!dest) return;
+  function setText(id, text) {
+    var el = $(id);
+    if (el) el.textContent = text === null || text === undefined ? "" : String(text);
+  }
 
-        document.title = dest.name + " - Pasuruan Info";
-        function setText(id, text) {
-          var el = $(id);
-          if (el) el.textContent = text;
-        }
-         setText("crumb-name", dest.name);
-         setText("hero-cat", catName(dest.categoryId) || "Wisata");
-         setText("detail-title", dest.name);
-         setText("detail-location", dest.address);
-         setText("tentang-desc", dest.short_description || "Deskripsi destinasi segera hadir.");
-         setText("info-kategori", catName(dest.categoryId) || "-");
-         setText("info-wilayah", regName(dest.regionId) || "-");
-         setText("info-alamat", dest.address);
-         
-         // Opening hours dengan status real-time
-         if (dest.opening_hours && window.OpeningHoursUtil) {
-           var hoursDisplay = window.OpeningHoursUtil.getDisplay(dest.opening_hours);
-           setText("info-jadwal", hoursDisplay.display);
-           var statusEl = $("info-jadwal-status");
-           if (statusEl) {
-             statusEl.textContent = hoursDisplay.indicator + " " + hoursDisplay.status;
-             if (hoursDisplay.isOpen === true) {
-               statusEl.className = "inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700";
-             } else if (hoursDisplay.isOpen === false) {
-               statusEl.className = "inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700";
-             } else {
-               statusEl.className = "inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700";
-             }
-           }
-         } else {
-           setText("info-jadwal", dest.opening_hours || "-");
-         }
-         
-         // Baris tambahan hanya bila datanya ada (dummy sistematis ok)
-        var infoRows = $("info-rows");
-        if (infoRows) {
-          var extra = "";
-          if (dest.prices && dest.prices.length) {
-            extra +=
-              '<tr><td class="py-3.5 px-4 font-semibold text-gray-500">Harga</td>' +
-              '<td class="py-3.5 px-4 font-bold text-gray-800">' + dest.prices.join(" - ") + "</td></tr>";
-          }
-          if (dest.opening_hours) {
-            extra +=
-              '<tr class="bg-gray-50/50"><td class="py-3.5 px-4 font-semibold text-gray-500">Jam Operasional</td>' +
-              '<td class="py-3.5 px-4 font-bold text-gray-800">' + dest.opening_hours + "</td></tr>";
-          }
-          if (dest.fasilitas && dest.fasilitas.length) {
-            extra +=
-              '<tr><td class="py-3.5 px-4 font-semibold text-gray-500">Fasilitas</td><td class="py-3.5 px-4 font-medium text-gray-800">' +
-              '<span class="flex flex-wrap gap-1.5">' +
-              dest.fasilitas.map(function (f) {
-                return '<span class="px-2 py-0.5 bg-gray-100 rounded text-xs font-semibold text-gray-600">' + f + "</span>";
-              }).join("") +
-              "</span></td></tr>";
-          }
-          infoRows.insertAdjacentHTML("beforeend", extra);
-        }
-        // Rating pill di hero dihapus (hanya tampilkan di bawah lokasi)
-        setText("hero-media-label", "Foto: " + dest.name + " (segera hadir)");
-        setText("lokasi-alamat", dest.address);
-        setText("lokasi-koordinat", dest.place.latitude + ", " + dest.place.longitude);
-        var rute = $("rute-link");
-        if (rute) {
-          if (dest.googleMapsUrl) {
-            rute.href = dest.googleMapsUrl;
-          } else {
-            rute.classList.add("hidden");
-          }
-        }
-        // Foto: pakai media.url bila tersedia, bila tidak maka placeholder.
-        var photoUrl = dest.media && dest.media[0] ? dest.media[0].url : null;
-        if (photoUrl) {
-          var heroMedia = $("hero-media");
-          if (heroMedia) {
-            heroMedia.innerHTML =
-              '<img src="' + photoUrl + '" alt="Foto ' + dest.name + '" class="w-full h-full object-cover" />';
-            heroMedia.setAttribute("aria-label", "Foto " + dest.name);
-          }
-          var galFeatured = $("galeri-featured");
-          if (galFeatured) {
-            galFeatured.innerHTML =
-              '<img src="' + photoUrl + '" alt="Foto ' + dest.name + '" loading="lazy" class="w-full h-full object-cover" />';
-            galFeatured.setAttribute("aria-label", "Foto " + dest.name);
-          }
-        }
-        setText("sekitar-title", "Jelajah Destinasi Sekitar " + regName(dest.regionId));
-        setText("serupa-title", catName(dest.categoryId) + " Serupa di Pasuruan");
-        // Rincian tiket dari data (bila tidak ada, tampilkan status)
-        var tiketList = $("tiket-list");
-        if (tiketList) {
-          var tiketRows = "";
-          if (dest.prices && dest.prices.length) {
-            tiketRows +=
-              '<li class="flex justify-between items-center gap-2 pt-2">' +
-              '<span class="text-gray-600 font-medium">Tiket Masuk</span>' +
-              '<span class="font-bold text-gray-900 text-right">' + dest.prices.join(" - ") + "</span></li>";
-          }
-          if (dest.opening_hours) {
-            tiketRows +=
-              '<li class="flex justify-between items-center gap-2 pt-2">' +
-              '<span class="text-gray-600 font-medium">Jam Operasional</span>' +
-              '<span class="font-bold text-gray-900 text-right">' + dest.opening_hours + "</span></li>";
-          }
-          tiketList.innerHTML =
-            tiketRows ||
-            '<li class="text-xs text-gray-500 pt-2">Info tiket segera hadir.</li>';
-        }
+  function esc(value) {
+    return String(value === null || value === undefined ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
 
-        // Mini peta: 1 penanda di atas latar polos (konsisten halaman wisata).
-        // Dijalankan setelah Leaflet (defer) tersedia.
-        function initMiniMap() {
-          try {
-            if (window.L && $("detail-map")) {
-              var mini = window.L.map("detail-map", {
-                scrollWheelZoom: false,
-                zoomControl: false,
-                attributionControl: false,
-              }).setView([dest.place.latitude, dest.place.longitude], 13);
-              window.L.circleMarker([dest.place.latitude, dest.place.longitude], {
-                radius: 9,
-                color: "#ffffff",
-                weight: 3,
-                fillColor: "#dc2626",
-                fillOpacity: 1,
-              }).addTo(mini);
-            }
-          } catch (e) {
-            /* peta opsional: konten tetap tampil tanpanya */
-          }
-        }
-        if (document.readyState === "loading") {
-          document.addEventListener("DOMContentLoaded", initMiniMap);
-        } else {
-          initMiniMap();
-        }
+  /* Pola bento galeri (sama dengan susunan sebelumnya: foto besar 2x2,
+     diikuti kartu 1x1). Slot dipakai bergilir sesuai jumlah media. */
+  var GALLERY_SLOTS = [
+    "col-span-2 row-span-2",
+    "col-span-1",
+    "col-span-1",
+    "col-span-2 row-span-2",
+    "col-span-1",
+    "col-span-1",
+    "col-span-2",
+    "col-span-2",
+    "col-span-1",
+    "col-span-1",
+    "col-span-1",
+    "col-span-1",
+  ];
 
-        // Display Source & Verification Info
-        (function () {
-          var sourceEl = $("source-info");
-          var verificationEl = $("verification-info");
-          
-          if (sourceEl && dest.sources && dest.sources.length > 0) {
-            var source = dest.sources[0];
-            var html = '<div class="text-sm">';
-            html += '<p class="font-semibold text-gray-900">' + (source.name || "Sumber Tidak Diketahui") + '</p>';
-            if (source.url) {
-              html += '<p class="text-xs text-blue-600 mt-1"><a href="' + source.url + '" target="_blank" rel="noopener">Kunjungi sumber →</a></p>';
-            }
-            html += '</div>';
-            sourceEl.innerHTML = html;
-          } else if (sourceEl) {
-            sourceEl.innerHTML = '<p class="text-xs text-gray-600">Informasi sumber belum tersedia</p>';
-          }
-          
-          if (verificationEl && dest.verification) {
-            var status = dest.verification.status || "unknown";
-            var statusLabel = status === "verified" ? "Terverifikasi" : status === "pending" ? "Menunggu Verifikasi" : "Status Tidak Diketahui";
-            var statusColor = status === "verified" ? "green" : status === "pending" ? "yellow" : "gray";
-            var statusBgClass = "bg-" + statusColor + "-100";
-            var statusTextClass = "text-" + statusColor + "-700";
-            
-            var html = '<div class="text-sm">';
-            html += '<div class="flex items-center gap-2 mb-2">';
-            html += '<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ' + statusBgClass + ' ' + statusTextClass + '">' + statusLabel + '</span>';
-            html += '</div>';
-            if (dest.verification.verified_at) {
-              var verifiedDate = new Date(dest.verification.verified_at);
-              var dateStr = verifiedDate.toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" });
-              html += '<p class="text-xs text-gray-600">Diverifikasi pada ' + dateStr + '</p>';
-            }
-            html += '</div>';
-            verificationEl.innerHTML = html;
-          } else if (verificationEl) {
-            verificationEl.innerHTML = '<p class="text-xs text-gray-600">Status verifikasi belum tersedia</p>';
-          }
-        })();
+  var PLAY_BADGE =
+    '<span class="absolute inset-0 flex items-center justify-center">' +
+    '<span class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center opacity-90 group-hover:opacity-100">' +
+    '<svg class="w-5 h-5 text-white fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>' +
+    "</span></span>";
 
-        // Kartu rekomendasi (placeholder visual + data real)
-        function recoCard(d) {
-          return (
-            '<a href="detail_wisata.html?slug=' + d.slug + '" class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col group">' +
-            '<div class="relative h-44 bg-red-400" role="img" aria-label="Foto destinasi ' + d.name + ' (placeholder)">' +
-            '<span class="absolute top-3 left-3 px-2.5 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold uppercase rounded-lg">' + catName(d.categoryId) + "</span>" +
-            "</div>" +
-            '<div class="p-4 flex-1 flex flex-col justify-between">' +
-            "<div>" +
-            '<h4 class="font-bold text-gray-900 text-base group-hover:text-red-600 transition-colors">' + d.name + "</h4>" +
-            '<p class="text-gray-500 text-xs mt-1 line-clamp-2">' + (d.short_description || "") + "</p>" +
-            "</div>" +
-            "</div></a>"
-          );
-        }
-        function renderReco(id, list) {
-          var el = $(id);
-          if (el) el.innerHTML = list.slice(0, 4).map(recoCard).join("");
-        }
-        var others = DATA.destinations.filter(function (d) { return d.id !== dest.id; });
-        renderReco(
-          "reco-serupa",
-          others.filter(function (d) { return d.categoryId === dest.categoryId; }),
-        );
-        renderReco(
-          "reco-lainnya",
-          others.filter(function (d) { return d.categoryId !== dest.categoryId; }),
-        );
-        // Sekitar = destinasi TERDEKAT by jarak real (haversine, nearby.js)
-        // dari koordinat destinasi ini; fallback: satu region bila jarak
-        // tak dapat dihitung (Owner 2026-10-09).
-        var sekitarList = others.filter(function (d) { return d.regionId === dest.regionId; });
-        try {
-          var ref = window.PasinfoNearby
-            ? window.PasinfoNearby.refPoint(dest, DATA.regions)
-            : null;
-          var near = window.PasinfoNearby
-            ? window.PasinfoNearby.nearest(ref, others, 4)
-            : [];
-          if (near.length) sekitarList = near;
-        } catch (e) {}
-        renderReco("reco-sekitar", sekitarList);
+  var PLACEHOLDER_MEDIA = "../../public/assets/images/poster-dummy.svg";
 
-        // Simpan (visual saja) + Bagikan (Web Share API / clipboard)
-        var bookmarked = false;
-        var bookmarkBtn = $("bookmarkBtn");
-        if (bookmarkBtn) {
-          bookmarkBtn.addEventListener("click", function () {
-            bookmarked = !bookmarked;
-            bookmarkBtn.setAttribute("aria-pressed", bookmarked ? "true" : "false");
-            var icon = $("bookmarkIcon");
-            var text = $("bookmarkText");
-            if (icon) icon.setAttribute("fill", bookmarked ? "currentColor" : "none");
-            if (text) text.textContent = bookmarked ? "Tersimpan" : "Simpan";
-          });
-        }
-        var shareBtn = $("shareBtn");
-        if (shareBtn) {
-          shareBtn.addEventListener("click", function () {
-            var url = window.location.href;
-            if (navigator.share) {
-              navigator.share({ title: dest.name, url: url }).catch(function () {});
-            } else if (navigator.clipboard) {
-              navigator.clipboard.writeText(url).catch(function () {});
-            }
-          });
-        }
-      })();
+  var STATUS_LABELS = {
+    verified: "Terverifikasi",
+    pending: "Menunggu Verifikasi",
+    rejected: "Ditolak",
+    expired: "Kedaluwarsa",
+  };
+  var STATUS_CLASS = {
+    verified: "bg-green-100 text-green-700",
+    pending: "bg-yellow-100 text-yellow-700",
+    rejected: "bg-red-100 text-red-700",
+    expired: "bg-gray-200 text-gray-700",
+  };
+  var CONFIDENCE_LABELS = {
+    rendah: "Rendah",
+    sedang: "Sedang",
+    tinggi: "Tinggi",
+    perlu_cek: "Perlu dicek",
+  };
+
+  function init() {
+    var DATA = window.PASINFO_WISATA;
+    if (!DATA || !DATA.destinations || !DATA.destinations.length) return;
+
+    /* Helper bersama dari data-wisata.js (satu sumber dengan listing). */
+    var H = window.PasinfoWisata || null;
+
+    /* Sumber & verifikasi diisi util deferred ini. Aman karena render
+       sudah menunggu DOMContentLoaded. */
+    if (window.AddSourcesData && window.AddSourcesData.enrichWisata) {
+      window.AddSourcesData.enrichWisata(DATA);
+    }
+
+    function catName(id) {
+      return H ? H.categoryName(id) || "" : "";
+    }
+    function regName(id) {
+      return H ? H.regionName(id) || "" : "";
+    }
+
+    /* Gambar: SATU sumber dengan halaman listing (data-wisata.js).
+       - wisata         -> photoFor (media[0].url / aset lokal deterministik)
+       - lintas domain  -> imageOf (media[0].url bila ada, else placeholder) */
+    function wisataPhoto(item) {
+      if (H && H.photoFor) return H.photoFor(item);
+      if (item && item.media && item.media[0] && item.media[0].url) return item.media[0].url;
+      return PLACEHOLDER_MEDIA;
+    }
+    function lainPhoto(item) {
+      if (H && H.imageOf) return H.imageOf(item);
+      if (item && item.media && item.media[0] && item.media[0].url) return item.media[0].url;
+      return PLACEHOLDER_MEDIA;
+    }
+    function slugParam() {
+      try {
+        return new URLSearchParams(window.location.search).get("slug");
+      } catch (e) {
+        return null;
+      }
+    }
+
+    var dest =
+      DATA.destinations.filter(function (d) {
+        return d.slug === slugParam();
+      })[0] || DATA.destinations[0];
+    if (!dest) return;
+
+    document.title = dest.name + " - Pasuruan Info";
+
+    /* Geolocation: jarak dari lokasi user sekarang ke destinasi */
+    var userLocation = null;
+    var userDistanceToDestination = "-";
     
+    function getUserLocation(callback) {
+      if (!navigator.geolocation) {
+        callback(null);
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        function(pos) { callback({lat: pos.coords.latitude, lng: pos.coords.longitude}); },
+        function() { callback(null); },
+        { timeout: 5000, maximumAge: 0 }
+      );
+    }
+    
+    function haversineDistance(lat1, lng1, lat2, lng2) {
+      var R = 6371; // km
+      var dLat = (lat2 - lat1) * Math.PI / 180;
+      var dLng = (lng2 - lng1) * Math.PI / 180;
+      var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+    
+    function formatDistance(km) {
+      if (!km && km !== 0) return "-";
+      return "±" + km.toFixed(1) + " km";
+    }
+    
+    /* Init geolocation async (non-blocking) */
+    getUserLocation(function(loc) {
+      if (loc && dest.place && dest.place.latitude && dest.place.longitude) {
+        var distKm = haversineDistance(loc.lat, loc.lng, dest.place.latitude, dest.place.longitude);
+        userDistanceToDestination = formatDistance(distKm);
+      }
+    });
+
+    /* ---------- 1. HERO ---------- */
+    setText("crumb-name", dest.name);
+    setText("hero-cat", catName(dest.categoryId) || "Wisata");
+    setText("detail-title", dest.name);
+    setText("detail-desc", dest.short_description || "Deskripsi destinasi segera hadir.");
+    setText("detail-location", dest.address || regName(dest.regionId) || "Pasuruan");
+
+    /* Rating: pakai angka dari data (sama dengan kartu listing),
+       bukan angka mockup lama "4.8 (3 rb ulasan)". */
+    var ratingText = "";
+    if (dest.rating !== null && dest.rating !== undefined && dest.rating !== "") {
+      ratingText = String(dest.rating);
+      if (dest.reviews_label) ratingText += " (" + dest.reviews_label + ")";
+    }
+    setText("detail-rating", ratingText || "Belum ada rating");
+
+    /* Foto hero: media[0].url (aset lokal yang sudah ada sampai foto asli
+       tersedia; Owner akan mengganti). */
+    var heroMedia = $("hero-media");
+    var heroPhoto = wisataPhoto(dest);
+    if (heroMedia && heroPhoto) {
+      heroMedia.innerHTML =
+        '<img src="' + esc(heroPhoto) + '" alt="Foto ' + esc(dest.name) + '" class="w-full h-full object-cover" />';
+      heroMedia.setAttribute("aria-label", "Foto " + dest.name);
+    }
+
+    /* ---------- 2. TENTANG WISATA (paragraf milik Owner) ---------- */
+    var tentang = $("tentang-desc");
+    var paragraphs = H && H.paragraphsOf ? H.paragraphsOf(dest) : [];
+    if (tentang) {
+      tentang.innerHTML = paragraphs.length
+        ? paragraphs
+            .map(function (p) {
+              return "<p>" + esc(p) + "</p>";
+            })
+            .join("")
+        : '<p class="text-gray-500">Deskripsi destinasi segera hadir.</p>';
+    }
+
+    /* ---------- 3. INFORMASI UTAMA (dl) ---------- */
+    setText("info-kategori", catName(dest.categoryId) || "-");
+    setText("info-wilayah", regName(dest.regionId) || "-");
+    setText("info-tiket", (H && H.priceLabel(dest)) || "-");
+    setText("info-lokasi", dest.address || "-");
+
+    var hours = H && H.hoursDisplay ? H.hoursDisplay(dest) : null;
+    if (hours) {
+      setText("info-jadwal", hours.display || "-");
+      var statusEl = $("info-jadwal-status");
+      if (statusEl) {
+        statusEl.textContent =
+          (hours.indicator ? hours.indicator + " " : "") + (hours.status || "");
+        if (hours.isOpen === true) {
+          statusEl.className =
+            "inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700";
+        } else if (hours.isOpen === false) {
+          statusEl.className =
+            "inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700";
+        } else {
+          statusEl.className =
+            "inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700";
+        }
+      }
+    }
+
+    var fasilitasEl = $("info-fasilitas");
+    var facilities = H && H.facilitiesOf ? H.facilitiesOf(dest) : [];
+    if (fasilitasEl) {
+      fasilitasEl.innerHTML = facilities.length
+        ? '<span class="flex flex-wrap gap-1.5 justify-end">' +
+          facilities
+            .map(function (f) {
+              return (
+                '<span class="px-2 py-0.5 bg-gray-100 rounded text-xs font-semibold text-gray-600">' +
+                esc(f.name) +
+                "</span>"
+              );
+            })
+            .join("") +
+          "</span>"
+        : "-";
+    }
+
+    /* ---------- 4. LOKASI & RUTE ---------- */
+    var lokasiDesc =
+      "Destinasi ini berada di " +
+      (dest.address || "alamat belum tersedia") +
+      (regName(dest.regionId) ? ", " + regName(dest.regionId) : "") +
+      ". Peta di bawah dapat dipakai untuk melihat titik lokasinya.";
+    setText("lokasi-desc", lokasiDesc);
+    setText("route-lokasi", dest.address || "-");
+
+    /* Peta mini: marker dari koordinat nyata (pola sama dengan halaman
+       wisata: tanpa tile, hanya penanda). Fallback tetap tampil bila
+       Leaflet tidak tersedia. */
+    function initMiniMap() {
+      var box = $("lokasi-map");
+      if (!box || !window.L) return;
+      var lat = dest.place && typeof dest.place.latitude === "number" ? dest.place.latitude : null;
+      var lng = dest.place && typeof dest.place.longitude === "number" ? dest.place.longitude : null;
+      if (lat === null || lng === null) return;
+      try {
+        var mini = window.L.map(box, {
+          scrollWheelZoom: false,
+          zoomControl: false,
+          attributionControl: false,
+          dragging: false,
+          touchZoom: false,
+          doubleClickZoom: false,
+          keyboard: false,
+        }).setView([lat, lng], 13);
+        window.L.circleMarker([lat, lng], {
+          radius: 9,
+          color: "#ffffff",
+          weight: 3,
+          fillColor: "#dc2626",
+          fillOpacity: 1,
+        }).addTo(mini);
+        box.removeAttribute("role");
+        box.setAttribute("aria-label", "Peta titik lokasi " + dest.name);
+        var fallback = $("lokasi-map-fallback");
+        if (fallback) fallback.setAttribute("aria-hidden", "true");
+      } catch (e) {
+        /* peta opsional: konten tetap tampil tanpa peta */
+      }
+    }
+    initMiniMap();
+
+    /* ---------- 5. GALERI (dari media[]) ---------- */
+    var galeriGrid = $("galeri-grid");
+    var media = H && H.photosOf ? H.photosOf(dest) : [];
+    if (galeriGrid) {
+      if (!media.length) {
+        galeriGrid.innerHTML =
+          '<div class="col-span-4 h-32 rounded-lg bg-gray-200 flex items-center justify-center text-xs font-semibold text-gray-500">Media belum tersedia</div>';
+      } else {
+        galeriGrid.innerHTML = media
+          .map(function (m, i) {
+            return galleryItemHTML(m, i, dest.name);
+          })
+          .join("");
+      }
+    }
+    setText(
+      "galeri-desc",
+      media.length
+        ? "Foto contoh memakai aset lokal yang sudah tersedia; foto dan video asli destinasi menyusul."
+        : "Media destinasi ini belum tersedia."
+    );
+
+    function galleryItemHTML(m, index, label) {
+      var slot = GALLERY_SLOTS[index % GALLERY_SLOTS.length];
+      var isVideo = m && m.type === "video";
+      var src = isVideo ? m.thumbnail_url : m && m.url;
+      var inner = "";
+      if (src) {
+        inner =
+          '<img src="' +
+          esc(src) +
+          '" alt="' +
+          esc((m && (m.alt_text || m.alt)) || label) +
+          '" loading="lazy" class="w-full h-full object-cover" />';
+      } else {
+        inner =
+          '<span class="absolute inset-0 flex items-center justify-center px-2 text-center text-[10px] font-semibold text-gray-500">' +
+          (isVideo ? "Video belum tersedia" : "Foto belum tersedia") +
+          "</span>";
+      }
+      if (isVideo && src) inner += PLAY_BADGE;
+      return '<div class="relative overflow-hidden rounded-lg bg-gray-200 group ' + slot + '">' + inner + "</div>";
+    }
+
+    /* ---------- 6. INFORMASI TAMBAHAN: cuaca & harga tiket ---------- */
+    /* Cuaca: nilai contoh dari data-wisata.js (DUMMY_WEATHER, API cuaca
+       menyusul) + tanggal nyata hari ini. Tidak ada angka cuaca yang
+       dikarang di sini. */
+    var weather = H && H.weatherOf ? H.weatherOf(dest) : null;
+    if (weather) {
+      setText("cuaca-judul", "Cuaca di " + dest.name);
+      setText("cuaca-tanggal", "Hari ini, " + (H && H.todayLabel ? H.todayLabel() : ""));
+      setText("cuaca-suhu", weather.temperature_c);
+      setText("cuaca-kondisi", weather.condition_label || "-");
+    }
+
+    /* Tiket: baris dari destination_prices (turunan `prices` + 2 baris
+       dummy, sudah ditandai di data-wisata.js). Label rupiah dibuat oleh
+       priceLabel supaya format tetap satu sumber dengan listing. */
+    var tiketList = $("tiket-list");
+    if (tiketList) {
+      var rows = H && H.ticketRows ? H.ticketRows(dest) : [];
+      tiketList.innerHTML = rows.length
+        ? rows
+            .map(function (r) {
+              var label = H && H.priceLabel ? H.priceLabel({ destination_prices: [r] }) : null;
+              return (
+                '<li class="flex justify-between gap-3">' +
+                '<span class="text-gray-600">' +
+                esc(r.name) +
+                "</span>" +
+                '<span class="font-bold text-gray-900 whitespace-nowrap">' +
+                esc(label || "-") +
+                "</span>" +
+                "</li>"
+              );
+            })
+            .join("")
+        : '<li class="text-gray-500">Info tiket belum tersedia.</li>';
+    }
+
+    /* ---------- 6b. SUMBER & VERIFIKASI ---------- */
+    (function () {
+      var sourceEl = $("source-info");
+      if (sourceEl) {
+        if (dest.sources && dest.sources.length) {
+          sourceEl.innerHTML = dest.sources
+            .map(function (s) {
+              var html = '<div class="text-sm">';
+              html += '<p class="font-semibold text-gray-800">' + esc(s.name) + "</p>";
+              if (s.url) {
+                html +=
+                  '<a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer" class="text-xs text-red-600 hover:text-red-700 font-semibold">Buka sumber' +
+                  '<span class="sr-only"> (tautan eksternal)</span></a>';
+              }
+              html += "</div>";
+              return html;
+            })
+            .join("");
+        } else if (dest.source) {
+          sourceEl.innerHTML =
+            '<p class="text-xs text-gray-600">Berkas data: ' + esc(dest.source) + "</p>";
+        } else {
+          sourceEl.innerHTML =
+            '<p class="text-xs text-gray-600">Informasi sumber belum tersedia</p>';
+        }
+      }
+
+      var verificationEl = $("verification-info");
+      if (verificationEl) {
+        var status = (dest.verification && dest.verification.status) || "pending";
+        var label = STATUS_LABELS[status] || "Menunggu Verifikasi";
+        var cls = STATUS_CLASS[status] || STATUS_CLASS.pending;
+        var html = '<div class="text-sm">';
+        html +=
+          '<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ' +
+          cls +
+          '">' +
+          esc(label) +
+          "</span>";
+        if (dest.verification && dest.verification.verified_at) {
+          var d = new Date(dest.verification.verified_at);
+          html +=
+            '<p class="text-xs text-gray-600 mt-2">Diverifikasi pada ' +
+            esc(d.toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" })) +
+            "</p>";
+        }
+        if (dest.keyakinan) {
+          html +=
+            '<p class="text-xs text-gray-600 mt-2">Keyakinan koordinat: ' +
+            esc(CONFIDENCE_LABELS[dest.keyakinan] || dest.keyakinan) +
+            "</p>";
+        }
+        html += "</div>";
+        verificationEl.innerHTML = html;
+      }
+    })();
+
+    /* ---------- 7. KARTU REKOMENDASI ---------- */
+    function recoCard(item) {
+      var name = esc(item.name || "Destinasi");
+      var photo = item._domain ? lainPhoto(item) : wisataPhoto(item);
+      var badgeText = item._domain || catName(item.categoryId) || "Wisata";
+      var badge =
+        '<span class="absolute top-3 left-3 px-2.5 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold uppercase rounded-lg">' +
+        esc(badgeText) +
+        "</span>";
+      var dist = "";
+      if (
+        item._distKm !== null &&
+        item._distKm !== undefined &&
+        window.PasinfoNearby &&
+        typeof window.PasinfoNearby.fmtKm === "function"
+      ) {
+        dist =
+          '<span class="absolute bottom-3 right-3 px-2 py-0.5 rounded-full bg-black/70 text-white text-[10px] font-bold">' +
+          esc(window.PasinfoNearby.fmtKm(item._distKm)) +
+          "</span>";
+      }
+      var desc = item.short_description
+        ? '<p class="text-gray-500 text-xs mt-1 line-clamp-2">' + esc(item.short_description) + "</p>"
+        : "";
+      var href = item._href || "detail_wisata.html?slug=" + item.slug;
+      return (
+        '<a href="' +
+        esc(href) +
+        '" class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col group">' +
+        '<div class="relative h-44 overflow-hidden bg-gray-200">' +
+        '<img src="' +
+        esc(photo) +
+        '" alt="Foto ' +
+        name +
+        '" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />' +
+        badge +
+        dist +
+        "</div>" +
+        '<div class="p-4 flex-1 flex flex-col justify-between"><div>' +
+        '<h4 class="font-bold text-gray-900 text-base group-hover:text-red-600 transition-colors">' +
+        name +
+        "</h4>" +
+        desc +
+        "</div></div></a>"
+      );
+    }
+
+    function renderReco(id, list, limit) {
+      var el = $(id);
+      if (el) el.innerHTML = list.slice(0, limit || 4).map(recoCard).join("");
+    }
+
+    var others = DATA.destinations.filter(function (d) {
+      return d.id !== dest.id;
+    });
+
+    /* Destinasi yang sama bisa terdaftar di domain lain (mis. candi-sepilar
+       ada di wisata dan budaya) -> keluarkan agar tidak jadi "tetangga" diri
+       sendiri pada Jelajah Sekitar. */
+    var crossPool = crossDomainPool().filter(function (x) {
+      return x.slug !== dest.slug;
+    });
+
+    renderReco(
+      "reco-serupa",
+      others.filter(function (d) {
+        return d.categoryId === dest.categoryId;
+      }),
+      4
+    );
+    renderReco(
+      "reco-lainnya",
+      others.filter(function (d) {
+        return d.categoryId !== dest.categoryId;
+      }),
+      4
+    );
+
+    /* Jelajah Sekitar = LINTAS DOMAIN (Owner 2026-10-13): kuliner + budaya +
+       acara terdekat dari koordinat destinasi ini. Jarak nyata (haversine,
+       nearby.js). Bila acuan/titik tidak tersedia, jatuh ke destinasi wisata
+       satu wilayah (perilaku lama). */
+    setText("sekitar-title", "Jelajah Sekitar " + (regName(dest.regionId) || "Pasuruan"));
+
+    function crossDomainPool() {
+      var pool = [];
+      function push(list, domain, hrefPrefix) {
+        if (!list || !list.length) return;
+        for (var i = 0; i < list.length; i++) {
+          var item = list[i];
+          if (!item) continue;
+          item._domain = domain;
+          item._href = hrefPrefix + item.slug;
+          pool.push(item);
+        }
+      }
+      var K = window.PASINFO_KULINER;
+      var B = window.PASINFO_BUDAYA;
+      var A = window.PASINFO_ACARA;
+      push(K && K.culinaries, "Kuliner", "detail_kuliner.html?slug=");
+      push(B && B.cultures, "Budaya", "detail_budaya.html?slug=");
+      push(A && A.events, "Acara", "detail_acara.html?slug=");
+      return pool;
+    }
+
+    var sekitarList = [];
+    var ref =
+      window.PasinfoNearby && typeof window.PasinfoNearby.refPoint === "function"
+        ? window.PasinfoNearby.refPoint(dest, DATA.regions)
+        : null;
+    if (ref && window.PasinfoNearby && crossPool.length) {
+      sekitarList = window.PasinfoNearby.nearest(ref, crossPool, 8);
+    }
+    if (!sekitarList.length) {
+      sekitarList = others.filter(function (d) {
+        return d.regionId === dest.regionId;
+      });
+    }
+    renderReco("reco-sekitar", sekitarList, 8);
+
+    /* ---------- 8. Simpan (visual) + Bagikan (Web Share API/clipboard) ---------- */
+    var bookmarked = false;
+    var bookmarkBtn = $("bookmarkBtn");
+    if (bookmarkBtn) {
+      bookmarkBtn.addEventListener("click", function () {
+        bookmarked = !bookmarked;
+        bookmarkBtn.setAttribute("aria-pressed", bookmarked ? "true" : "false");
+        var icon = $("bookmarkIcon");
+        var text = $("bookmarkText");
+        if (icon) icon.setAttribute("fill", bookmarked ? "currentColor" : "none");
+        if (text) text.textContent = bookmarked ? "Tersimpan" : "Simpan";
+      });
+    }
+    var shareBtn = $("shareBtn");
+    if (shareBtn) {
+      shareBtn.addEventListener("click", function () {
+        var url = window.location.href;
+        if (navigator.share) {
+          navigator.share({ title: dest.name, url: url }).catch(function () {});
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(url).catch(function () {});
+        }
+      });
+    }
+  }
+
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
