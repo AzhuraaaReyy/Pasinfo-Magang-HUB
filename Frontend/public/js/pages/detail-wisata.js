@@ -280,10 +280,17 @@
        Leaflet tidak tersedia. */
     function initMiniMap() {
       var box = $("lokasi-map");
-      if (!box || !window.L) return;
+      if (!box) return false;
+      if (!window.L) {
+        console.warn("[detail-wisata] Leaflet tidak tersedia saat initMiniMap dipanggil");
+        return false;
+      }
       var lat = dest.place && typeof dest.place.latitude === "number" ? dest.place.latitude : null;
       var lng = dest.place && typeof dest.place.longitude === "number" ? dest.place.longitude : null;
-      if (lat === null || lng === null) return;
+      if (lat === null || lng === null) {
+        console.warn("[detail-wisata] Koordinat tidak valid:", {lat: lat, lng: lng});
+        return false;
+      }
       try {
         var mini = window.L.map(box, {
           scrollWheelZoom: false,
@@ -305,11 +312,37 @@
         box.setAttribute("aria-label", "Peta titik lokasi " + dest.name);
         var fallback = $("lokasi-map-fallback");
         if (fallback) fallback.setAttribute("aria-hidden", "true");
+        console.log("[detail-wisata] Mini-map berhasil diinisialisasi untuk:", dest.name);
+        return true;
       } catch (e) {
-        /* peta opsional: konten tetap tampil tanpa peta */
+        console.error("[detail-wisata] Error saat init mini-map:", e);
+        return false;
       }
     }
-    initMiniMap();
+    
+    /* Tunggu Leaflet tersedia sebelum inisialisasi map.
+       Leaflet dimuat dengan defer, jadi mungkin belum siap. */
+    function waitForLeafletAndInitMap() {
+      if (window.L) {
+        initMiniMap();
+      } else {
+        console.log("[detail-wisata] Leaflet belum tersedia, menunggu...");
+        var attempts = 0;
+        var maxAttempts = 50;
+        var checkInterval = setInterval(function() {
+          attempts++;
+          if (window.L) {
+            clearInterval(checkInterval);
+            console.log("[detail-wisata] Leaflet siap, inisialisasi mini-map");
+            initMiniMap();
+          } else if (attempts >= maxAttempts) {
+            clearInterval(checkInterval);
+            console.warn("[detail-wisata] Timeout menunggu Leaflet setelah " + (maxAttempts * 100) + "ms");
+          }
+        }, 100);
+      }
+    }
+    waitForLeafletAndInitMap();
 
     /* ---------- 5. GALERI (dari media[]) ---------- */
     var galeriGrid = $("galeri-grid");
