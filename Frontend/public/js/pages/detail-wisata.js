@@ -173,9 +173,12 @@
     
     /* Init geolocation async (non-blocking) */
     getUserLocation(function(loc) {
-      if (loc && dest.place && dest.place.latitude && dest.place.longitude) {
-        var distKm = haversineDistance(loc.lat, loc.lng, dest.place.latitude, dest.place.longitude);
-        userDistanceToDestination = formatDistance(distKm);
+      if (loc) {
+        userLocation = loc;
+        if (dest.place && dest.place.latitude && dest.place.longitude) {
+          var distKm = haversineDistance(loc.lat, loc.lng, dest.place.latitude, dest.place.longitude);
+          userDistanceToDestination = formatDistance(distKm);
+        }
       }
     });
 
@@ -448,48 +451,51 @@
 
     /* ---------- 7. KARTU REKOMENDASI ---------- */
     function recoCard(item) {
-      var name = esc(item.name || "Destinasi");
-      var photo = item._domain ? lainPhoto(item) : wisataPhoto(item);
-      var badgeText = item._domain || catName(item.categoryId) || "Wisata";
-      var badge =
-        '<span class="absolute top-3 left-3 px-2.5 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold uppercase rounded-lg">' +
-        esc(badgeText) +
-        "</span>";
-      var dist = "";
-      if (
-        item._distKm !== null &&
-        item._distKm !== undefined &&
-        window.PasinfoNearby &&
-        typeof window.PasinfoNearby.fmtKm === "function"
-      ) {
-        dist =
-          '<span class="absolute bottom-3 right-3 px-2 py-0.5 rounded-full bg-black/70 text-white text-[10px] font-bold">' +
-          esc(window.PasinfoNearby.fmtKm(item._distKm)) +
-          "</span>";
+      var itemDist = "-";
+      if (userLocation && item.place && item.place.latitude && item.place.longitude) {
+        var distKm = haversineDistance(userLocation.lat, userLocation.lng, item.place.latitude, item.place.longitude);
+        itemDist = formatDistance(distKm);
       }
-      var desc = item.short_description
-        ? '<p class="text-gray-500 text-xs mt-1 line-clamp-2">' + esc(item.short_description) + "</p>"
-        : "";
-      var href = item._href || "detail_wisata.html?slug=" + item.slug;
+      
+      var catName_val = H ? H.categoryName(item.categoryId || item.category_id) || "" : "";
+      var rating = item.rating || 0;
+      var photo = wisataPhoto(item) || lainPhoto(item) || PLACEHOLDER_MEDIA;
+      var location = item.address || (item.place && item.place.name) || "-";
+      
       return (
-        '<a href="' +
-        esc(href) +
-        '" class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col group">' +
-        '<div class="relative h-44 overflow-hidden bg-gray-200">' +
-        '<img src="' +
-        esc(photo) +
-        '" alt="Foto ' +
-        name +
-        '" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />' +
-        badge +
-        dist +
-        "</div>" +
-        '<div class="p-4 flex-1 flex flex-col justify-between"><div>' +
-        '<h4 class="font-bold text-gray-900 text-base group-hover:text-red-600 transition-colors">' +
-        name +
-        "</h4>" +
-        desc +
-        "</div></div></a>"
+        '<a href="' + esc(item._href || "#") + '" class="group block no-underline">' +
+        '<article class="relative rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">' +
+        
+        '<div class="absolute top-3 left-3 right-3 flex items-center justify-between z-10">' +
+        '<span class="inline-block px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-md">' +
+        esc(catName_val) +
+        '</span>' +
+        '<span class="inline-block px-2.5 py-1 bg-white text-gray-900 text-xs font-semibold rounded-md">' +
+        '⭐ ' + rating +
+        '</span>' +
+        '</div>' +
+        
+        '<div class="relative h-44 sm:h-48 lg:h-52 overflow-hidden bg-gray-200">' +
+        '<img src="' + esc(photo) + '" alt="' + esc(item.name) + '" ' +
+        'class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" ' +
+        'loading="lazy" />' +
+        '</div>' +
+        
+        '<div class="flex flex-col flex-1 p-4 bg-white">' +
+        '<h3 class="font-bold text-gray-900 text-base line-clamp-2 mb-2">' +
+        esc(item.name) +
+        '</h3>' +
+        '<p class="text-xs text-gray-600 line-clamp-2 mb-3">' +
+        esc(item.short_description || "") +
+        '</p>' +
+        '<div class="text-xs text-gray-600 space-y-1">' +
+        '<p>📍 ' + esc(location) + '</p>' +
+        '<p>📏 ' + itemDist + '</p>' +
+        '</div>' +
+        '</div>' +
+        
+        '</article>' +
+        '</a>'
       );
     }
 
