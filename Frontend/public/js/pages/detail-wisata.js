@@ -270,6 +270,7 @@
       ". Peta di bawah dapat dipakai untuk melihat titik lokasinya.";
     setText("lokasi-desc", lokasiDesc);
     setText("route-lokasi", dest.address || "-");
+    setText("route-jarak", userDistanceToDestination);
 
     /* Peta mini: marker dari koordinat nyata (pola sama dengan halaman
        wisata: tanpa tile, hanya penanda). Fallback tetap tampil bila
