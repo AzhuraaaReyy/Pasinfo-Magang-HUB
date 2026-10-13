@@ -511,6 +511,20 @@
     })();
 
     /* ---------- 7. KARTU REKOMENDASI ---------- */
+    function getItemField(item, domain, fieldName) {
+      if (fieldName === 'address') {
+        if (domain === 'Acara') return item.venue_address || '-';
+        return item.address || (item.place && item.place.name) || '-';
+      }
+      if (fieldName === 'name') {
+        return item.name || '-';
+      }
+      if (fieldName === 'short_description') {
+        return item.short_description || item.description || '-';
+      }
+      return '-';
+    }
+
     function recoCard(item) {
       var itemDist = "-";
       if (userLocation && item.place && item.place.latitude && item.place.longitude) {
@@ -518,10 +532,13 @@
         itemDist = formatDistance(distKm);
       }
       
+      var domain = item._domain || 'Wisata';
       var catName_val = H ? H.categoryName(item.categoryId || item.category_id) || "" : "";
       var rating = item.rating || 0;
       var photo = wisataPhoto(item) || lainPhoto(item) || PLACEHOLDER_MEDIA;
-      var location = item.address || (item.place && item.place.name) || "-";
+      var cardName = getItemField(item, domain, 'name');
+      var cardDesc = getItemField(item, domain, 'short_description');
+      var cardLocation = getItemField(item, domain, 'address');
       
       return (
         '<a href="' + esc(item._href || "#") + '" class="group block no-underline">' +
@@ -538,20 +555,20 @@
         '</div>' +
         
         '<div class="relative h-44 sm:h-48 lg:h-52 overflow-hidden bg-gray-200">' +
-        '<img src="' + esc(photo) + '" alt="' + esc(item.name) + '" ' +
+        '<img src="' + esc(photo) + '" alt="' + esc(cardName) + '" ' +
         'class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" ' +
         'loading="lazy" />' +
         '</div>' +
         
         '<div class="flex flex-col flex-1 p-4 bg-white">' +
         '<h3 class="font-bold text-gray-900 text-base line-clamp-2 mb-2">' +
-        esc(item.name) +
+        esc(cardName) +
         '</h3>' +
         '<p class="text-xs text-gray-600 line-clamp-2 mb-3">' +
-        esc(item.short_description || "") +
+        esc(cardDesc) +
         '</p>' +
         '<div class="text-xs text-gray-600 space-y-1">' +
-        '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_lokasi-hitam.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + esc(location) + '</p>' +
+        '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_lokasi-hitam.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + esc(cardLocation) + '</p>' +
         '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_jarak.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + itemDist + '</p>' +
         '</div>' +
         '</div>' +
