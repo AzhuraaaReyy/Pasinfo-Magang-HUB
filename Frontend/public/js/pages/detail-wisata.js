@@ -557,20 +557,34 @@
       return pool;
     }
 
-    var sekitarList = [];
-    var ref =
-      window.PasinfoNearby && typeof window.PasinfoNearby.refPoint === "function"
-        ? window.PasinfoNearby.refPoint(dest, DATA.regions)
-        : null;
-    if (ref && window.PasinfoNearby && crossPool.length) {
-      sekitarList = window.PasinfoNearby.nearest(ref, crossPool, 8);
-    }
-    if (!sekitarList.length) {
-      sekitarList = others.filter(function (d) {
-        return d.regionId === dest.regionId;
-      });
-    }
-    renderReco("reco-sekitar", sekitarList, 8);
+     /* Pemetaan kategori ke folder aset gambar */
+     function getImageForItem(item) {
+       var domain = item._domain;
+       if (domain === "Kuliner") return "../../public/assets/images/poster-dummy.svg";
+       if (domain === "Budaya") return "../../public/assets/images/poster-dummy.svg";
+       if (domain === "Acara") return "../../public/assets/images/poster-dummy.svg";
+       // Fallback: wisata photos
+       return wisataPhoto(item) || lainPhoto(item) || PLACEHOLDER_MEDIA;
+     }
+
+     var sekitarList = [];
+     var ref =
+       window.PasinfoNearby && typeof window.PasinfoNearby.refPoint === "function"
+         ? window.PasinfoNearby.refPoint(dest, DATA.regions)
+         : null;
+     if (ref && window.PasinfoNearby && crossPool.length) {
+       sekitarList = window.PasinfoNearby.nearest(ref, crossPool, 8);
+     }
+     if (!sekitarList.length) {
+       sekitarList = others.filter(function (d) {
+         return d.regionId === dest.regionId;
+       });
+     }
+     // Limit to 4 items
+     if (sekitarList.length > 4) {
+       sekitarList = sekitarList.slice(0, 4);
+     }
+     renderReco("reco-sekitar", sekitarList, 4);
 
     /* ---------- 8. Simpan (visual) + Bagikan (Web Share API/clipboard) ---------- */
     var bookmarked = false;
