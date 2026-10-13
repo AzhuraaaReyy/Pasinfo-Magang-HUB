@@ -171,16 +171,29 @@
       return "±" + km.toFixed(1) + " km";
     }
     
-    /* Init geolocation async (non-blocking) */
-    getUserLocation(function(loc) {
-      if (loc) {
-        userLocation = loc;
-        if (dest.place && dest.place.latitude && dest.place.longitude) {
-          var distKm = haversineDistance(loc.lat, loc.lng, dest.place.latitude, dest.place.longitude);
-          userDistanceToDestination = formatDistance(distKm);
-        }
-      }
-    });
+     /* Init geolocation async (non-blocking) */
+     getUserLocation(function(loc) {
+       if (loc) {
+         userLocation = loc;
+         if (dest.place && dest.place.latitude && dest.place.longitude) {
+           var distKm = haversineDistance(loc.lat, loc.lng, dest.place.latitude, dest.place.longitude);
+           userDistanceToDestination = formatDistance(distKm);
+         }
+         /* Populate route-dari with user location */
+         setText("route-dari", 
+           "Lat: " + loc.lat.toFixed(4) + ", Lng: " + loc.lng.toFixed(4)
+         );
+         /* Calculate and populate route-estimasi based on distance and average speed */
+         if (dest.place && dest.place.latitude && dest.place.longitude) {
+           var distKm = haversineDistance(loc.lat, loc.lng, dest.place.latitude, dest.place.longitude);
+           var estimasiMenit = Math.ceil(distKm / 30 * 60);
+           setText("route-estimasi", estimasiMenit + " menit");
+         }
+       } else {
+         /* Geolocation not available or denied */
+         setText("route-dari", "Izinkan lokasi untuk melihat rute");
+       }
+     });
 
     /* ---------- 1. HERO ---------- */
     setText("crumb-name", dest.name);
