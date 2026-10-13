@@ -342,9 +342,24 @@
         }, 100);
       }
     }
-    waitForLeafletAndInitMap();
+     waitForLeafletAndInitMap();
 
-    /* ---------- 5. GALERI (dari media[]) ---------- */
+     /* Tombol: Dapatkan Arah & Rute (redirect ke Google Maps) */
+     var ruteBtn = $("ruteBtn");
+     if (ruteBtn) {
+       ruteBtn.addEventListener("click", function (e) {
+         e.preventDefault();
+         if (dest.place && typeof dest.place.latitude === "number" && typeof dest.place.longitude === "number") {
+           var mapsUrl = "https://www.google.com/maps/dir/?api=1&destination=" +
+             dest.place.latitude + "," + dest.place.longitude;
+           window.open(mapsUrl, "_blank");
+         } else {
+           alert("Koordinat destinasi tidak tersedia untuk membuka Google Maps.");
+         }
+       });
+     }
+
+     /* ---------- 5. GALERI (dari media[]) ---------- */
     var galeriGrid = $("galeri-grid");
     var media = H && H.photosOf ? H.photosOf(dest) : [];
     if (galeriGrid) {
