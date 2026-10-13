@@ -2,6 +2,45 @@
 <html lang="id" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      /* Tirai masuk transisi halaman (Owner rev.3): hanya muncul bila
+         navigasi datang dari transisi internal (lihat page-transition.js). */
+      (function () {
+        try {
+          if (sessionStorage.getItem("ph-nav") === "1") {
+            sessionStorage.removeItem("ph-nav");
+            document.documentElement.classList.add("ph-entering");
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <style>
+      /* Tirai mulai penuh lalu memudar, menyatu dengan fade halaman asal. */
+      html.ph-entering::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background-color: #f9fafb;
+        pointer-events: none;
+        opacity: 1;
+        animation: ph-curtain-out 0.42s ease-out forwards;
+      }
+      @keyframes ph-curtain-out {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html.ph-entering::after {
+          animation: none;
+          opacity: 0;
+        }
+      }
+    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Detail Wisata Bromo - Pasuruan Info</title>
 
@@ -90,10 +129,11 @@
                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
                <span id="detail-location">Pasuruan</span>
              </span>
-             <span class="flex items-center gap-1.5 text-gray-100">
-               <span class="text-amber-400 tracking-tight" aria-hidden="true">★★★★★</span>
-               <span id="detail-rating" class="font-semibold">4.8 (3 rb ulasan)</span>
-             </span>
+              <span class="flex items-center gap-1.5 text-gray-100">
+                <svg class="h-4 w-4 text-yellow-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" /></svg>
+                <!-- diisi dari data-wisata.js (rating + reviews_label), sama dengan kartu listing -->
+                <span id="detail-rating" class="font-semibold">-</span>
+              </span>
            </div>
          </div>
       </div>
@@ -109,9 +149,10 @@
           <h2 id="tentang-title" class="text-lg sm:text-xl font-bold text-gray-900 mb-4">
             Tentang Wisata
           </h2>
-          <p id="tentang-desc" class="text-xs sm:text-sm text-gray-600 leading-relaxed mb-6">
-            Destinasi wisata alam yang menakjubkan di Pasuruan.
-          </p>
+          <!-- Diisi dari field `description` (paragraf milik Owner) via detail-wisata.js -->
+          <div id="tentang-desc" class="text-xs sm:text-sm text-gray-600 leading-relaxed mb-6 space-y-3">
+            <p>Deskripsi destinasi segera hadir.</p>
+          </div>
 
           <dl class="text-xs sm:text-sm">
             <div class="flex items-center justify-between gap-4 py-2.5 border-b border-gray-200">
@@ -141,19 +182,45 @@
             <div class="flex items-center justify-between gap-4 py-2.5 border-b border-gray-200">
               <dt class="flex items-center gap-2 text-gray-500 font-medium">
                 <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
+                Wilayah
+              </dt>
+              <dd id="info-wilayah" class="font-bold text-gray-800 text-right">-</dd>
+            </div>
+            <div class="flex items-center justify-between gap-4 py-2.5 border-b border-gray-200">
+              <dt class="flex items-center gap-2 text-gray-500 font-medium">
+                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
                 Lokasi
               </dt>
               <dd id="info-lokasi" class="font-bold text-gray-800 text-right">-</dd>
             </div>
-            <div class="flex items-center justify-between gap-4 py-2.5">
-              <dt class="flex items-center gap-2 text-gray-500 font-medium">
-                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
-                Fasilitas
-              </dt>
-              <dd id="info-fasilitas" class="font-bold text-gray-800 text-right">-</dd>
+             <div class="flex items-center justify-between gap-4 py-2.5">
+               <dt class="flex items-center gap-2 text-gray-500 font-medium">
+                 <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
+                 Fasilitas
+               </dt>
+               <dd id="info-fasilitas" class="font-bold text-gray-800 text-right">-</dd>
+             </div>
+           </dl>
+
+          <!-- Sumber Informasi & Status Verifikasi (bagian dari Tentang Wisata) -->
+          <div class="mt-8 pt-6 border-t border-gray-200">
+            <h3 class="text-sm font-bold text-gray-900 mb-4">Sumber & Verifikasi</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p class="text-xs text-gray-600 font-semibold mb-2">Sumber Informasi</p>
+                <div id="source-info" class="text-xs text-gray-600">
+                  <p>Memuat sumber informasi...</p>
+                </div>
+              </div>
+              <div>
+                <p class="text-xs text-gray-600 font-semibold mb-2">Status Verifikasi</p>
+                <div id="verification-info" class="text-xs text-gray-600">
+                  <p>Memuat status verifikasi...</p>
+                </div>
+              </div>
             </div>
-          </dl>
-        </section>
+          </div>
+         </section>
 
         <!-- RIGHT: Lokasi & Space (lg:col-span-1, h-full flex flex-col) -->
         <div class="space-y-6 h-full flex flex-col">
@@ -167,23 +234,19 @@
               Informasi lokasi dan rute menuju destinasi wisata ini.
             </p>
 
+            <!-- Peta: diisi Leaflet dengan titik koordinat destinasi (data-wisata.js)
+                 melalui detail-wisata.js. Lapisan fallback tetap tampil bila
+                 Leaflet belum/gagal dimuat. -->
             <div
               id="lokasi-map"
               class="relative w-full h-44 rounded-xl overflow-hidden bg-gray-300 mb-4"
               role="img"
               aria-label="Peta lokasi wisata"
             >
-              <div class="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-400" aria-hidden="true"></div>
-              <div class="absolute left-[18%] top-[38%]" aria-hidden="true">
-                <span class="block h-3 w-3 rounded-full bg-red-600 ring-2 ring-white shadow"></span>
+              <div id="lokasi-map-fallback" class="absolute inset-0">
+                <div class="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-400"></div>
+                <span class="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-gray-500 bg-white/80 rounded px-2 py-0.5">Peta lokasi wisata</span>
               </div>
-              <div class="absolute left-[46%] top-[55%]" aria-hidden="true">
-                <span class="block h-3 w-3 rounded-full bg-red-600 ring-2 ring-white shadow"></span>
-              </div>
-              <div class="absolute left-[68%] top-[30%]" aria-hidden="true">
-                <span class="block h-3 w-3 rounded-full bg-red-600 ring-2 ring-white shadow"></span>
-              </div>
-              <span class="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-gray-500 bg-white/80 rounded px-2 py-0.5">Peta lokasi wisata</span>
             </div>
 
             <dl class="text-xs sm:text-sm space-y-2.5 mb-5">
@@ -243,99 +306,13 @@
           <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-3">
             Galeri Foto &amp; Video
           </h2>
-          <p class="text-xs sm:text-sm text-gray-600 leading-relaxed mb-4">
-            Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard
+          <!-- Deskripsi & isi galeri diisi dari field media[] via detail-wisata.js -->
+          <p id="galeri-desc" class="text-xs sm:text-sm text-gray-600 leading-relaxed mb-4">
+            Galeri foto destinasi.
           </p>
-          
-          <!-- BENTO GRID LAYOUT -->
-          <div class="grid grid-cols-4 gap-3 auto-rows-[120px] sm:auto-rows-[160px]">
-            
-            <!-- ROW 1: Hero image (col-span-2, row-span-2) + 2 videos (col-span-1, row-span-1 each) -->
-            <!-- Item 1: Large hero photo (left, 2x2) -->
-            <div class="col-span-2 row-span-2 bg-gradient-to-br from-amber-700 to-slate-800 rounded-lg overflow-hidden relative group">
-              <span class="absolute inset-0 flex items-center justify-center text-white/60 text-xs font-semibold">Foto utama wisata</span>
-            </div>
 
-            <!-- Item 2: Video (top-right) -->
-            <div class="bg-red-400 rounded-lg overflow-hidden relative group hover:shadow-md transition-shadow">
-              <span class="absolute inset-0 flex items-center justify-center text-white/70 text-xs font-semibold">Video 1</span>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center opacity-90 group-hover:opacity-100">
-                  <svg class="w-5 h-5 text-white fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-                </div>
-              </div>
-            </div>
-
-            <!-- Item 3: Video (bottom-right) -->
-            <div class="bg-red-400 rounded-lg overflow-hidden relative group hover:shadow-md transition-shadow">
-              <span class="absolute inset-0 flex items-center justify-center text-white/70 text-xs font-semibold">Video 2</span>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center opacity-90 group-hover:opacity-100">
-                  <svg class="w-5 h-5 text-white fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-                </div>
-              </div>
-            </div>
-
-            <!-- ROW 2: 1 large photo (col-span-2, row-span-2) + 2 medium photos -->
-            <!-- Item 4: Large photo (left, 2x2) -->
-            <div class="col-span-2 row-span-2 bg-red-400 rounded-lg overflow-hidden relative group hover:shadow-md transition-shadow">
-              <span class="absolute inset-0 flex items-center justify-center text-white/70 text-xs font-semibold">Foto 2</span>
-            </div>
-
-            <!-- Item 5: Photo (right) -->
-            <div class="bg-red-400 rounded-lg overflow-hidden relative group hover:shadow-md transition-shadow">
-              <span class="absolute inset-0 flex items-center justify-center text-white/70 text-xs font-semibold">Foto 3</span>
-            </div>
-
-            <!-- Item 6: Photo (right) -->
-            <div class="bg-red-400 rounded-lg overflow-hidden relative group hover:shadow-md transition-shadow">
-              <span class="absolute inset-0 flex items-center justify-center text-white/70 text-xs font-semibold">Foto 4</span>
-            </div>
-
-            <!-- ROW 3: 2 large landscape photos (col-span-2 each) -->
-            <!-- Item 7: Large landscape photo (col-span-2) -->
-            <div class="col-span-2 bg-red-400 rounded-lg overflow-hidden relative group hover:shadow-md transition-shadow">
-              <span class="absolute inset-0 flex items-center justify-center text-white/70 text-xs font-semibold">Foto 5</span>
-            </div>
-
-            <!-- Item 8: Large landscape photo (col-span-2) -->
-            <div class="col-span-2 bg-red-400 rounded-lg overflow-hidden relative group hover:shadow-md transition-shadow">
-              <span class="absolute inset-0 flex items-center justify-center text-white/70 text-xs font-semibold">Foto 6</span>
-            </div>
-
-            <!-- ROW 4: 1 photo + 3 videos (1 col-span-1 photo + 3 col-span-1 videos) -->
-            <!-- Item 9: Photo -->
-            <div class="bg-gradient-to-br from-amber-700 to-slate-800 rounded-lg overflow-hidden relative group hover:shadow-md transition-shadow">
-              <span class="absolute inset-0 flex items-center justify-center text-white/60 text-xs font-semibold">Foto 7</span>
-            </div>
-
-            <!-- Item 10: Video -->
-            <div class="bg-red-400 rounded-lg overflow-hidden relative group hover:shadow-md transition-shadow">
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center opacity-90 group-hover:opacity-100">
-                  <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-                </div>
-              </div>
-            </div>
-
-            <!-- Item 11: Video -->
-            <div class="bg-red-400 rounded-lg overflow-hidden relative group hover:shadow-md transition-shadow">
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center opacity-90 group-hover:opacity-100">
-                  <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-                </div>
-              </div>
-            </div>
-
-            <!-- Item 12: Video -->
-            <div class="bg-red-400 rounded-lg overflow-hidden relative group hover:shadow-md transition-shadow">
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center opacity-90 group-hover:opacity-100">
-                  <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- BENTO GRID LAYOUT: item dirender dari media[] via detail-wisata.js -->
+          <div id="galeri-grid" class="grid grid-cols-4 gap-3 auto-rows-[120px] sm:auto-rows-[160px]"></div>
         </section>
 
         <!-- RIGHT: Informasi Tambahan (lg:col-span-1, h-full flex flex-col) -->
@@ -345,52 +322,35 @@
            <section class="bg-gray-100 rounded-2xl p-5 sm:p-7 flex-1" aria-label="Informasi tambahan">
              <h3 class="font-bold text-gray-900 text-lg mb-4">Informasi Tambahan</h3>
              
-             <!-- Cuaca Card -->
+             <!-- Cuaca Card: nilai contoh dari data-wisata.js (API cuaca menyusul),
+                  tanggal memakai tanggal nyata hari ini. Diisi detail-wisata.js -->
              <div class="bg-white rounded-xl p-4 mb-4">
-               <p class="text-xs text-gray-500 mb-2">Cuaca di Wisata Bromo</p>
-               <p class="text-xs text-gray-600">Hari ini, Selasa 20 Oktober 2026</p>
+               <p id="cuaca-judul" class="text-xs text-gray-500 mb-2">Cuaca destinasi</p>
+               <p id="cuaca-tanggal" class="text-xs text-gray-600">-</p>
                <div class="flex items-center gap-4 mt-3">
                  <svg class="h-12 w-12 text-yellow-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                    <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.591a.75.75 0 101.06 1.06l1.591-1.591zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.591-1.591a.75.75 0 10-1.06 1.06l1.591 1.591zM12 18a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0v-2.25a.75.75 0 01.75-.75zM7.591 17.303a.75.75 0 00-1.06 1.06l1.591 1.591a.75.75 0 101.06-1.06l-1.591-1.591zM2.25 12a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75zM6.166 7.166a.75.75 0 00-1.06-1.06L3.515 7.697a.75.75 0 001.06 1.06l1.591-1.591z"/>
                  </svg>
                  <div>
-                   <div class="text-3xl font-bold text-gray-900">30<span class="text-xl">°C</span></div>
-                   <p class="text-sm text-gray-600">Cerah Berawan</p>
+                   <div class="text-3xl font-bold text-gray-900"><span id="cuaca-suhu">-</span><span class="text-xl">°C</span></div>
+                   <p id="cuaca-kondisi" class="text-sm text-gray-600">-</p>
                  </div>
                </div>
              </div>
 
-             <!-- Harga Tiket Section -->
+             <!-- Harga Tiket Section: baris dirender dari destination_prices
+                  (turunan `prices` + baris dummy yang ditandai di data-wisata.js) -->
              <div class="mb-4">
                <h4 class="font-bold text-gray-900 text-sm mb-3">Harga Tiket</h4>
-               <p class="text-xs text-gray-600 mb-3">Tiket berlaku 2025-2029</p>
-               <ul class="space-y-2 text-xs">
-                 <li class="flex justify-between">
-                   <span class="text-gray-600">🎫 Tiket Masuk</span>
-                   <span class="font-bold text-gray-900">Rp 1.500.000,00</span>
-                 </li>
-                 <li class="flex justify-between">
-                   <span class="text-gray-600">🅿️ Tiket Parkir</span>
-                   <span class="font-bold text-gray-900">Rp 10.000,00</span>
-                 </li>
-                 <li class="flex justify-between">
-                   <span class="text-gray-600">🚐 Tiket Sewa Jeep</span>
-                   <span class="font-bold text-gray-900">Rp 500.000,00</span>
-                 </li>
-                 <li class="flex justify-between">
-                   <span class="text-gray-600">🚌 Tiket Transportasi</span>
-                   <span class="font-bold text-gray-900">Rp 30.000,00</span>
-                 </li>
-                 <li class="flex justify-between">
-                   <span class="text-gray-600">🐴 Tiket Sewa Kuda</span>
-                   <span class="font-bold text-gray-900">Rp 40.000,00</span>
-                 </li>
-                 <li class="flex justify-between">
-                   <span class="text-gray-600">👨‍🏫 Tour Guide</span>
-                   <span class="font-bold text-gray-900">Rp 300.000,00</span>
-                 </li>
+               <p class="text-xs text-gray-600 mb-3">Perkiraan harga tiket; harga resmi mengikuti pengelola destinasi.</p>
+               <ul id="tiket-list" class="space-y-2 text-xs">
+                 <li class="text-gray-500">Memuat harga tiket...</li>
                </ul>
-               <button class="w-full mt-4 py-2.5 px-4 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-xs transition-colors">
+               <button
+                 type="button"
+                 title="Tombol visual — pemesanan tiket belum tersedia"
+                 class="w-full mt-4 py-2.5 px-4 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-xs transition-colors"
+               >
                  Pesan Tiket
                </button>
              </div>
@@ -464,39 +424,6 @@
       </div>
     </section>
 
-    <!-- SECTION SUMBER & VERIFIKASI -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-      <div class="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-gray-100">
-        <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-6">
-          Sumber & Verifikasi
-        </h2>
-        
-        <!-- Source Information -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div class="bg-gray-50 rounded-xl p-6">
-            <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <svg class="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              Sumber Informasi
-            </h3>
-            <div id="source-info" class="space-y-3">
-              <p class="text-xs text-gray-500">Memuat sumber informasi...</p>
-            </div>
-          </div>
-          
-          <!-- Verification Status -->
-          <div class="bg-gray-50 rounded-xl p-6">
-            <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <svg class="h-5 w-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              Status Verifikasi
-            </h3>
-            <div id="verification-info" class="space-y-3">
-              <p class="text-xs text-gray-500">Memuat status verifikasi...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- SECTION REKOMENDASI WISATA (3 KELOMPOK) -->
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 space-y-16">
       <!-- KELOMPOK 1: Rekomendasi Destinasi Wisata Serupa -->
@@ -555,7 +482,7 @@
               Jelajah Destinasi Sekitar
             </h3>
             <p id="sekitar-desc" class="text-xs sm:text-sm text-gray-500">
-              Destinasi satu wilayah dengan lokasi ini
+              Kuliner, budaya, dan acara terdekat dari destinasi ini
             </p>
           </div>
           <a
@@ -581,6 +508,12 @@
     <script src="./partials/pasinfo-footer.js" defer></script>
     <script src="./partials/pasinfo-layout.js" defer></script>
     <script src="../../public/vendor/leaflet/leaflet.js" defer></script>
+    <!-- Data domain lain: dipakai "Jelajah Sekitar" (kuliner/budaya/acara terdekat).
+         Urutan mengikuti detail_kuliner.html / detail_acara.html.
+         Leaflet sudah dimuat di atas (defer). -->
+    <script src="../../public/js/data-kuliner.js"></script>
+    <script src="../../public/js/data-budaya.js"></script>
+    <script src="../../public/js/data-acara.js"></script>
     <script src="../../public/js/data-wisata.js"></script>
     <script src="../../public/js/pages/nearby.js"></script>
     <script src="../../public/js/main.js" defer></script>
