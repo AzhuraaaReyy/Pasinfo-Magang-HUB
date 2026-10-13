@@ -267,10 +267,10 @@
 
     /* ---------- 4. LOKASI & RUTE ---------- */
     var lokasiDesc =
-      "Destinasi ini berada di " +
-      (dest.address || "alamat belum tersedia") +
+      esc(dest.name) + " berlokasi di " +
+      esc(dest.address || "alamat belum tersedia") +
       (regName(dest.regionId) ? ", " + regName(dest.regionId) : "") +
-      ". Peta di bawah dapat dipakai untuk melihat titik lokasinya.";
+      ". Gunakan peta di bawah untuk melihat lokasi tepatnya, atau klik 'Dapatkan Arah & Rute' untuk navigasi ke Google Maps.";
     setText("lokasi-desc", lokasiDesc);
     setText("route-lokasi", dest.address || "-");
     setText("route-jarak", userDistanceToDestination);
@@ -518,8 +518,9 @@
         '<span class="inline-block px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-md">' +
         esc(catName_val) +
         '</span>' +
-        '<span class="inline-block px-2.5 py-1 bg-white text-gray-900 text-xs font-semibold rounded-md">' +
-        '⭐ ' + rating +
+        '<span class="inline-block px-2.5 py-1 bg-white text-gray-900 text-xs font-semibold rounded-md flex items-center gap-1">' +
+        '<img src="../../public/assets/icons/icon_fasilitas.svg" alt="" class="w-4 h-4" />' +
+        rating +
         '</span>' +
         '</div>' +
         
@@ -537,8 +538,8 @@
         esc(item.short_description || "") +
         '</p>' +
         '<div class="text-xs text-gray-600 space-y-1">' +
-        '<p>📍 ' + esc(location) + '</p>' +
-        '<p>📏 ' + itemDist + '</p>' +
+        '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_lokasi-hitam.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + esc(location) + '</p>' +
+        '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_jarak.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + itemDist + '</p>' +
         '</div>' +
         '</div>' +
         
