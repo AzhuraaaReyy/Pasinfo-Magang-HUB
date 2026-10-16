@@ -2,14 +2,65 @@
 <html lang="id" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
+    <script src="../../public/js/page-enter.js"></script>
+    <script>
+      (function () {
+        try {
+          var slug = new URLSearchParams(location.search).get("slug");
+          if (!slug) return;
+          var F = [
+            "../../public/assets/images/kuliner/optimized/soto-pasuruan.webp",
+            "../../public/assets/images/kuliner/optimized/Lontong Kupang Kraton.webp",
+            "../../public/assets/images/kuliner/optimized/Nasi Punel.webp",
+            "../../public/assets/images/kuliner/optimized/Nasi Punel.webp"
+          ];
+          var h = 0;
+          for (var i = 0; i < slug.length; i++) h = (h + slug.charCodeAt(i)) % F.length;
+          var link = document.createElement("link");
+          link.rel = "preload";
+          link.as = "image";
+          link.fetchPriority = "high";
+          link.href = F[h];
+          document.head.appendChild(link);
+        } catch (e) {}
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Detail Kuliner - Pasuruan Info</title>
-
     <link rel="icon" href="data:," />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="../../public/css/styles.css" />
+    <link rel="stylesheet" href="../../public/vendor/leaflet/leaflet.css" />
+    <style>
+      #reco-kuliner,
+      #reco-sekitar {
+        grid-auto-rows: minmax(0, 1fr);
+      }
+      #reco-kuliner > a,
+      #reco-kuliner article,
+      #reco-sekitar > a,
+      #reco-sekitar article {
+        height: 100%;
+      }
+      #reco-kuliner article h3,
+      #reco-sekitar article h3 {
+        line-height: 1.4;
+        min-height: 2.8em;
+      }
+      #reco-kuliner article h3 + p,
+      #reco-sekitar article h3 + p {
+        line-height: 1.5;
+        min-height: 3em;
+      }
+      #reco-kuliner article > div:last-child > div:last-child,
+      #reco-sekitar article > div:last-child > div:last-child {
+        margin-top: auto;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" defer></script>
     <script src="../../public/js/opening-hours-util.js" defer></script>
     <script src="../../public/js/add-sources-data.js" defer></script>
   </head>
@@ -18,186 +69,187 @@
     <div data-layout-header></div>
 
     <!-- 1. BREADCRUMB: home icon > Kuliner > {nama} (nama biru) -->
-    <div class="bg-white py-3">
+    <div class="bg-gray-100 border-b border-gray-200 py-3">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav class="flex items-center text-xs md:text-sm space-x-1.5" aria-label="Breadcrumb">
-          <a href="../../index.html" aria-label="Beranda" class="text-gray-500 transition-colors hover:text-blue-600">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" /></svg>
-          </a>
-          <span aria-hidden="true" class="text-gray-400 font-bold">›</span>
-          <a href="kuliner.html" class="font-semibold text-gray-700 transition-colors hover:text-blue-600">Kuliner</a>
-          <span aria-hidden="true" class="text-gray-400 font-bold">›</span>
+        <nav class="flex text-xs md:text-sm text-gray-500 space-x-2" aria-label="Breadcrumb">
+          <a href="../../index.html" class="transition-colors hover:text-brand"><svg class="mr-1 inline h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" /></svg>Beranda</a>
+          <span aria-hidden="true">/</span>
+          <a href="kuliner.html" class="transition-colors hover:text-brand">Kuliner Pasuruan</a>
+          <span aria-hidden="true">/</span>
           <span id="crumb-name" class="text-blue-700 font-semibold truncate">Detail Kuliner</span>
         </nav>
       </div>
     </div>
 
-    <!-- 2. HERO BANNER full-width: placeholder gradient + badge + judul + desc + meta + tombol -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-4">
-      <div class="relative rounded-2xl overflow-hidden shadow h-[340px] sm:h-[420px] lg:h-[440px]">
-        <!-- Hero media: placeholder gradient karena media.url null -->
-        <div
-          id="hero-media"
-          class="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-900 via-stone-800 to-slate-900"
-          role="img"
-          aria-label="Foto kuliner (placeholder)"
-        >
-          <span id="hero-media-label" class="text-white/50 text-sm font-medium px-6 text-center">Foto kuliner (placeholder)</span>
+    <!-- HERO BANNER SECTION (mirror detail_wisata.html) -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
+      <div class="relative rounded-2xl overflow-hidden shadow-sm h-[340px] sm:h-[420px] lg:h-[440px]">
+        <!-- Hero Media (foto langsung; paritas detail_acara.html, Owner 2026-10-16) -->
+        <div id="hero-media" class="w-full h-full bg-gradient-to-br from-amber-900 via-stone-800 to-slate-900" role="img" aria-label="Foto kuliner">
+          <img id="hero-media-img" src="../../public/assets/images/poster-dummy.svg" alt="Foto kuliner (placeholder)" fetchpriority="high" decoding="async" class="w-full h-full object-cover" />
         </div>
-        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10 pointer-events-none"></div>
 
-        <!-- Tombol kanan atas: Simpan (putih) + Bagikan (biru), dummy non-fungsional -->
+        <!-- Dark Overlay Gradient -->
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20"></div>
+
+        <!-- Tombol kanan atas: Simpan (putih) + Bagikan -->
         <div class="absolute top-4 right-4 flex items-center gap-2">
-          <button
-            id="btn-simpan"
-            type="button"
-            title="Simpan kuliner ini (segera hadir)"
-            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-gray-800 text-xs font-bold shadow hover:bg-gray-100 transition-colors"
-          >
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.726 48.726 0 017.186 0z" transform="scale(0.55) translate(9.8,9.8)" /></svg>
+            <button id="btn-simpan" type="button" title="Simpan kuliner ini (segera hadir)" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-gray-800 text-xs font-bold shadow hover:bg-gray-100 transition-colors">
+            <img src="../../public/assets/icons/icon_bookmark-kuning%201.svg" alt="" aria-hidden="true" class="h-3.5 w-3.5 object-contain" />
             Simpan
           </button>
-          <button
-            id="btn-bagikan"
-            type="button"
-            title="Bagikan kuliner ini (segera hadir)"
-            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-blue-700 text-white text-xs font-bold shadow hover:bg-blue-600 transition-colors"
-          >
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 5.5V3L8 7l5 4V8.5c3.5 0 5.5 1.5 7 4.5-1-4-3.5-6.5-7-7.5z" /><path d="M20 15.5c-1.5-3-3.5-4.5-7-4.5v-2L8 13l5 4v-2.5c2 0 3.7.7 5 2.2l2-1.2z" opacity=".9" /></svg>
+          <button id="btn-bagikan" type="button" title="Bagikan kuliner ini (segera hadir)" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-blue-700 text-white text-xs font-bold shadow hover:bg-blue-600 transition-colors">
+            <img src="../../public/assets/icons/icon_share.svg" alt="" aria-hidden="true" class="h-3.5 w-3.5 object-contain" />
             Bagikan
           </button>
         </div>
 
-        <!-- Konten hero tengah (middle) -->
-         <div class="absolute inset-0 flex flex-col justify-center px-5 sm:p-8 text-white">
-          <span
-            id="hero-cat"
-            class="inline-block px-3 py-1 bg-blue-700 text-white text-xs font-bold rounded-md shadow mb-3 w-fit"
-          >Kuliner Tradisional</span>
-          <h1
-            id="detail-title"
-            class="text-2xl sm:text-3xl lg:text-4xl font-extrabold uppercase tracking-tight leading-tight drop-shadow-md"
-          >Detail Kuliner</h1>
-          <p
-            id="detail-desc"
-            class="text-gray-200 text-xs sm:text-sm leading-relaxed max-w-2xl mt-2 line-clamp-2"
-          >Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.</p>
-          <p class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 text-xs sm:text-sm font-semibold">
-            <span class="inline-flex items-center gap-1">
-              <svg class="h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>
-              <span id="detail-location">Pasuruan, Jawa Timur</span>
+        <!-- Content Overlay -->
+        <div class="absolute inset-0 flex flex-col justify-center px-5 sm:p-8 text-white">
+          <div class="mb-3">
+            <span id="hero-cat" class="inline-block px-3 py-1 bg-blue-700 text-white text-xs font-bold rounded-md shadow w-fit">Kuliner Tradisional</span>
+          </div>
+          <h1 id="detail-title" class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight drop-shadow-md">Detail Kuliner</h1>
+          <p id="detail-desc" class="text-gray-200 text-xs sm:text-sm leading-relaxed max-w-2xl mt-2 mb-3 line-clamp-2">Deskripsi kuliner akan ditampilkan di sini.</p>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm">
+            <span class="flex items-center gap-1.5 text-gray-100">
+              <img src="../../public/assets/icons/icon_lokasi-putih.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" />
+              <span id="detail-location">Pasuruan</span>
             </span>
-            <span id="hero-rating" class="inline-flex items-center gap-1 text-amber-300">
-              <span aria-hidden="true" class="tracking-tight">★★★★★</span>
-              <span id="hero-rating-text" class="text-white">4.7 (1.245 Ulasan)</span>
+            <span class="flex items-center gap-1.5 text-gray-100">
+              <img src="../../public/assets/icons/icon_rating.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" />
+              <span id="hero-rating-text" class="font-semibold">-</span>
             </span>
-          </p>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- 3. TAB STRIP abu: anchor scroll, tab pertama aktif, tanpa backend ulasan -->
+    <main>
+    <!-- 3. TAB STRIP: navigasi antar-halaman kuliner (Owner 2026-10-16).
+         Informasi Utama (halaman ini) · Menu & Harga · Ulasan. slug dibawa
+         oleh detail-kuliner.js. -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
-      <nav class="bg-gray-50 rounded-lg px-4 py-3 flex items-center gap-6 text-xs sm:text-sm border-b border-gray-200" aria-label="Navigasi section kuliner">
-        <a id="tab-utama" href="#info-utama" aria-current="page" class="pb-3 font-bold text-blue-700 border-b-2 border-blue-700 transition-colors">Informasi utama</a>
-        <a id="tab-menu" href="#menu-harga" class="pb-3 font-semibold text-gray-700 border-b-2 border-transparent hover:text-blue-700 hover:border-blue-700 transition-colors">Menu&amp;Harga</a>
-        <a id="tab-ulasan" href="#hero-rating" title="Rating tampilan saja, tanpa backend ulasan" class="pb-3 font-semibold text-gray-700 border-b-2 border-transparent hover:text-blue-700 hover:border-blue-700 transition-colors">Ulasan</a>
+      <nav class="bg-gray-50 rounded-lg px-4 py-3 flex items-center gap-6 text-xs sm:text-sm border-b border-gray-200" aria-label="Navigasi halaman kuliner">
+        <a id="tab-utama" href="detail_kuliner.html" aria-current="page" class="pb-3 font-bold text-blue-700 border-b-2 border-blue-700 transition-colors">Informasi Utama</a>
+        <a id="tab-menu" href="menu_kuliner.html" class="pb-3 font-semibold text-gray-700 border-b-2 border-transparent hover:text-blue-700 hover:border-blue-700 transition-colors">Menu &amp; Harga</a>
+        <a id="tab-ulasan" href="ulasan.html" class="pb-3 font-semibold text-gray-700 border-b-2 border-transparent hover:text-blue-700 hover:border-blue-700 transition-colors">Ulasan</a>
       </nav>
     </div>
 
-    <!-- 4. DUA KOLOM: kiri Tentang + tabel info | kanan Lokasi & Rute -->
+    <!-- 4. DUA KOLOM: kiri Tentang + tabel info | kanan Lokasi & Rute (mirror detail_wisata) -->
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 auto-rows-max lg:auto-rows-fr">
-        <!-- Kiri: Tentang Kuliner (h-full) -->
-        <article id="info-utama" class="bg-gray-100 rounded-xl p-5 sm:p-6 scroll-mt-24 h-full">
-          <h2 class="text-base sm:text-lg font-bold text-gray-900 mb-2">Tentang Kuliner</h2>
-          <p id="tentang-desc" class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
-            Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
-          </p>
-          <dl class="mt-4 space-y-3 text-[11px] sm:text-xs">
-            <div class="flex items-start gap-3">
-              <dt class="flex items-center gap-2 w-36 sm:w-40 shrink-0 text-gray-700 font-semibold">
-                <svg class="h-4 w-4 text-gray-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 auto-rows-max lg:auto-rows-fr">
+        <!-- LEFT: Tentang Kuliner -->
+        <section id="info-utama" class="bg-gray-100 rounded-2xl p-5 sm:p-7 scroll-mt-24 h-full" aria-labelledby="tentang-title">
+          <h2 id="tentang-title" class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Tentang Kuliner</h2>
+          <div id="tentang-desc" class="text-xs sm:text-sm text-gray-600 leading-relaxed mb-4 space-y-3"><p>Deskripsi kuliner akan ditampilkan di sini.</p></div>
+          <dl class="text-xs sm:text-sm">
+            <div class="flex items-center justify-between gap-4 py-2.5 border-b border-gray-200">
+              <dt class="flex items-center gap-2 text-gray-500 font-medium">
+                <img src="../../public/assets/icons/icon_kategori.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" />
                 Kategori
               </dt>
-              <dd id="info-kategori" class="font-bold text-gray-900">Tradisional</dd>
+              <dd id="info-kategori" class="font-bold text-gray-800 text-right">-</dd>
             </div>
-            <div class="flex items-start gap-3">
-              <dt class="flex items-center gap-2 w-36 sm:w-40 shrink-0 text-gray-700 font-semibold">
-                <svg class="h-4 w-4 text-gray-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" /><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" /></svg>
+            <div class="flex items-center justify-between gap-4 py-2.5 border-b border-gray-200">
+              <dt class="flex items-center gap-2 text-gray-500 font-medium">
+                <img src="../../public/assets/icons/icon_harga-tiket.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" />
                 Harga
               </dt>
-              <dd id="info-harga" class="font-bold text-gray-900">Rp 10.000 - Rp 15.000</dd>
+              <dd id="info-harga" class="font-bold text-gray-800 text-right">-</dd>
             </div>
-            <div class="flex items-start gap-3">
-              <dt class="flex items-center gap-2 w-36 sm:w-40 shrink-0 text-gray-700 font-semibold">
-                <svg class="h-4 w-4 text-gray-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div class="flex items-center justify-between gap-4 py-2.5 border-b border-gray-200">
+              <dt class="flex items-center gap-2 text-gray-500 font-medium">
+                <img src="../../public/assets/icons/icon_waktu.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" />
                 Jam Operasional
               </dt>
-              <dd class="font-bold text-gray-900 flex flex-col items-start gap-1">
-                <span id="info-jam">08:00 - 15:00 WIB</span>
+              <dd class="font-bold text-gray-800 text-right flex flex-col items-end gap-1">
+                <span id="info-jam">-</span>
                 <span id="info-jam-status" class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700"></span>
               </dd>
             </div>
-            <div class="flex items-start gap-3">
-              <dt class="flex items-center gap-2 w-36 sm:w-40 shrink-0 text-gray-700 font-semibold">
-                <svg class="h-4 w-4 text-gray-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div class="flex items-center justify-between gap-4 py-2.5 border-b border-gray-200">
+              <dt class="flex items-center gap-2 text-gray-500 font-medium">
+                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 Status Operasional
               </dt>
-              <dd><span id="info-status" class="inline-block px-2.5 py-0.5 rounded bg-green-500 text-white text-[10px] font-bold">Buka</span></dd>
+              <dd class="text-right"><span id="info-status" class="inline-block px-2.5 py-0.5 rounded bg-green-500 text-white text-[10px] font-bold">Buka</span></dd>
             </div>
-            <div class="flex items-start gap-3">
-              <dt class="flex items-center gap-2 w-36 sm:w-40 shrink-0 text-gray-700 font-semibold">
-                <svg class="h-4 w-4 text-gray-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
+            <div class="flex items-center justify-between gap-4 py-2.5">
+              <dt class="flex items-center gap-2 text-gray-500 font-medium">
+                <img src="../../public/assets/icons/icon_fasilitas.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" />
                 Fasilitas
               </dt>
-              <dd id="info-fasilitas" class="font-medium text-gray-800">Parkir, Toilet, Tempat Ibadah, AC</dd>
+              <dd id="info-fasilitas" class="font-bold text-gray-800 text-right">-</dd>
             </div>
           </dl>
-        </article>
 
-        <!-- Kanan: Lokasi & Rute (h-full) -->
-        <aside class="bg-gray-100 rounded-xl p-5 sm:p-6 h-full" aria-label="Lokasi dan rute kuliner">
-          <h2 class="text-base sm:text-lg font-bold text-gray-900 mb-2">Lokasi &amp; Rute</h2>
-          <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard</p>
-          <!-- Visual peta STATIS placeholder (tanpa Leaflet: place null) -->
-          <div
-            id="static-map"
-            class="mt-3 w-full h-44 sm:h-48 rounded-lg overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 border border-gray-200 flex items-center justify-center relative"
-            role="img"
-            aria-label="Peta lokasi kuliner (placeholder)"
-          >
-            <svg class="absolute inset-0 w-full h-full text-gray-400" viewBox="0 0 400 180" fill="none" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
-              <path d="M20 130 L70 90 L120 100 L170 60 L230 75 L290 40 L340 60 L380 30" stroke="#9ca3af" stroke-width="2" stroke-dasharray="5 4" />
-              <circle cx="120" cy="100" r="6" fill="#dc2626" stroke="#fff" stroke-width="2" />
-              <circle cx="230" cy="75" r="6" fill="#dc2626" stroke="#fff" stroke-width="2" />
-              <circle cx="290" cy="40" r="6" fill="#dc2626" stroke="#fff" stroke-width="2" />
-            </svg>
-            <span class="relative text-[11px] font-semibold text-gray-500 bg-white/80 px-3 py-1 rounded-full">Peta lokasi (placeholder)</span>
+          <!-- Sumber Informasi & Status Verifikasi (bagian dari Tentang Kuliner, mirror wisata) -->
+          <div class="mt-8 pt-6 border-t border-gray-200">
+            <dl class="text-xs sm:text-sm space-y-2.5">
+              <!-- SUMBER INFORMASI -->
+              <div class="flex items-start justify-between gap-4 py-2.5 border-b border-gray-200">
+                <dt class="flex items-center gap-2 text-gray-500 font-medium shrink-0">
+                  <img src="../../public/assets/icons/icon_sumber.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" />
+                  Sumber Informasi
+                </dt>
+                <dd id="source-info" class="text-gray-800 text-right">
+                  <p>Memuat sumber informasi...</p>
+                </dd>
+              </div>
+
+              <!-- STATUS VERIFIKASI -->
+              <div class="flex items-start justify-between gap-4 py-2.5">
+                <dt class="flex items-center gap-2 text-gray-500 font-medium shrink-0">
+                  Status Verifikasi
+                </dt>
+                <dd id="verification-info" class="text-gray-800 text-right">
+                  <p>Memuat status verifikasi...</p>
+                </dd>
+              </div>
+            </dl>
           </div>
-          <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] sm:text-xs">
+        </section>
+
+        <!-- RIGHT: Lokasi & Rute (map Leaflet + panel rute, mirror detail_wisata) -->
+        <aside class="bg-gray-100 rounded-2xl p-5 sm:p-7 h-full" aria-labelledby="lokasi-title">
+          <h2 id="lokasi-title" class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">Lokasi &amp; Rute</h2>
+          <p id="lokasi-desc" class="text-xs sm:text-sm text-gray-600 leading-relaxed mb-4">Informasi lokasi dan rute menuju kuliner ini.</p>
+          <div
+            id="lokasi-map"
+            class="relative w-full h-48 sm:h-56 lg:h-64 rounded-xl overflow-hidden bg-gray-300 mb-4"
+            role="img"
+            aria-label="Peta lokasi kuliner"
+          >
+            <div id="lokasi-map-fallback" class="absolute inset-0">
+              <div class="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-400"></div>
+              <span class="absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px] font-semibold text-gray-500 bg-white/80 px-3 py-1 rounded-full">Peta lokasi kuliner</span>
+            </div>
+          </div>
+          <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] sm:text-xs mb-4">
             <div class="flex items-start gap-1.5">
-              <svg class="h-3.5 w-3.5 text-gray-500 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>
-              <div><dt class="font-bold text-gray-900">Lokasi</dt><dd id="lokasi-alamat" class="text-gray-500">Pasuruan, Jawa Timur</dd></div>
+              <img src="../../public/assets/icons/icon_lokasi-hitam.svg" alt="" aria-hidden="true" class="h-3.5 w-3.5 shrink-0 mt-0.5 object-contain" />
+              <div><dt class="font-bold text-gray-900">Lokasi</dt><dd id="route-lokasi" class="text-gray-500">-</dd></div>
             </div>
             <div class="flex items-start gap-1.5">
-              <svg class="h-3.5 w-3.5 text-gray-500 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>
-              <div><dt class="font-bold text-gray-900">Lokasi Anda</dt><dd class="text-gray-500">Sekitar Pasuruan (contoh)</dd></div>
+              <img src="../../public/assets/icons/icon_lokasi-saya.svg" alt="" aria-hidden="true" class="h-3.5 w-3.5 shrink-0 mt-0.5 object-contain" />
+              <div><dt class="font-bold text-gray-900">Lokasi Anda</dt><dd id="route-dari" class="text-gray-500">-</dd></div>
             </div>
             <div class="flex items-start gap-1.5">
-              <svg class="h-3.5 w-3.5 text-gray-500 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.159.69.159 1.006 0z" /></svg>
-              <div><dt class="font-bold text-gray-900">Jarak</dt><dd class="text-gray-500">±10 km (contoh)</dd></div>
+              <img src="../../public/assets/icons/icon_jarak.svg" alt="" aria-hidden="true" class="h-3.5 w-3.5 shrink-0 mt-0.5 object-contain" />
+              <div><dt class="font-bold text-gray-900">Jarak</dt><dd id="route-jarak" class="text-gray-500">-</dd></div>
             </div>
             <div class="flex items-start gap-1.5">
-              <svg class="h-3.5 w-3.5 text-gray-500 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <div><dt class="font-bold text-gray-900">Estimasi</dt><dd class="text-gray-500">±20 menit (contoh)</dd></div>
+              <img src="../../public/assets/icons/icon_estimasi.svg" alt="" aria-hidden="true" class="h-3.5 w-3.5 shrink-0 mt-0.5 object-contain" />
+              <div><dt class="font-bold text-gray-900">Estimasi</dt><dd id="route-estimasi" class="text-gray-500">-</dd></div>
             </div>
           </dl>
           <button
-            id="btn-rute"
+            id="ruteBtn"
             type="button"
-            title="Petunjuk arah (segera hadir)"
-            class="mt-3 w-full inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-blue-700 hover:bg-blue-600 text-white text-xs sm:text-sm font-bold shadow transition-colors"
+            title="Buka rute di Google Maps"
+            class="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-blue-700 hover:bg-blue-600 text-white text-xs sm:text-sm font-bold shadow transition-colors"
           >Dapatkan Arah&amp;Rute</button>
         </aside>
       </div>
@@ -205,11 +257,11 @@
 
     <!-- 5. GALERI KULINER: foto besar carousel + 4 thumbs -->
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6" aria-label="Galeri kuliner">
-      <div class="bg-gray-100 rounded-xl p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div class="bg-gray-100 rounded-2xl p-5 sm:p-7 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <div>
           <div class="relative rounded-xl overflow-hidden bg-gradient-to-br from-amber-800 via-stone-700 to-slate-800 h-52 sm:h-64 lg:h-72">
-            <div id="galeri-main" class="w-full h-full flex items-center justify-center" role="img" aria-label="Foto galeri utama (placeholder)">
-              <span id="galeri-main-label" class="text-white/70 text-xs font-semibold px-6 text-center">Foto galeri utama (placeholder)</span>
+            <div id="galeri-main" class="w-full h-full flex items-center justify-center" role="img" aria-label="Foto galeri utama (segera hadir)">
+              <span id="galeri-main-label" class="text-white/70 text-xs font-semibold px-6 text-center">Foto galeri utama segera hadir</span>
             </div>
             <button id="galeri-prev" type="button" aria-label="Foto sebelumnya" class="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white text-gray-800 font-bold shadow hover:bg-gray-200 transition-colors">‹</button>
             <button id="galeri-next" type="button" aria-label="Foto berikutnya" class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white text-gray-800 font-bold shadow hover:bg-gray-200 transition-colors">›</button>
@@ -218,25 +270,25 @@
             <button type="button" data-thumb="0" aria-label="Lihat foto 1" class="thumb-btn h-14 sm:h-16 rounded-lg overflow-hidden bg-gradient-to-br from-amber-800 via-stone-700 to-slate-800 ring-2 ring-blue-600 text-white/80 text-[10px] font-bold">1</button>
             <button type="button" data-thumb="1" aria-label="Lihat foto 2" class="thumb-btn h-14 sm:h-16 rounded-lg overflow-hidden bg-gradient-to-br from-stone-700 via-amber-800 to-slate-800 text-white/80 text-[10px] font-bold">2</button>
             <button type="button" data-thumb="2" aria-label="Lihat foto 3" class="thumb-btn h-14 sm:h-16 rounded-lg overflow-hidden bg-gray-300 text-gray-500 text-[10px] font-bold">3</button>
-            <button type="button" data-thumb="3" aria-label="Lihat semua foto" title="17 foto lainnya (segera hadir)" class="thumb-btn relative h-14 sm:h-16 rounded-lg overflow-hidden bg-slate-900/90 text-white text-[10px] font-bold leading-tight">17 +<br />Foto</button>
+            <a href="galeri_kuliner.html" aria-label="Lihat semua foto" title="Lihat semua foto" class="relative h-14 sm:h-16 rounded-lg overflow-hidden bg-slate-900/90 text-white text-[10px] font-bold leading-tight flex items-center justify-center text-center">17 +<br />Foto</a>
           </div>
         </div>
         <div>
-          <h2 class="text-base sm:text-lg font-bold text-gray-900 mb-3">Galeri Kuliner</h2>
-          <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+          <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">Galeri Kuliner</h2>
+          <div id="galeri-desc" class="text-xs sm:text-sm text-gray-600 leading-relaxed space-y-3"><p>Galeri foto kuliner ini.</p></div>
         </div>
       </div>
     </section>
 
     <!-- 6. MENU & KISARAN HARGA + pill toggle -->
     <section id="menu-harga" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 scroll-mt-24" aria-label="Menu dan kisaran harga">
-      <div class="bg-gray-100 rounded-xl p-5 sm:p-6">
-        <div class="flex items-start justify-between gap-4 mb-2">
-          <div>
-            <h2 class="text-base sm:text-lg font-bold text-gray-900">Menu &amp; Kisaran Harga</h2>
-            <p class="text-[11px] sm:text-xs text-gray-500 mt-1 max-w-xl">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard</p>
+      <div class="bg-gray-100 rounded-2xl p-5 sm:p-7">
+        <div class="mb-2">
+          <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">Menu &amp; Kisaran Harga</h2>
+          <div class="flex items-center justify-between gap-4 mt-1">
+            <p class="text-xs sm:text-sm text-gray-500 max-w-xl">Pilihan menu dan kisaran harga kuliner ini.</p>
+            <a id="menu-toggle" href="menu_kuliner.html" class="shrink-0 px-3.5 py-1.5 rounded-full bg-blue-700 hover:bg-blue-600 text-white text-[11px] sm:text-xs font-bold shadow transition-colors">Lihat Semua Menu →</a>
           </div>
-          <button id="menu-toggle" type="button" aria-expanded="false" class="shrink-0 px-3.5 py-1.5 rounded-full bg-blue-700 hover:bg-blue-600 text-white text-[11px] sm:text-xs font-bold shadow transition-colors">Lihat Semua Menu →</button>
         </div>
         <div id="menu-grid" class="mt-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <!-- Kartu menu dirender via JS -->
@@ -244,43 +296,15 @@
       </div>
     </section>
 
-    <!-- SUMBER & VERIFIKASI (pola detail_wisata, Tier 1.7) -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6" aria-label="Sumber dan verifikasi">
-      <div class="bg-gray-100 rounded-xl p-5 sm:p-6">
-        <h2 class="text-base sm:text-lg font-bold text-gray-900">Sumber &amp; Verifikasi</h2>
-        <p class="text-[11px] sm:text-xs text-gray-500 mt-1">Asal informasi dan status verifikasi kuliner ini.</p>
-        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-white rounded-xl p-5">
-            <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <svg class="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              Sumber Informasi
-            </h3>
-            <div id="source-info" class="space-y-3">
-              <p class="text-xs text-gray-500">Memuat sumber informasi...</p>
-            </div>
-          </div>
-          <div class="bg-white rounded-xl p-5">
-            <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <svg class="h-5 w-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              Status Verifikasi
-            </h3>
-            <div id="verification-info" class="space-y-3">
-              <p class="text-xs text-gray-500">Memuat status verifikasi...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- 7. REKOMENDASI KULINER LAINNYA -->
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6" aria-label="Rekomendasi kuliner lainnya">
-      <div class="bg-gray-100 rounded-xl p-5 sm:p-6">
-        <h2 class="text-base sm:text-lg font-bold text-gray-900">Rekomendasi Kuliner Lainnya</h2>
-        <p class="text-[11px] sm:text-xs text-gray-500 mt-1">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.</p>
+      <div class="bg-gray-100 rounded-2xl p-5 sm:p-7">
+        <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">Rekomendasi Kuliner Lainnya</h2>
+        <p class="text-xs sm:text-sm text-gray-500 mt-1">Rekomendasi kuliner lain di Pasuruan.</p>
         <div class="flex justify-end mt-2">
           <a href="kuliner.html" class="px-3.5 py-1.5 rounded-full bg-blue-700 hover:bg-blue-600 text-white text-[11px] sm:text-xs font-bold shadow transition-colors">Jelajah →</a>
         </div>
-        <div id="reco-kuliner" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div id="reco-kuliner" class="mt-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <!-- 4 kartu rekomendasi dirender via JS -->
         </div>
       </div>
@@ -288,13 +312,13 @@
 
     <!-- 8. JELAJAH DESTINASI SEKITAR KULINER -->
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6" aria-label="Jelajah destinasi sekitar kuliner">
-      <div class="bg-gray-100 rounded-xl p-5 sm:p-6">
-        <h2 id="sekitar-title" class="text-base sm:text-lg font-bold text-gray-900">Jelajah Destinasi Sekitar Kuliner</h2>
-        <p class="text-[11px] sm:text-xs text-gray-500 mt-1">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.</p>
+      <div class="bg-gray-100 rounded-2xl p-5 sm:p-7">
+        <h2 id="sekitar-title" class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">Jelajah Destinasi Sekitar Kuliner</h2>
+        <p id="sekitar-desc" class="text-xs sm:text-sm text-gray-500 mt-1">Jelajahi destinasi di sekitar area kuliner ini.</p>
         <div class="flex justify-end mt-2">
           <a href="wisata.html" class="px-3.5 py-1.5 rounded-full bg-blue-700 hover:bg-blue-600 text-white text-[11px] sm:text-xs font-bold shadow transition-colors">Jelajah →</a>
         </div>
-        <div id="reco-sekitar" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div id="reco-sekitar" class="mt-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <!-- 4 kartu sekitar dirender via JS -->
         </div>
       </div>
@@ -306,6 +330,7 @@
         <span class="text-3xl sm:text-4xl font-medium text-gray-800">Space Iklan</span>
       </div>
     </section>
+    </main>
 
     <!-- FOOTER -->
     <div data-layout-footer></div>
@@ -316,10 +341,18 @@
     <script src="./partials/pasinfo-header.js" defer></script>
     <script src="./partials/pasinfo-footer.js" defer></script>
     <script src="./partials/pasinfo-layout.js" defer></script>
+    <script src="../../public/js/page-transition.js" defer></script>
+    <script src="../../public/js/pages/internal-nav.js" defer></script>
     <script src="../../public/js/data-kuliner.js"></script>
+    <script src="../../public/js/data-kuliner-menus.js"></script>
     <script src="../../public/js/data-wisata.js"></script>
     <script src="../../public/js/pages/nearby.js"></script>
+    <script src="../../public/vendor/leaflet/leaflet.js" defer></script>
     <script src="../../public/js/main.js" defer></script>
     <script src="../../public/js/pages/detail-kuliner.js"></script>
+
+    <!-- GSAP Animation Script (Owner override design.md §49-50) -->
+    <script src="../../public/js/pages/detail-kuliner-animation.js" defer></script>
   </body>
 </html>
+

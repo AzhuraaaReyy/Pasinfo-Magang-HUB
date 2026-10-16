@@ -86,8 +86,8 @@
       setOpen(panel.classList.contains("hidden"));
     });
 
-    /* Menutup panel saat layar melebar ke tablet/desktop, agar state
-       terbuka tidak tertinggal saat layout berubah. */
+    /* Menutup panel saat layar melebar ke tablet/desktop (md >= 768),
+       agar state terbuka tidak tertinggal saat layout berubah. */
     var desktop = window.matchMedia("(min-width: 768px)");
     function onBreakpointChange(event) {
       if (event.matches) setOpen(false);
@@ -141,8 +141,6 @@
     var list = document.querySelector("[data-nav-list]");
     var prev = document.querySelector("[data-nav-prev]");
     var next = document.querySelector("[data-nav-next]");
-    var fadeLeft = document.querySelector("[data-nav-fade-left]");
-    var fadeRight = document.querySelector("[data-nav-fade-right]");
     if (!list || !prev || !next) return;
 
     /* Di tablet (md) tampil 3 item, di desktop (lg) 4 item. */
@@ -152,27 +150,58 @@
 
     var SCROLL_STEP = 150;
 
-    /* Membatasi lebar list pada lebar total beberapa item pertama
-       beserta gap, sehingga item berikutnya tidak terlihat sebelum
-       pengguna menggulir. */
-    function clampToVisibleItems() {
-      var count = visibleItems();
-      var items = list.children;
-      if (items.length <= count) {
-        list.style.removeProperty("max-width");
-        return;
-      }
+     /* Membatasi lebar list pada lebar total beberapa item pertama
+        beserta gap, sehingga item berikutnya tidak terlihat sebelum
+        pengguna menggulir. Padding kiri/kanan (px-4) ikut dihitung
+        karena `box-sizing: border-box`; tanpa ini content-box terlalu
+        sempit sehingga item terakhir tampak terpotong. */
+     function clampToVisibleItems() {
+       var count = visibleItems();
+       var items = list.children;
+       if (items.length <= count) {
+         list.style.removeProperty("max-width");
+         return;
+       }
 
-      var gap = parseFloat(window.getComputedStyle(list).columnGap) || 0;
-      var width = 0;
+       var cs = window.getComputedStyle(list);
+       var gap = parseFloat(cs.columnGap) || 0;
+       var padLeft = parseFloat(cs.paddingLeft) || 0;
+       var padRight = parseFloat(cs.paddingRight) || 0;
+       var width = 0;
 
-      for (var i = 0; i < count; i++) {
-        width += items[i].getBoundingClientRect().width;
-        if (i < count - 1) width += gap;
-      }
+       for (var i = 0; i < count; i++) {
+         width += items[i].getBoundingClientRect().width;
+         if (i < count - 1) width += gap;
+       }
 
-      list.style.maxWidth = Math.ceil(width + gap) + "px";
-    }
+       list.style.maxWidth = Math.ceil(width + padLeft + padRight) + "px";
+     }
+
+     /* Geser ke batas item terdekat agar nama menu tidak berhenti
+        dalam keadaan terpotong setelah digeser/drag. */
+     function snapToItem() {
+       var maxScroll = list.scrollWidth - list.clientWidth;
+       if (maxScroll <= 1) return;
+
+       var padLeft = parseFloat(window.getComputedStyle(list).paddingLeft) || 0;
+       var items = list.children;
+       var target = 0;
+       var bestDist = Infinity;
+
+       for (var i = 0; i < items.length; i++) {
+         var offset = items[i].offsetLeft - padLeft;
+         if (offset < 0) offset = 0;
+         if (offset > maxScroll) offset = maxScroll;
+         var dist = Math.abs(offset - list.scrollLeft);
+         if (dist < bestDist) {
+           bestDist = dist;
+           target = offset;
+         }
+       }
+
+       if (bestDist <= 2) return; /* sudah sejajar dengan batas item */
+       list.scrollTo({ left: target, behavior: "smooth" });
+     }
 
     /* Sinkronisasi aria-disabled.
        Panah selalu ada di DOM namun disembunyikan lewat CSS
@@ -191,10 +220,6 @@
 
       prev.setAttribute("aria-disabled", String(atStart));
       next.setAttribute("aria-disabled", String(atEnd));
-
-      // Fade indikator scroll masih mengikuti logika posisi
-      if (fadeLeft) fadeLeft.classList.toggle("hidden", atStart);
-      if (fadeRight) fadeRight.classList.toggle("hidden", atEnd);
     }
 
     function scrollByStep(direction) {
@@ -220,6 +245,87 @@
     list.addEventListener("scroll", updateArrows, { passive: true });
     window.addEventListener("resize", sync);
     sync();
+
+    /* ── Geser nav dengan drag (mouse/pen) ──
+       Sebelumnya nav hanya bisa digeser lewat tombol panah atau gesture
+       sentuh asli. Roda mouse vertikal menggulir halaman, bukan nav,
+       sehingga tanpa touchpad nav terasa tidak bisa digeser. Drag ini
+       melengkapinya; touch dibiarkan memakai momentum scroll native. */
+    (function enableDragScroll() {
+      var startX = 0;
+      var startScroll = 0;
+      var dragging = false;
+      var moved = false;
+
+      list.style.cursor = "grab";
+
+      list.addEventListener("pointerdown", function (event) {
+        if (event.pointerType === "touch") return;
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        dragging = true;
+        moved = false;
+        startX = event.clientX;
+        startScroll = list.scrollLeft;
+        list.style.cursor = "grabbing";
+        list.style.userSelect = "none";
+        list.style.scrollBehavior = "auto";
+      });
+
+      /* Geser didengarkan pada window, BUKAN lewat setPointerCapture.
+         setPointerCapture membuat event `click` ikut "ter-capture" ke <ul>,
+         sehingga <a> menu tidak menerima klik dan navigasi gagal (terbukti).
+         Dengan listener di window, drag tetap berjalan walau kursor keluar
+         dari daftar, dan klik biasa tetap mengarah ke <a> sehingga navigasi
+         menu berfungsi. */
+      function onPointerMove(event) {
+        if (!dragging) return;
+        var delta = event.clientX - startX;
+        if (Math.abs(delta) > 3) moved = true;
+        if (!moved) return;
+        list.scrollLeft = startScroll - delta;
+        event.preventDefault();
+      }
+
+      function endDrag() {
+        if (!dragging) return;
+        dragging = false;
+        list.style.cursor = "grab";
+        list.style.userSelect = "";
+        list.style.scrollBehavior = "";
+        if (moved) snapToItem();
+      }
+
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", endDrag);
+      window.addEventListener("pointercancel", endDrag);
+
+      /* Setelah geser/scroll berhenti, ratakan ke batas item terdekat
+         supaya nama menu tidak tertinggal terpotong di tepi. Selama
+         drag, penjadwalan dilewati agar tidak berebut dengan pointer. */
+      var snapTimer = null;
+      list.addEventListener(
+        "scroll",
+        function () {
+          if (dragging) return;
+          if (snapTimer) clearTimeout(snapTimer);
+          snapTimer = setTimeout(snapToItem, 160);
+        },
+        { passive: true }
+      );
+
+      /* Cegah klik link yang tidak sengaja terpicu setelah menggeser. */
+      list.addEventListener(
+        "click",
+        function (event) {
+          if (moved) {
+            event.preventDefault();
+            event.stopPropagation();
+            moved = false;
+          }
+        },
+        true
+      );
+    })();
   }
 
   /* ───────────────────────────────────────────────

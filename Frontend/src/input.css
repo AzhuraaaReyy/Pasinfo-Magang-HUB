@@ -37,14 +37,9 @@
     }
   }
 
-  /* Pada tablet (md) navigasi kategori tampil seperti desktop, namun
-     tidak ada hover di layar sentuh. Panah dibuat selalu terlihat. */
-  @media (min-width: 768px) and (max-width: 1023.98px) {
-    [data-nav-prev],
-    [data-nav-next] {
-      opacity: 1 !important;
-      pointer-events: auto !important;
-    }
+  /* Enable smooth horizontal scroll pada navigation list */
+  [data-nav-list] {
+    scroll-behavior: smooth;
   }
 
   /* Memusatkan item saat muat, tetapi tidak membuat overflow sisi kiri
@@ -154,6 +149,22 @@
   }
   body[data-header-overlay] header .ph-menu-btn:hover {
     background-color: rgba(255, 255, 255, 0.15);
+  }
+  /* Saat header masih transparan di atas hero (belum .header-solid),
+     buat tombol panah nav transparan (ikon putih) tanpa bg/shadow agar
+     menyatu dengan foto hero. Hanya berlaku pada halaman ber-`data-header-overlay`. */
+  body[data-header-overlay] header:not(.header-solid) [data-nav-prev],
+  body[data-header-overlay] header:not(.header-solid) [data-nav-next] {
+    background-color: transparent;
+    box-shadow: none;
+  }
+  body[data-header-overlay] header:not(.header-solid) [data-nav-prev] svg,
+  body[data-header-overlay] header:not(.header-solid) [data-nav-next] svg {
+    color: #ffffff;
+  }
+  body[data-header-overlay] header:not(.header-solid) [data-nav-prev]:hover,
+  body[data-header-overlay] header:not(.header-solid) [data-nav-next]:hover {
+    background-color: rgba(255, 255, 255, 0.16);
   }
   body[data-header-overlay] header.header-solid {
     background-color: #ffffff;
@@ -270,6 +281,20 @@
   outline-offset: 2px;
 }
 
+/* Owner 2026-10-14: hilangkan "kotak hitam" (outline fokus bawaan browser)
+   pada poligon wilayah peta wisata saat diklik. Hanya <path> (bukan marker
+   div), sehingga ring fokus keyboard marker di atas tetap dipertahankan. */
+#wisata-map path.leaflet-interactive:focus {
+  outline: none;
+}
+
+/* Owner 2026-10-14: di tablet/mobile, geser pada area peta hanya menggeser
+   peta (Leaflet), halaman tidak ikut ter-scroll. Dipaksa agar tidak bergantung
+   pada deteksi touch bawaan Leaflet. */
+body[data-page-active="wisata"] #wisata-map {
+  touch-action: none;
+}
+
 /* Hero accordion (wisata): origin FLIP di tepi kiri agar kartu yang
    melebar tumbuh ke kanan; deskripsi thumb hanya tampil saat aktif. */
 .hero-thumb {
@@ -310,5 +335,477 @@
   .hero-thumb.active .thumb-desc {
     transition: none !important;
     animation: none !important;
+  }
+}
+
+/* ============================================================================
+   HALAMAN WISATA — CSS yang dipindah dari <style> inline wisata.html
+   (Owner 2026-10-14: konsolidasi ke Tailwind utama / src/input.css).
+   Aturan yang menargetkan elemen bersama (#hero-section, .leaflet-tooltip,
+   #hero-location) DIBATASI ke body[data-page-active="wisata"] agar halaman
+   Kuliner/Budaya/Acara tidak terpengaruh. Kelas .reco-* / .coverflow-* /
+   .ref-card-* hanya dipakai wisata sehingga dibiarkan global.
+   ========================================================================== */
+
+/* (A) Sembunyikan kotak/tooltip bawaan peta wisata — wisata-only agar peta
+   acara (memakai .leaflet-tooltip yang sama) tidak ikut berubah. */
+body[data-page-active="wisata"] .leaflet-tooltip {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+body[data-page-active="wisata"] .leaflet-tooltip-pane {
+  display: none !important;
+}
+
+/* (B) Section background Rekomendasi (fallback; JS meng-override dinamis). */
+.reco-section-bg {
+  position: relative;
+  padding: 6rem 0 5rem 0;
+  color: #ffffff;
+  background-size: cover;
+  background-position: center top;
+  background-image: linear-gradient(
+      to bottom,
+      rgba(15, 23, 42, 0.38) 0%,
+      rgba(15, 23, 42, 0) 34%,
+      rgba(15, 23, 42, 0) 56%,
+      rgba(15, 23, 42, 0.92) 100%
+    ),
+    url("../../public/assets/images/wisata/bromo_banner.png");
+}
+.reco-heading h2,
+.reco-heading p {
+  text-shadow: 0 2px 14px rgba(2, 6, 23, 0.55);
+}
+
+/* (C) Kartu foto bergeser antar-layer (FLIP). */
+.reco-card {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  will-change: transform, opacity;
+}
+.reco-card__img {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.reco-card__grad {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.6) 16%,
+    rgba(0, 0, 0, 0) 54%
+  );
+}
+.reco-card__tint {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(2, 6, 23, 0);
+  transition: background-color 0.4s ease;
+}
+.ref-card-inner-side .reco-card__tint {
+  background-color: rgba(2, 6, 23, 0.32);
+}
+.ref-card-outer-side .reco-card__tint {
+  background-color: rgba(2, 6, 23, 0.32);
+}
+.reco-card__body {
+  position: relative;
+  z-index: 2;
+  color: #ffffff;
+  padding: 1.1rem 1.15rem;
+}
+.reco-card__name,
+.reco-card__desc {
+  text-shadow: 0 1px 3px rgba(2, 6, 23, 0.7), 0 2px 10px rgba(2, 6, 23, 0.45);
+}
+
+/* (D) Coverflow — kerangka posisi/layer 3D. */
+.coverflow-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 1020px;
+  margin: 0 auto;
+}
+.coverflow-track {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+  scroll-behavior: smooth;
+  padding: 3.5rem 0 2rem 0;
+  width: 100%;
+}
+.ref-card-center {
+  width: 240px !important;
+  height: 300px !important;
+  border-radius: 20px !important;
+  padding: 0.85rem !important;
+  flex-shrink: 0 !important;
+  border: 2px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.65) !important;
+  position: relative !important;
+  z-index: 30 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  overflow: visible !important;
+  background: transparent !important;
+  margin: 0 -14px !important;
+  transform: translateY(40px) !important;
+}
+.ref-card-inner-side {
+  width: 240px !important;
+  height: 300px !important;
+  background-color: transparent !important;
+  color: #ffffff !important;
+  border-radius: 20px !important;
+  padding: 1.35rem 1.25rem !important;
+  flex-shrink: 0 !important;
+  overflow: visible !important;
+  z-index: 20 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35) !important;
+  margin: 0 -16px !important;
+  transform: translateY(-10px) !important;
+  position: relative !important;
+}
+.ref-card-outer-side {
+  width: 240px !important;
+  height: 300px !important;
+  background-color: transparent !important;
+  color: #ffffff !important;
+  border-radius: 20px !important;
+  padding: 1.35rem 1.25rem !important;
+  flex-shrink: 0 !important;
+  overflow: visible !important;
+  z-index: 10 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3) !important;
+  transform: translateY(-50px) !important;
+  margin-bottom: 0 !important;
+  position: relative !important;
+}
+.reco-nav-btn {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(calc(-50% - 25px)) !important;
+  z-index: 50 !important;
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  border-radius: 9999px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease-in-out !important;
+}
+.reco-nav-btn:hover {
+  background-color: #f3f4f6 !important;
+  transform: translateY(calc(-50% - 25px)) scale(1.1) !important;
+}
+.reco-nav-btn-prev {
+  left: -25px !important;
+}
+.reco-nav-btn-next {
+  right: -25px !important;
+}
+@media (min-width: 640px) {
+  .reco-nav-btn-prev {
+    left: -60px !important;
+  }
+  .reco-nav-btn-next {
+    right: -60px !important;
+  }
+}
+@media (min-width: 1024px) {
+  .reco-nav-btn-prev {
+    left: -70px !important;
+  }
+  .reco-nav-btn-next {
+    right: -70px !important;
+  }
+}
+/* Owner 2026-10-14: pada 1024–1279px gutter di luar container (max 1020px)
+   terlalu sempit untuk panah di -70px, sehingga menyebabkan overflow
+   horizontal. Tahan panah DI DALAM kartu pada rentang ini. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .reco-nav-btn-prev {
+    left: 8px !important;
+  }
+  .reco-nav-btn-next {
+    right: 8px !important;
+  }
+}
+.coverflow-card {
+  transition:
+    transform 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+    z-index 0.4s ease,
+    opacity 0.4s ease,
+    box-shadow 0.4s ease !important;
+  will-change: transform, z-index;
+  cursor: pointer;
+  user-select: none;
+}
+@media (max-width: 1023px) {
+  .ref-card-outer-side {
+    display: none !important;
+  }
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  .coverflow-track {
+    padding: 3rem 0 1.75rem 0;
+  }
+  .reco-nav-btn-prev {
+    left: 8px !important;
+  }
+  .reco-nav-btn-next {
+    right: 8px !important;
+  }
+}
+@media (max-width: 639px) {
+  .ref-card-center {
+    transform: translateY(20px) !important;
+  }
+  .ref-card-inner-side {
+    transform: translateY(0px) !important;
+    /* Owner 2026-10-14: kartu 3D di belakang kartu tengah dibuat SEDIKIT
+       lebih terlihat di mobile (blur 2px → 1px, opacity 0.5 → 0.7) namun
+       tetap terkesan berada di belakang kartu tengah. */
+    opacity: 0.7 !important;
+    filter: blur(1px) !important;
+  }
+  .coverflow-track {
+    padding: 2.5rem 0 1.5rem 0;
+  }
+  .reco-nav-btn {
+    display: none !important;
+  }
+}
+@media (hover: hover) and (pointer: fine) and (min-width: 640px) {
+  .ref-card-center:hover {
+    transform: translateY(30px) !important;
+    box-shadow: 0 30px 56px rgba(0, 0, 0, 0.7) !important;
+  }
+  .ref-card-inner-side:hover {
+    transform: translateY(-20px) !important;
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.5) !important;
+  }
+  .ref-card-outer-side:hover {
+    transform: translateY(-60px) !important;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45) !important;
+  }
+}
+
+/* (E) Override gradient hero wisata (per-breakpoint) — wisata-only. */
+body[data-page-active="wisata"] #hero-section > div[class*="bg-gradient-to-t"] {
+  background-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0) 38%,
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.32) 62%,
+    rgba(0, 0, 0, 0.48) 74%,
+    rgba(0, 0, 0, 0.62) 86%,
+    rgba(0, 0, 0, 0.75) 100%
+  ) !important;
+}
+@media (min-width: 768px) {
+  body[data-page-active="wisata"] #hero-section > div[class*="bg-gradient-to-t"] {
+    background-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.22) 0%,
+      rgba(0, 0, 0, 0.26) 12%,
+      rgba(0, 0, 0, 0.34) 28%,
+      rgba(0, 0, 0, 0.44) 46%,
+      rgba(0, 0, 0, 0.56) 64%,
+      rgba(0, 0, 0, 0.66) 82%,
+      rgba(0, 0, 0, 0.75) 100%
+    ) !important;
+  }
+}
+@media (min-width: 1024px) {
+  body[data-page-active="wisata"] #hero-section > div[class*="bg-gradient-to-t"] {
+    background-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0) 26%,
+      rgba(0, 0, 0, 0.16) 38%,
+      rgba(0, 0, 0, 0.28) 50%,
+      rgba(0, 0, 0, 0.4) 62%,
+      rgba(0, 0, 0, 0.56) 76%,
+      rgba(0, 0, 0, 0.68) 88%,
+      rgba(0, 0, 0, 0.75) 100%
+    ) !important;
+  }
+}
+
+/* (F) Desktop: judul/deskripsi rata-kiri tapi di tengah vertikal — wisata-only. */
+@media (min-width: 1024px) {
+  body[data-page-active="wisata"] #hero-section > div[class*="z-20"] {
+    align-self: stretch;
+  }
+  body[data-page-active="wisata"] #hero-section #content-container {
+    align-self: center;
+  }
+}
+
+/* (G) Tablet 768–1023 (Owner 2026-10-14): hilangkan ruang kosong besar di
+   bawah. Kartu di bagian bawah (jarak wajar), teks (badge/judul/deskripsi)
+   diposisikan di area tengah vertikal. Mobile & desktop tidak berubah. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  body[data-page-active="wisata"] #hero-section {
+    align-items: stretch;
+  }
+  body[data-page-active="wisata"] #hero-section > div[class*="z-20"] {
+    align-self: stretch;
+  }
+  body[data-page-active="wisata"] #hero-section #content-container {
+    margin-top: auto;
+    margin-bottom: auto;
+  }
+  /* Owner 2026-10-14: perbesar teks hero di tablet agar jelas terlihat.
+     (Judul diatur lewat data-hero-title-class = md:text-6xl.) */
+  body[data-page-active="wisata"] #hero-section #content-container {
+    max-width: 42rem;
+  }
+  body[data-page-active="wisata"] #hero-section #badge-text {
+    font-size: 1rem;
+    padding: 0.4rem 0.95rem;
+  }
+  body[data-page-active="wisata"] #hero-section #hero-location {
+    font-size: 0.85rem;
+  }
+  body[data-page-active="wisata"] #hero-section #hero-desc {
+    font-size: 1.125rem;
+    line-height: 1.65;
+    max-width: 34rem;
+  }
+}
+
+/* (H) Teks lokasi "Pasuruan Raya" di samping badge hero — wisata-only. */
+body[data-page-active="wisata"] #hero-section #hero-location {
+  color: #ef4444 !important;
+  text-shadow:
+    -1px -1px 0 #ffffff,
+    1px -1px 0 #ffffff,
+    -1px 1px 0 #ffffff,
+    1px 1px 0 #ffffff,
+    -2px 0 0 #ffffff,
+    2px 0 0 #ffffff,
+    0 -2px 0 #ffffff,
+    0 2px 0 #ffffff !important;
+}
+
+/* (I) Header saat transparan di atas hero wisata (Owner 2026-10-14):
+   search background PUTIH + ikon/teks hitam (agar tidak menyatu dengan foto),
+   dan logo memakai "Logo Pasinfo.png" (dark). Hanya wisata, hanya saat
+   header belum solid (masih di area hero). */
+body[data-page-active="wisata"][data-header-overlay]
+  header:not(.header-solid)
+  .ph-search {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  border-color: #e5e7eb !important;
+}
+body[data-page-active="wisata"][data-header-overlay]
+  header:not(.header-solid)
+  .ph-search::placeholder {
+  color: #6b7280 !important;
+}
+body[data-page-active="wisata"][data-header-overlay]
+  header:not(.header-solid)
+  [data-search-form]
+  svg {
+  color: #1f2937 !important;
+  stroke: #1f2937 !important;
+}
+body[data-page-active="wisata"][data-header-overlay]
+  header:not(.header-solid)
+  .ph-logo-dark {
+  display: block !important;
+}
+body[data-page-active="wisata"][data-header-overlay]
+  header:not(.header-solid)
+  .ph-logo-light {
+  display: none !important;
+}
+
+/* (J) Owner 2026-10-14: cegah overflow horizontal (scroll samping) di wisata.
+   - Reveal GSAP (#dest-detail) mulai dari transform translateX(30px) sebelum
+     masuk viewport -> menambah lebar dokumen saat load.
+   - Kartu coverflow sisi-luar menjulur keluar tepi di >=1024px.
+   Pakai overflow-x: clip (bukan hidden) agar tidak membuat scroll container
+   sehingga elemen position:sticky tetap berfungsi dan overflow-y tetap visible. */
+body[data-page-active="wisata"] main {
+  overflow-x: clip;
+}
+
+/* (J2) Owner 2026-10-16: kuliner memakai coverflow yang sama dengan wisata
+   (kartu sisi-luar menjulur keluar tepi), jadi perlakukan sama seperti (J). */
+body[data-page-active="kuliner"] main {
+  overflow-x: clip;
+}
+
+/* (K) Owner 2026-10-14: tirai transisi antar-halaman DIPUSATKAN di sini
+   (dipindah dari <style>/<script> inline tiap halaman supaya HTML bersih).
+   - .ph-leaving ditambah page-transition.js tepat sebelum navigasi keluar.
+   - .ph-entering ditambah page-enter.js saat halaman tujuan dimuat.
+   Warna tirai #f9fafb dipakai sama untuk kedua sisi agar serah-terima
+   terasa menyatu; durasi 0.22s selaras DURATION di page-transition.js. */
+html::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: #f9fafb;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease-in;
+}
+html.ph-leaving::after {
+  opacity: 1;
+}
+html.ph-entering::after {
+  opacity: 1;
+  transition: none;
+  animation: ph-curtain-out 0.42s ease-out forwards;
+}
+@keyframes ph-curtain-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html::after {
+    transition: none;
+  }
+  html.ph-entering::after {
+    animation: none;
+    opacity: 0;
   }
 }

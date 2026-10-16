@@ -7,6 +7,7 @@
  *   data-page-active="terbaru" | "wisata" | ...
  *   data-wisata-href="./src/views/wisata.html" | "wisata.html"
  *   data-home-href="./index.html" | "../../index.html" (logo + Beranda mobile)
+ *   data-news-href="./src/views/LayoutNews.html" | "LayoutNews.html" (opsional)
  *   data-header-overlay="dark"  (opsional: header transparan di hero)
  *
  * Muat SETELAH pasinfo-header.js + pasinfo-footer.js,
@@ -17,11 +18,21 @@
 
   function config() {
     var body = document.body;
+    var assetPrefix = body.getAttribute("data-asset-prefix") || "./public";
+    // Halaman root (index.html) memakai "./public"; halaman di src/views/
+    // memakai "../../public". LayoutNews.html berada di src/views/, jadi
+    // turunkan jalur relatifnya dari posisi halaman.
+    var newsHref =
+      body.getAttribute("data-news-href") ||
+      (assetPrefix === "./public"
+        ? "./src/views/LayoutNews.html"
+        : "LayoutNews.html");
     return {
-      assetPrefix: body.getAttribute("data-asset-prefix") || "./public",
+      assetPrefix: assetPrefix,
       active: body.getAttribute("data-page-active") || "",
       wisataHref: body.getAttribute("data-wisata-href") || "#",
       homeHref: body.getAttribute("data-home-href") || "#",
+      newsHref: newsHref,
     };
   }
 

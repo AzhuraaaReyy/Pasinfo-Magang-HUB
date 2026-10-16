@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="../../public/js/page-enter.js"></script>
     <title>Pasuruan Info - Detail Kuliner & Ulasan</title>
     <link rel="icon" href="data:," />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -12,39 +13,55 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../../public/css/styles.css" />
+    <style>
+      /* Samakan tinggi kartu rekomendasi/sekitar dgn detail_kuliner.html. */
+      #reco-kuliner-grid,
+      #reco-destinasi-grid {
+        grid-auto-rows: minmax(0, 1fr);
+      }
+      #reco-kuliner-grid > a,
+      #reco-destinasi-grid > a {
+        height: 100%;
+      }
+    </style>
+    <!-- GSAP Animations (Owner override design.md §49-50): CDN + ScrollTrigger -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" defer></script>
   </head>
   <body class="bg-white text-gray-800 font-sans antialiased" data-page-active="kuliner" data-asset-prefix="../../public" data-wisata-href="wisata.html" data-home-href="../../index.html">
     
     <!-- HEADER / NAVBAR -->
     <div data-layout-header></div>
 
+    <!-- BREADCRUMB (disamakan dengan menu_kuliner.html) -->
+    <div class="bg-gray-100 border-b border-gray-200 py-3">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="flex text-xs md:text-sm text-gray-500 space-x-2" aria-label="Breadcrumb">
+          <a href="../../index.html" class="transition-colors hover:text-brand">
+            <svg class="mr-1 inline h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" /></svg>
+            Beranda
+          </a>
+          <span aria-hidden="true">/</span>
+          <a href="kuliner.html" class="transition-colors hover:text-brand">Kuliner Pasuruan</a>
+          <span aria-hidden="true">/</span>
+          <span id="crumb-name" class="text-gray-900 font-semibold truncate">Ulasan</span>
+        </nav>
+      </div>
+    </div>
+
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      
-      <!-- BREADCRUMB -->
-      <nav class="flex text-sm text-gray-500 mb-6 gap-2 items-center" aria-label="Breadcrumb">
-        <a href="../../index.html" class="hover:text-blue-600" aria-label="Beranda">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l1.293 1.293a1 1 0 001.414-1.414l-7-7z"/></svg>
-        </a>
-        <span>&rsaquo;</span>
-        <a href="kuliner.html" class="text-blue-600 hover:underline">Kuliner</a>
-        <span>&rsaquo;</span>
-        <span class="text-gray-400" id="crumb-name">Soto Ayam Kambing</span>
-      </nav>
 
       <!-- HERO SECTION -->
       <section class="relative w-full h-[340px] sm:h-[420px] lg:h-[440px] rounded-2xl overflow-hidden mb-12 shadow-lg">
         <div 
-          class="absolute inset-0 bg-cover bg-center"
-          style="background-image: url('../../public/assets/mockup/agenda_budaya.png');"
+          id="hero-media"
+          class="absolute inset-0 bg-cover bg-center bg-gradient-to-br from-amber-900 via-stone-800 to-slate-900"
         ></div>
         <!-- Overlay Dark Gradient -->
         <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20"></div>
 
         <!-- Top Badges / Action Buttons -->
-        <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
-          <span class="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-md shadow-sm" id="hero-cat">
-            Kuliner Tradisional
-          </span>
+        <div class="absolute top-4 left-4 right-4 flex items-center justify-end z-10">
           <div class="flex items-center gap-2">
             <button type="button" id="btn-simpan" class="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors" aria-pressed="false">
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.424 48.424 0 0111.186 0z" /></svg> <span id="simpan-text">Simpan</span>
@@ -56,7 +73,10 @@
         </div>
 
         <!-- Bottom Text Content -->
-        <div class="absolute bottom-6 left-6 right-6 text-white max-w-3xl z-10">
+        <div id="hero-content" class="absolute bottom-6 left-6 right-6 text-white max-w-3xl z-10">
+          <span class="inline-block mb-2 bg-blue-700 text-white text-xs font-bold px-3 py-1 rounded-md shadow-sm" id="hero-cat">
+            Kuliner Tradisional
+          </span>
           <h1 class="text-2xl sm:text-4xl font-extrabold uppercase tracking-wide leading-tight mb-2 drop-shadow-md" id="detail-title">
             SOTO AYAM KAMBING
           </h1>
@@ -75,7 +95,7 @@
         <div class="bg-gray-50 rounded-lg px-4 py-3 flex items-center gap-6 text-xs sm:text-sm border-b border-gray-200">
           <a id="tab-utama" href="detail_kuliner.html" class="pb-3 font-semibold text-gray-700 border-b-2 border-transparent hover:text-blue-700 hover:border-blue-700 transition-colors">Informasi Utama</a>
           <a id="tab-menu" href="menu_kuliner.html" class="pb-3 font-semibold text-gray-700 border-b-2 border-transparent hover:text-blue-700 hover:border-blue-700 transition-colors">Menu &amp; Harga</a>
-          <a href="#" aria-current="page" class="pb-3 font-bold text-blue-700 border-b-2 border-blue-700 transition-colors">Ulasan</a>
+          <a id="tab-ulasan" href="ulasan.html" aria-current="page" class="pb-3 font-bold text-blue-700 border-b-2 border-blue-700 transition-colors">Ulasan</a>
         </div>
       </nav>
 
@@ -84,7 +104,7 @@
         <div class="text-center mb-8">
           <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900">Ulasan Pengunjung</h2>
           <p class="text-xs sm:text-sm text-gray-500 mt-1 max-w-xl mx-auto">
-            Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since 1966.
+            Ringkasan dan pengalaman pengunjung pada tempat kuliner ini.
           </p>
         </div>
 
@@ -136,15 +156,15 @@
           <!-- Total Review -->
           <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs flex flex-col items-center justify-center text-center">
             <span class="text-xs font-bold text-gray-500 mb-1">Total Review</span>
-            <span class="text-4xl font-black text-gray-900">20k</span>
-            <span class="text-xs text-gray-400 mt-1">(12.876 ulasan)</span>
+            <span class="text-4xl font-black text-gray-900" id="stat-total">—</span>
+            <span class="text-xs text-gray-400 mt-1" id="stat-total-sub">(0 ulasan)</span>
           </div>
 
           <!-- Score Rating -->
           <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs flex flex-col items-center justify-center text-center">
             <span class="text-xs font-bold text-gray-500 mb-1">Rating</span>
-            <span class="text-4xl font-black text-gray-900">4.7</span>
-            <div class="text-yellow-400 text-sm mt-1">★★★★★</div>
+            <span class="text-4xl font-black text-gray-900" id="stat-rating">—</span>
+            <div class="text-yellow-400 text-sm mt-1" id="stat-stars" aria-hidden="true">★★★★★</div>
           </div>
 
         </div>
@@ -169,7 +189,7 @@
         <div class="text-center max-w-lg mx-auto mb-6">
           <h3 class="text-xl font-extrabold text-gray-900">Form Ulasan</h3>
           <p class="text-xs text-gray-500 mt-1">
-            Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since 1966.
+            Bagikan pengalaman Anda pada tempat kuliner ini.
           </p>
         </div>
 
@@ -185,6 +205,7 @@
           <!-- Textarea -->
           <div>
             <textarea 
+              id="ulasan-text"
               rows="4" 
               placeholder="Beri Ulasan Pengalaman Anda di sini..."
               class="w-full bg-white border border-gray-300 rounded-xl p-3.5 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all placeholder:text-gray-400 resize-none shadow-2xs"
@@ -206,71 +227,56 @@
               Kirim ulasan
             </button>
           </div>
+          <p id="ulasan-msg" class="text-xs font-semibold hidden" role="status" aria-live="polite"></p>
         </form>
       </section>
 
-      <!-- RECOMMENDATIONS & SIDEBAR AD CONTAINER -->
-      <div class="mt-16 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        <!-- RECOMMENDATIONS CONTENT (Span 9) -->
-        <div class="lg:col-span-9 space-y-12">
-          
-          <!-- Menu & Kisaran Harga -->
-          <div>
-            <div class="flex items-center justify-between mb-3">
-              <div>
-                <h3 class="text-lg font-bold text-gray-900">Menu & Kisaran Harga</h3>
-                <p class="text-xs text-gray-500">Lorem ipsum is simply dummy text of the printing and typesetting industry.</p>
-              </div>
-              <a href="menu_kuliner.html" id="btn-lihat-menu" class="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-md shadow-2xs">
-                Lihat Semua Menu &rsaquo;
-              </a>
+      <!-- REKOMENDASI & SEKITAR (lebar penuh; Space Iklan vertikal dihapus — Owner 2026-10-15) -->
+      <div class="mt-16 space-y-12">
+
+        <!-- Menu & Kisaran Harga -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="text-lg font-bold text-gray-900">Menu &amp; Kisaran Harga</h3>
+              <p class="text-xs text-gray-500">Pilihan menu dan kisaran harga pada tempat kuliner ini.</p>
             </div>
-            <div id="menu-harga-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 items-stretch">
-              <!-- Rendered via JS -->
-            </div>
+            <a href="menu_kuliner.html" id="btn-lihat-menu" class="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-md shadow-2xs">
+              Lihat Semua Menu &rsaquo;
+            </a>
           </div>
-
-          <!-- Rekomendasi Kuliner Lainnya -->
-          <div>
-            <div class="flex items-center justify-between mb-3">
-              <div>
-                <h3 class="text-lg font-bold text-gray-900">Rekomendasi Kuliner Lainnya</h3>
-                <p class="text-xs text-gray-500">Lorem ipsum is simply dummy text of the printing and typesetting industry.</p>
-              </div>
-              <a href="kuliner.html" class="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-md shadow-2xs">
-                Jelajah &rsaquo;
-              </a>
-            </div>
-            <div id="reco-kuliner-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 items-stretch">
-              <!-- Rendered via JS -->
-            </div>
-          </div>
-
-          <!-- Jelajah Destinasi Sekitar Kuliner -->
-          <div>
-            <div class="flex items-center justify-between mb-3">
-              <div>
-                <h3 class="text-lg font-bold text-gray-900">Jelajah Destinasi Sekitar Kuliner</h3>
-                <p class="text-xs text-gray-500">Lorem ipsum is simply dummy text of the printing and typesetting industry.</p>
-              </div>
-              <a href="wisata.html" class="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-md shadow-2xs">
-                Jelajah &rsaquo;
-              </a>
-            </div>
-            <div id="reco-destinasi-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 items-stretch">
-              <!-- Rendered via JS -->
-            </div>
-          </div>
-
-        </div>
-
-        <!-- RIGHT AD SPACE (Span 3) -->
-        <div class="lg:col-span-3">
-          <div class="bg-gray-100 border border-gray-200 rounded-2xl h-full min-h-[300px] flex items-center justify-center p-4">
-            <span class="text-sm font-bold text-gray-400 [writing-mode:vertical-lr] sm:[writing-mode:horizontal-tb] lg:[writing-mode:vertical-lr] uppercase tracking-widest">Space Iklan</span>
+          <div id="menu-harga-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 items-stretch">
+            <!-- Rendered via JS -->
           </div>
         </div>
+
+        <!-- Rekomendasi Kuliner Lainnya (disamakan dgn detail_kuliner.html) -->
+        <section aria-label="Rekomendasi kuliner lainnya">
+          <div class="bg-gray-100 rounded-2xl p-5 sm:p-7">
+            <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">Rekomendasi Kuliner Lainnya</h2>
+            <p class="text-xs sm:text-sm text-gray-500 mt-1">Rekomendasi kuliner lain di Pasuruan.</p>
+            <div class="flex justify-end mt-2">
+              <a href="kuliner.html" class="px-3.5 py-1.5 rounded-full bg-blue-700 hover:bg-blue-600 text-white text-[11px] sm:text-xs font-bold shadow transition-colors">Jelajah →</a>
+            </div>
+            <div id="reco-kuliner-grid" class="mt-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Jelajah Destinasi Sekitar Kuliner (disamakan dgn detail_kuliner.html) -->
+        <section aria-label="Jelajah destinasi sekitar kuliner">
+          <div class="bg-gray-100 rounded-2xl p-5 sm:p-7">
+            <h2 id="sekitar-title" class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">Jelajah Destinasi Sekitar Kuliner</h2>
+            <p id="sekitar-desc" class="text-xs sm:text-sm text-gray-500 mt-1">Jelajahi destinasi di sekitar area kuliner ini.</p>
+            <div class="flex justify-end mt-2">
+              <a href="wisata.html" class="px-3.5 py-1.5 rounded-full bg-blue-700 hover:bg-blue-600 text-white text-[11px] sm:text-xs font-bold shadow transition-colors">Jelajah →</a>
+            </div>
+            <div id="reco-destinasi-grid" class="mt-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </section>
 
       </div>
 
@@ -286,14 +292,19 @@
     <!-- FOOTER -->
     <div data-layout-footer></div>
 
-    <!-- JAVASCRIPT LOGIC -->
     <script src="../../public/js/data-kuliner.js"></script>
+    <script src="../../public/js/data-kuliner-menus.js"></script>
+    <script src="../../public/js/data-kuliner-ulasan.js"></script>
     <script src="../../public/js/data-wisata.js"></script>
+    <script src="../../public/js/pages/nearby.js"></script>
     <script src="../../public/js/pages/ulasan.js"></script>
 
     <script src="./partials/pasinfo-header.js" defer></script>
     <script src="./partials/pasinfo-footer.js" defer></script>
     <script src="./partials/pasinfo-layout.js" defer></script>
+    <script src="../../public/js/page-transition.js" defer></script>
+    <script src="../../public/js/pages/internal-nav.js" defer></script>
     <script src="../../public/js/main.js" defer></script>
+    <script src="../../public/js/pages/ulasan-animation.js" defer></script>
   </body>
 </html>

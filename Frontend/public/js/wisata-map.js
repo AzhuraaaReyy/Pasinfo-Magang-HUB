@@ -118,11 +118,12 @@
   map.setMaxBounds(PASURUAN_BOUNDS);
   map.options.maxBoundsViscosity = 1.0;
 
-  var markerLayer = window.L.layerGroup().addTo(map);
-  var markersById = {};
-  var boundaryLayer = window.L.layerGroup().addTo(map);
-  var kecamatanLayer = window.L.layerGroup().addTo(map);
-  var kecamatanRefs = []; // { layer, regionId }
+   var markerLayer = window.L.layerGroup().addTo(map);
+   var markersById = {};
+   var boundaryLayer = window.L.layerGroup().addTo(map);
+   var kecamatanLayer = window.L.layerGroup().addTo(map);
+   var kecamatanRefs = []; // { layer, regionId }
+   var regionBoundsCache = {}; // Cache bounds untuk setiap region (TASK 3)
 
   /* Batas administrasi resmi (disuplai user, bukan dikarang).
      Path relatif terhadap halaman wisata.html. */
@@ -204,36 +205,34 @@
   }
 
   function kecamatanStyle(selected, color) {
+    // TASK: Warna tetap konsisten hijau baik saat dipilih maupun tidak
+    // Hanya opacity sedikit berbeda agar terlihat selected state
     return {
       color: color,
-      weight: selected ? 3 : 1.5,
-      opacity: selected ? 0.95 : 0.65,
+      weight: 1.5,  // Konsisten, tidak berubah saat selected
+      opacity: 0.75,  // Konsisten lebih visible
       fillColor: color,
-      fillOpacity: selected ? 0.32 : 0.14,
+      fillOpacity: 0.18,  // Konsisten fill
     };
   }
 
-  /* Fokus wilayah: poligon region terpilih tampil penuh; poligon lain
-     tetap ada garis batasnya (tanpa isian). Tanpa filter, semua tampil. */
+  /* Fokus wilayah: poligon region terpilih tampil dengan highlight subtle
+     (hanya opacity sedikit lebih tinggi); poligon lain tetap normal. 
+     Warna tetap konsisten hijau/sesuai region. */
   function updateKecamatan() {
     kecamatanRefs.forEach(function (ref) {
       var r = findById(DATA.regions, ref.regionId);
       if (!r) return;
       var selected = state.selectedRegion === ref.regionId;
       if (!kecamatanLayer.hasLayer(ref.layer)) ref.layer.addTo(kecamatanLayer);
-      if (!state.selectedRegion || selected) {
-        ref.layer.setStyle(
-          kecamatanStyle(selected, r.color || "#9ca3af"),
-        );
-      } else {
-        ref.layer.setStyle({
-          color: r.color || "#9ca3af",
-          weight: 1,
-          opacity: 0.55,
-          fillColor: r.color || "#9ca3af",
-          fillOpacity: 0,
-        });
-      }
+      // Warna tetap konsisten, hanya opacity sedikit berbeda saat selected
+      ref.layer.setStyle({
+        color: r.color || "#9ca3af",
+        weight: selected ? 2 : 1.5,  // Sedikit lebih tebal saat selected
+        opacity: selected ? 0.95 : 0.75,  // Sedikit lebih visible saat selected
+        fillColor: r.color || "#9ca3af",
+        fillOpacity: selected ? 0.25 : 0.18,  // Sedikit lebih opaque saat selected
+      });
     });
   }
 
@@ -244,60 +243,68 @@
     });
   }
 
-  function renderAdministrative(kecamatanGeo, kotaGeo, kabupatenGeo) {
-    var rendered = 0;
-    if (kabupatenGeo && kabupatenGeo.features) {
-      kabupatenGeo.features.forEach(function (f) {
-        if (!f.geometry) return;
-        var outline = window.L.geoJSON(f.geometry, {
-          color: "#475569",
-          weight: 2,
-          opacity: 0.9,
-          fill: false,
-          interactive: false,
-        });
-        outline.addTo(boundaryLayer);
-        if (!kabupatenBoundsCache) {
-          kabupatenBoundsCache = outline.getBounds();
-        } else {
-          kabupatenBoundsCache.extend(outline.getBounds());
+   function renderAdministrative(kecamatanGeo, kotaGeo, kabupatenGeo) {
+     var rendered = 0;
+     if (kabupatenGeo && kabupatenGeo.features) {
+       kabupatenGeo.features.forEach(function (f) {
+         if (!f.geometry) return;
+         var outline = window.L.geoJSON(f.geometry, {
+           color: "#475569",
+           weight: 2,
+           opacity: 0.9,
+           fill: false,
+           interactive: false,
+         });
+         outline.addTo(boundaryLayer);
+         if (!kabupatenBoundsCache) {
+           kabupatenBoundsCache = outline.getBounds();
+         } else {
+           kabupatenBoundsCache.extend(outline.getBounds());
+         }
+       });
+     }
+     if (kotaGeo && kotaGeo.features) {
+       kotaGeo.features.forEach(function (f) {
+         if (!f.geometry) return;
+         window.L.geoJSON(f.geometry, {
+           color: "#0f172a",
+           weight: 3,
+           opacity: 0.95,
+           fill: false,
+           interactive: false,
+         }).addTo(boundaryLayer);
+       });
+     }
+        if (kecamatanGeo && kecamatanGeo.features) {
+          kecamatanGeo.features.forEach(function (f) {
+            if (!f.geometry) return;
+            var regionId = classifyKecamatan(f);
+            var r = findById(DATA.regions, regionId);
+            if (!r) return;
+            var color = r.color || "#9ca3af";
+            var layer = window.L.geoJSON(f.geometry, {
+              style: kecamatanStyle(false, color),  // TASK: Warna konsisten hijau (diperbaiki di kecamatanStyle)
+            });
+            var kecName = (f.properties && f.properties.kecamatan) || r.name;
+            layer.bindTooltip(kecName + " — " + r.name, { sticky: true });
+            layer.on("click", function () {
+              selectRegion(regionId);
+            });
+            kecamatanLayer.addLayer(layer);
+            kecamatanRefs.push({ layer: layer, regionId: regionId });
+            
+            // TASK 3: Cache bounds untuk setiap region
+            if (!regionBoundsCache[regionId]) {
+              regionBoundsCache[regionId] = layer.getBounds();
+            } else {
+              regionBoundsCache[regionId].extend(layer.getBounds());
+            }
+            
+            rendered++;
+          });
         }
-      });
-    }
-    if (kotaGeo && kotaGeo.features) {
-      kotaGeo.features.forEach(function (f) {
-        if (!f.geometry) return;
-        window.L.geoJSON(f.geometry, {
-          color: "#0f172a",
-          weight: 3,
-          opacity: 0.95,
-          fill: false,
-          interactive: false,
-        }).addTo(boundaryLayer);
-      });
-    }
-    if (kecamatanGeo && kecamatanGeo.features) {
-      kecamatanGeo.features.forEach(function (f) {
-        if (!f.geometry) return;
-        var regionId = classifyKecamatan(f);
-        var r = findById(DATA.regions, regionId);
-        if (!r) return;
-        var color = r.color || "#9ca3af";
-        var layer = window.L.geoJSON(f.geometry, {
-          style: kecamatanStyle(false, color),
-        });
-        var kecName = (f.properties && f.properties.kecamatan) || r.name;
-        layer.bindTooltip(kecName + " — " + r.name, { sticky: true });
-        layer.on("click", function () {
-          selectRegion(regionId);
-        });
-        kecamatanLayer.addLayer(layer);
-        kecamatanRefs.push({ layer: layer, regionId: regionId });
-        rendered++;
-      });
-    }
-    return rendered;
-  }
+     return rendered;
+   }
 
   function loadBoundaries() {
     if (!window.fetch) return;
@@ -331,8 +338,69 @@
     return kabupatenBoundsCache || PASURUAN_BOUNDS;
   }
 
+  /* ── Transisi viewport halus (Owner 2026-10-14) ──────────────────
+     Semua perpindahan (pilih wilayah, reset, toggle) memakai flyTo()
+     supaya zoom-out selalu beranimasi mulus. fitBounds() bawaan
+     Leaflet mengabaikan opsi `duration` dan "snap" singkat, sehingga
+     transisi pin (level 18) → wilayah terasa melompat. */
+  var FLY_DURATION = 0.9; // detik
+  var FLY_EASE = 0.25;
+  var REGION_MAX_ZOOM = 16;
+
+  /* Zoom tampilan penuh — acuan agar pilih wilayah selalu jelas lebih
+     dekat dari tampilan penuh. (Tanpa padding agar bingkai awal sama
+     persis dengan fitBounds sebelumnya.) */
+  function fullViewZoom() {
+    return map.getBoundsZoom(fullBounds());
+  }
+
   function defaultView(instant) {
-    map.fitBounds(fullBounds(), { animate: instant ? false : !reducedMotion });
+    var b = fullBounds();
+    if (instant || reducedMotion) {
+      map.fitBounds(b, { animate: false });
+      return;
+    }
+    map.flyTo(b.getCenter(), fullViewZoom(), {
+      animate: true,
+      duration: FLY_DURATION,
+      easeLinearity: FLY_EASE,
+    });
+  }
+
+  /* Bingkai satu wilayah: hitung zoom ideal dari bounds-nya, lalu
+     pastikan minimal 1 level lebih dekat dari tampilan penuh agar
+     wilayah besar (mis. Pasuruan Barat) tidak tampak seperti tampilan
+     penuh. Mengembalikan { center, zoom } atau null. */
+  function regionView(id) {
+    var b = regionBoundsCache[id];
+    if (b && b.isValid()) {
+      var fit = map.getBoundsZoom(b, false, window.L.point(24, 24));
+      var z = Math.min(Math.max(fit, fullViewZoom() + 1), REGION_MAX_ZOOM);
+      return { center: b.getCenter(), zoom: z };
+    }
+    var r = findById(DATA.regions, id);
+    if (
+      r &&
+      r.center &&
+      Number.isFinite(r.center.latitude) &&
+      Number.isFinite(r.center.longitude)
+    ) {
+      return {
+        center: window.L.latLng(r.center.latitude, r.center.longitude),
+        zoom: Math.min(Math.max(r.zoom || 0, fullViewZoom() + 1), REGION_MAX_ZOOM),
+      };
+    }
+    return null;
+  }
+
+  function flyToRegion(id) {
+    var v = regionView(id);
+    if (!v) return;
+    map.flyTo(v.center, v.zoom, {
+      animate: !reducedMotion,
+      duration: reducedMotion ? 0 : FLY_DURATION,
+      easeLinearity: FLY_EASE,
+    });
   }
 
   /* ── chips, count, detail ──────────────────────────── */
@@ -422,78 +490,112 @@
   var ICON_TAG_SM =
     '<svg class="h-3.5 w-3.5 shrink-0 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" /><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" /></svg>';
 
+  /* Ikon aset Owner (public/assets/icons) untuk rating, kategori, cuaca. */
+  var ICON_RATING_IMG =
+    '<img src="../../public/assets/icons/icon_rating.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" />';
+  var ICON_KATEGORI_IMG =
+    '<img src="../../public/assets/icons/icon_kategori.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" />';
+  var ICON_CUACA_IMG =
+    '<img src="../../public/assets/icons/icon_cuaca.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" />';
+
   function renderDetail() {
-    var panel = document.getElementById("dest-detail");
-    if (!panel) return;
-    var d = state.selectedDestination ? getDestination(state.selectedDestination) : null;
+     var panel = document.getElementById("dest-detail");
+     if (!panel) return;
+     var d = state.selectedDestination ? getDestination(state.selectedDestination) : null;
 
-    if (!d || !isValidDestination(d)) {
-      panel.innerHTML =
-        '<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">' +
-        '<span class="font-bold text-gray-800 text-sm block mb-3">Destinasi</span>' +
-        '<p class="text-sm text-gray-500">Pilih penanda pada peta atau kartu destinasi untuk melihat detail.</p>' +
-        "</div>";
-      return;
-    }
+     if (!d || !isValidDestination(d)) {
+       panel.innerHTML =
+         '<div class="bg-white rounded-xl shadow-sm border-2 p-4 flex flex-col flex-1">' +
+         '<span class="font-bold text-gray-800 text-2xl block mb-3">Destinasi</span>' +
+         '<p class="text-sm text-gray-500 text-center flex items-center justify-center flex-1">Pilih penanda pada peta atau kartu destinasi untuk melihat detail.</p>' +
+         "</div>";
+       return;
+     }
 
-    var price =
-      d.prices && d.prices.length ? d.prices.join(" - ") : null;
-    var rows = metaRow(ICON_PIN_SM, d.address || "-");
-    if (d.opening_hours) rows += metaRow(ICON_CLOCK_SM, d.opening_hours);
-    if (price) rows += metaRow(ICON_TAG_SM, price);
+     /* Sinkron dgn kartu listing (TASK-WIS-DETAIL-SYNC-001): pakai rentang
+        harga yang sama supaya panel peta tidak tampil beda dari kartu. */
+     var price =
+       window.PasinfoWisata && window.PasinfoWisata.priceLabel
+         ? window.PasinfoWisata.priceLabel(d)
+         : d.prices && d.prices.length
+           ? d.prices.join(" - ")
+           : null;
+     var rows = metaRow(ICON_PIN_SM, d.address || "-");
+     if (d.opening_hours) rows += metaRow(ICON_CLOCK_SM, d.opening_hours);
+     if (price) rows += metaRow(ICON_TAG_SM, price);
 
-    var cta = "";
-    if (d.googleMapsUrl) {
-      cta =
-        '<a href="' +
-        d.googleMapsUrl +
-        '" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex items-center justify-center w-full px-4 py-2 rounded-md text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-colors">Buka di Google Maps' +
-        '<span class="sr-only"> (tautan eksternal)</span></a>';
-    }
+     /* Info tambahan (Owner 2026-10-14): rating, kategori, cuaca. */
+     var ratingText = Number.isFinite(d.rating)
+       ? d.rating + "/5" + (d.reviews_label ? " \u00B7 " + d.reviews_label : "")
+       : "-";
+     rows += metaRow(ICON_RATING_IMG, ratingText);
+     var cat = categoryName(d.categoryId);
+     if (cat) rows += metaRow(ICON_KATEGORI_IMG, cat);
+     var weather =
+       window.PasinfoWisata && window.PasinfoWisata.weatherOf
+         ? window.PasinfoWisata.weatherOf(d)
+         : d.weather;
+     if (weather && weather.condition_label) {
+       var weatherText =
+         weather.condition_label +
+         (Number.isFinite(weather.temperature_c)
+           ? " \u00B7 " + weather.temperature_c + "\u00B0C"
+           : "");
+       rows += metaRow(ICON_CUACA_IMG, weatherText);
+     }
 
-    var detailLink =
-      '<a href="detail_wisata.html?slug=' +
-      d.slug +
-      '" class="mt-2 inline-flex items-center justify-center w-full px-4 py-2 rounded-md text-xs font-bold text-red-600 hover:text-red-700 transition-colors">Lihat Halaman Detail &rarr;</a>';
+     var cta = "";
+     if (d.googleMapsUrl) {
+       cta =
+         '<a href="' +
+         d.googleMapsUrl +
+         '" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex items-center justify-center w-full px-4 py-2 rounded-md text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-colors">Buka di Google Maps' +
+         '<span class="sr-only"> (tautan eksternal)</span></a>';
+     }
 
-    var photo = d.media && d.media[0] && d.media[0].url;
-    var photoBox = photo
-      ? '<img src="' +
-        photo +
-        '" alt="Foto ' +
-        d.name +
-        '" loading="lazy" class="w-full h-36 rounded-lg mb-3 object-cover" />'
-      : '<div class="w-full h-36 rounded-lg mb-3 flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300" role="img" aria-label="Foto ' +
-        d.name +
-        ' (placeholder)">' +
-        '<span class="text-xs font-semibold text-gray-500">Foto: ' +
-        d.name +
-        "</span></div>";
+     var detailLink =
+       '<a href="detail_wisata.html?slug=' +
+       d.slug +
+       '" class="mt-2 inline-flex items-center justify-center w-full px-4 py-2 rounded-md text-xs font-bold text-red-600 hover:text-red-700 transition-colors">Lihat Halaman Detail &rarr;</a>';
 
-    panel.innerHTML =
-      '<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col justify-between h-full">' +
-      "<div>" +
-      '<span class="font-bold text-gray-800 text-sm block mb-3">Destinasi</span>' +
-      photoBox +
-      '<p class="text-[11px] font-semibold text-red-700 uppercase">' +
-      regionName(d.regionId) +
-      " · " +
-      categoryName(d.categoryId) +
-      "</p>" +
-      '<h3 class="font-bold text-base text-gray-900">' +
-      d.name +
-      "</h3>" +
-      '<p class="text-xs text-gray-500 mt-1 leading-relaxed">' +
-      (d.short_description || "") +
-      "</p>" +
-      "</div>" +
-      '<div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-gray-100 text-[11px] text-gray-600">' +
-      rows +
-      "</div>" +
-      cta +
-      detailLink +
-      "</div>";
-  }
+     var photo = d.media && d.media[0] && d.media[0].url;
+     var photoBox = photo
+       ? '<img src="' +
+         photo +
+         '" alt="Foto ' +
+         d.name +
+         '" loading="lazy" class="w-full h-36 rounded-lg mb-3 object-cover" />'
+       : '<div class="w-full h-36 rounded-lg mb-3 flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300" role="img" aria-label="Foto ' +
+         d.name +
+         ' (placeholder)">' +
+         '<span class="text-xs font-semibold text-gray-500">Foto: ' +
+         d.name +
+         "</span></div>";
+
+     panel.innerHTML =
+       '<div class="bg-white rounded-xl shadow-sm border-2 p-4 flex flex-col flex-1">' +
+       "<div>" +
+       '<span class="font-bold text-gray-800 text-2xl block mb-3">Destinasi</span>' +
+       photoBox +
+       '<p class="text-[11px] font-semibold text-red-700 uppercase">' +
+       regionName(d.regionId) +
+       " · " +
+       categoryName(d.categoryId) +
+       "</p>" +
+       '<h3 class="font-bold text-base text-gray-900">' +
+       d.name +
+       "</h3>" +
+       '<p class="text-xs text-gray-500 mt-1 leading-relaxed">' +
+       (d.short_description || "") +
+       "</p>" +
+       "</div>" +
+       '<div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-gray-100 text-[11px] text-gray-600">' +
+       rows +
+       "</div>" +
+       cta +
+       detailLink +
+       "</div>";
+   }
 
   function highlightDaftarCard() {
     var cards = document.querySelectorAll("#dest-grid [data-dest-id]");
@@ -532,37 +634,55 @@
     state.selectedDestination = null; // ganti wilayah = reset pilihan destinasi
     updateAll();
     notifyDaftar();
-    // Viewport tidak diubah: seluruh kabupaten selalu terlihat.
+
+    if (id) {
+      // Auto-zoom mulus ke wilayah terpilih (sesuai bounds wilayah).
+      flyToRegion(id);
+    } else {
+      // Toggle off / "Semua Wilayah" → zoom-out mulus ke tampilan penuh.
+      defaultView(false);
+    }
   }
 
-  function selectCategory(id) {
-    state.selectedCategory = id || null;
-    var sel = state.selectedDestination ? getDestination(state.selectedDestination) : null;
-    var visible = sel && getFilteredDestinations().some(function (d) {
-      return d.id === sel.id;
-    });
-    if (!visible) state.selectedDestination = null;
-    updateAll();
-    notifyDaftar();
-  }
+   function selectCategory(id) {
+     state.selectedCategory = id || null;
+     var sel = state.selectedDestination ? getDestination(state.selectedDestination) : null;
+     var visible = sel && getFilteredDestinations().some(function (d) {
+       return d.id === sel.id;
+     });
+     if (!visible) state.selectedDestination = null;
+     updateAll();
+     notifyDaftar();
+   }
 
-  function selectDestination(id) {
-    var d = getDestination(id);
-    if (!d || !isValidDestination(d)) return;
-    state.selectedDestination = id;
-    renderMarkers();
-    renderDetail();
-    highlightDaftarCard();
-  }
+   function selectDestination(id) {
+     var d = getDestination(id);
+     if (!d || !isValidDestination(d)) return;
+     state.selectedDestination = id;
+     renderMarkers();
+     renderDetail();
+     highlightDaftarCard();
+     
+    // TASK: Zoom ke marker saat dipilih dengan smooth transition (level 15)
+    if (d && d.place && Number.isFinite(d.place.latitude) && Number.isFinite(d.place.longitude)) {
+      setTimeout(function() {
+        // Zoom ke marker dengan level 15 (tidak terlalu dekat; Owner 2026-10-14).
+        map.flyTo([d.place.latitude, d.place.longitude], 15, {  // Level 15 (dikurangi dari 18)
+          animate: !reducedMotion,
+          duration: 0.8
+        });
+      }, 100);
+    }
+   }
 
-  function resetFilters() {
-    state.selectedRegion = null;
-    state.selectedCategory = null;
-    state.selectedDestination = null;
-    updateAll();
-    notifyDaftar();
-    defaultView(false);
-  }
+   function resetFilters() {
+     state.selectedRegion = null;
+     state.selectedCategory = null;
+     state.selectedDestination = null;
+     updateAll();
+     notifyDaftar();
+     defaultView(false);  // Smooth zoom-out animation
+   }
 
   /* ── wiring ────────────────────────────────────────── */
 

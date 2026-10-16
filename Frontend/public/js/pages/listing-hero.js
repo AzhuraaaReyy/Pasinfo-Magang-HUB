@@ -43,7 +43,7 @@
       '<p id="hero-desc" class="text-sm md:text-base text-gray-200/90 leading-relaxed max-w-md font-normal drop-shadow-sm line-clamp-3">' + cfg.desc + "</p>" +
       "</div>" +
       '<div class="w-full lg:w-auto flex-shrink-0 z-30">' +
-      '<div id="cards-container" class="flex items-center space-x-4 overflow-x-auto no-scrollbar py-3 px-1 max-w-full" aria-label="' + cfg.cardsLabel + '"></div>' +
+        '<div id="cards-container" class="flex items-center space-x-4 overflow-x-auto no-scrollbar py-3 px-1 max-w-full" aria-label="' + cfg.cardsLabel + '"></div>' +
       "</div>" +
       "</div>" +
       "</section>"

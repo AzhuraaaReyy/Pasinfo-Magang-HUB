@@ -29,6 +29,21 @@
   var mapEl = document.getElementById("budaya-map");
   if (!DATA || !mapEl || !window.L) return;
 
+  // FOTO SEMENTARA (Owner 2026-10-14): gambar contoh domain untuk kartu
+  // featured; media.url dipakai bila ada. Ganti foto asli menyusul.
+  var BUDAYA_FALLBACK_PHOTOS = [
+    "../../public/assets/images/budaya/optimized/Tari Terbang Bandung & Tari Pasuruan Kondang.thumb.webp",
+    "../../public/assets/images/budaya/optimized/Tradisi-Skilot.thumb.webp",
+    "../../public/assets/images/budaya/optimized/Yadnya Karo Sodoran (Tosari).thumb.webp"
+  ];
+  function budayaPhotoFor(d) {
+    if (d && d.media && d.media[0] && d.media[0].url) return d.media[0].url;
+    var key = d && d.id != null ? String(d.id) : "";
+    var sum = 0;
+    for (var i = 0; i < key.length; i++) sum += key.charCodeAt(i);
+    return BUDAYA_FALLBACK_PHOTOS[sum % BUDAYA_FALLBACK_PHOTOS.length];
+  }
+
   var reducedMotion =
     window.matchMedia &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -140,6 +155,7 @@
   var boundaryLayer = window.L.layerGroup().addTo(map);
   var kecamatanLayer = window.L.layerGroup().addTo(map);
   var kecamatanRefs = []; // { layer, regionId }
+  var regionBoundsCache = {}; // Cache bounds per wilayah untuk flyTo (mirror Kuliner).
 
   /* Batas administrasi resmi (disuplai user, bukan dikarang).
      Path relatif terhadap halaman budaya.html. */
@@ -182,7 +198,7 @@
         zIndexOffset: d.id === state.selectedCulture ? 1000 : 0,
       });
       marker.on("click", function () {
-        selectCulture(d.id, { fly: false });
+        selectCulture(d.id);
       });
       markersById[d.id] = marker;
       markerLayer.addLayer(marker);
@@ -312,6 +328,13 @@
         });
         kecamatanLayer.addLayer(layer);
         kecamatanRefs.push({ layer: layer, regionId: regionId });
+
+        // Cache bounds tiap wilayah (mirror Kuliner) untuk zoom flyTo.
+        if (!regionBoundsCache[regionId]) {
+          regionBoundsCache[regionId] = layer.getBounds();
+        } else {
+          regionBoundsCache[regionId].extend(layer.getBounds());
+        }
         rendered++;
       });
     }
@@ -350,16 +373,84 @@
     return kabupatenBoundsCache || PASURUAN_BOUNDS;
   }
 
+  /* ── Transisi viewport halus (mirror Kuliner) ────────────────────
+     Pilih wilayah / reset / pilih budaya memakai flyTo() supaya
+     zoom selalu beranimasi mulus (fitBounds bawaan "snap"). */
+  var FLY_DURATION = 0.9; // detik
+  var FLY_EASE = 0.25;
+  var REGION_MAX_ZOOM = 16;
+  var CULTURE_ZOOM = 15;
+
+  function fullViewZoom() {
+    return map.getBoundsZoom(fullBounds());
+  }
+
   function defaultView(instant) {
-    map.fitBounds(fullBounds(), { animate: instant ? false : !reducedMotion });
+    var b = fullBounds();
+    if (instant || reducedMotion) {
+      map.fitBounds(b, { animate: false });
+      return;
+    }
+    map.flyTo(b.getCenter(), fullViewZoom(), {
+      animate: true,
+      duration: FLY_DURATION,
+      easeLinearity: FLY_EASE,
+    });
+  }
+
+  /* Bingkai satu wilayah: zoom ideal dari bounds-nya, minimal 1 level
+     lebih dekat dari tampilan penuh (mirror Kuliner). */
+  function regionView(id) {
+    var b = regionBoundsCache[id];
+    if (b && b.isValid()) {
+      var fit = map.getBoundsZoom(b, false, window.L.point(24, 24));
+      var z = Math.min(Math.max(fit, fullViewZoom() + 1), REGION_MAX_ZOOM);
+      return { center: b.getCenter(), zoom: z };
+    }
+    var r = findById(DATA.regions, id);
+    if (
+      r &&
+      r.center &&
+      Number.isFinite(r.center.latitude) &&
+      Number.isFinite(r.center.longitude)
+    ) {
+      return {
+        center: window.L.latLng(r.center.latitude, r.center.longitude),
+        zoom: Math.min(Math.max(r.zoom || 0, fullViewZoom() + 1), REGION_MAX_ZOOM),
+      };
+    }
+    return null;
+  }
+
+  function flyToRegion(id) {
+    var v = regionView(id);
+    if (!v) return;
+    map.flyTo(v.center, v.zoom, {
+      animate: !reducedMotion,
+      duration: reducedMotion ? 0 : FLY_DURATION,
+      easeLinearity: FLY_EASE,
+    });
+  }
+
+  /* Zoom mulus ke lokasi budaya terpilih (level CULTURE_ZOOM, mirror
+     Kuliner). Hanya bila koordinat asli tersedia. */
+  function flyToCulture(d) {
+    if (!d || !d.place) return;
+    if (!Number.isFinite(d.place.latitude) || !Number.isFinite(d.place.longitude)) return;
+    setTimeout(function () {
+      map.flyTo([d.place.latitude, d.place.longitude], CULTURE_ZOOM, {
+        animate: !reducedMotion,
+        duration: 0.8,
+      });
+    }, 100);
   }
 
   /* ── chips, count, detail ──────────────────────────── */
 
   var CHIP_BASE =
     "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors";
-  var CHIP_ACTIVE = "bg-blue-700 text-white";
-  var CHIP_IDLE = "bg-blue-100 text-blue-700 hover:bg-blue-200";
+  var CHIP_ACTIVE = "bud-accent text-white";
+  var CHIP_IDLE = "bud-accent-soft";
 
   function chipButton(label, pressed, attrs) {
     var btn = document.createElement("button");
@@ -429,24 +520,16 @@
     var panel = document.getElementById("bud-featured");
     if (!panel) return;
     /* Satu-satunya pemilik #bud-featured adalah map ini (jangan render
-       dari script lain agar tidak dobel). Default: budaya featured
-       pertama / item pertama dari daftar terfilter. */
+       dari script lain agar tidak dobel). Default (belum ada pilihan) =
+       pesan terpusat "Pilih penanda…" (paritas kartu peta Kuliner),
+       BUKAN fallback ke item pertama. */
     var d = state.selectedCulture ? getCulture(state.selectedCulture) : null;
 
     if (!d || !isValidCulture(d)) {
-      var list = getFilteredCultures();
-      var feat = null;
-      for (var i = 0; i < list.length; i++) {
-        if (list[i].featured) { feat = list[i]; break; }
-      }
-      d = feat || list[0] || null;
-    }
-
-    if (!d || !isValidCulture(d)) {
       panel.innerHTML =
-        '<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">' +
-        '<span class="font-bold text-gray-800 text-sm block mb-3">Budaya</span>' +
-        '<p class="text-sm text-gray-500">Pilih penanda pada peta atau kartu budaya untuk melihat detail.</p>' +
+        '<div class="bg-white rounded-xl shadow-sm border-2 p-4 flex flex-col flex-1">' +
+        '<span class="font-bold text-gray-800 text-2xl block mb-3">Budaya</span>' +
+        '<p class="text-sm text-gray-500 text-center flex items-center justify-center flex-1">Pilih penanda pada peta atau kartu budaya untuk melihat detail.</p>' +
         "</div>";
       return;
     }
@@ -459,16 +542,16 @@
       cta =
         '<a href="' +
         d.googleMapsUrl +
-        '" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex items-center justify-center w-full px-4 py-2 rounded-md text-xs font-bold text-white bg-blue-700 hover:bg-blue-800 transition-colors">Buka di Google Maps' +
+        '" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex items-center justify-center w-full px-4 py-2 rounded-md text-xs font-bold text-white bud-accent transition-colors">Buka di Google Maps' +
         '<span class="sr-only"> (tautan eksternal)</span></a>';
     }
 
     var detailLink =
       '<a href="detail_budaya.html?slug=' +
       d.slug +
-      '" class="mt-2 inline-flex items-center justify-center w-full px-4 py-2 rounded-md text-xs font-bold text-blue-700 hover:text-blue-800 transition-colors">Lihat Halaman Detail &rarr;</a>';
+      '" class="mt-2 inline-flex items-center justify-center w-full px-4 py-2 rounded-md text-xs font-bold bud-accent-text transition-colors">Lihat Halaman Detail &rarr;</a>';
 
-    var photo = d.media && d.media[0] && d.media[0].url;
+    var photo = budayaPhotoFor(d);
     var photoBox = photo
       ? '<img src="' +
         photo +
@@ -483,11 +566,11 @@
         "</span></div>";
 
     panel.innerHTML =
-      '<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col justify-between h-full">' +
+      '<div class="bg-white rounded-xl shadow-sm border-2 p-4 flex flex-col flex-1">' +
       "<div>" +
-      '<span class="font-bold text-gray-800 text-sm block mb-3">Budaya</span>' +
+      '<span class="font-bold text-gray-800 text-2xl block mb-3">Budaya</span>' +
       photoBox +
-      '<p class="text-[11px] font-semibold text-blue-700 uppercase">' +
+      '<p class="text-[11px] font-semibold bud-accent-text uppercase">' +
       regionName(d.regionId) +
       " · " +
       categoryName(d.categoryId) +
@@ -544,7 +627,13 @@
     state.selectedCulture = null; // ganti wilayah = reset pilihan budaya
     updateAll();
     notifyDaftar();
-    // Viewport tidak diubah: seluruh kabupaten selalu terlihat.
+    // Zoom otomatis mulus ke wilayah terpilih (mirror Kuliner); toggle
+    // off → zoom-out mulus ke tampilan penuh.
+    if (id) {
+      flyToRegion(id);
+    } else {
+      defaultView(false);
+    }
   }
 
   function selectCategory(id) {
@@ -565,6 +654,8 @@
     renderMarkers();
     renderDetail();
     highlightDaftarCard();
+    // Zoom mulus ke lokasi budaya terpilih (mirror Kuliner).
+    flyToCulture(d);
   }
 
   function resetFilters() {

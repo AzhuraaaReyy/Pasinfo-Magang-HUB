@@ -2,45 +2,39 @@
 <html lang="id" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
+    <!-- Tirai transisi halaman: CSS dipusatkan di src/input.css,
+         logika di public/js/page-enter.js (HTML bersih - Owner). -->
+    <script src="../../public/js/page-enter.js"></script>
+    <!-- Preload foto hero (Owner 2026-10-15): elemen <img> hero dibuat via JS
+         (detail-wisata.js) sehingga browser baru memintanya SETELAH
+         DOMContentLoaded -> sempat terlihat "loading". Preload berikut memulai
+         unduhan sejak awal parse <head>. Peta foto adalah mirror dari
+         data-wisata.js (PHOTO_FALLBACK + photoIndex); untuk semua destinasi
+         id === slug (terverifikasi 64/64), jadi cukup pakai ?slug. -->
     <script>
-      /* Tirai masuk transisi halaman (Owner rev.3): hanya muncul bila
-         navigasi datang dari transisi internal (lihat page-transition.js). */
       (function () {
         try {
-          if (sessionStorage.getItem("ph-nav") === "1") {
-            sessionStorage.removeItem("ph-nav");
-            document.documentElement.classList.add("ph-entering");
-          }
+          var slug = new URLSearchParams(location.search).get("slug");
+          if (!slug) return;
+          var F = [
+            "../../public/assets/images/wisata/optimized/bromo2.webp",
+            "../../public/assets/images/wisata/optimized/bromo3.webp",
+            "../../public/assets/images/wisata/optimized/bromo_banner.webp",
+            "../../public/assets/images/wisata/optimized/purwodadi-botanic-garden.webp",
+            "../../public/assets/images/wisata/optimized/taman_safari_indonesia_2.webp",
+            "../../public/assets/images/wisata/optimized/air-terjun-kakek-bodo.webp",
+          ];
+          var h = 0;
+          for (var i = 0; i < slug.length; i++) h = (h + slug.charCodeAt(i)) % F.length;
+          var link = document.createElement("link");
+          link.rel = "preload";
+          link.as = "image";
+          link.fetchPriority = "high";
+          link.href = F[h];
+          document.head.appendChild(link);
         } catch (e) {}
       })();
     </script>
-    <style>
-      /* Tirai mulai penuh lalu memudar, menyatu dengan fade halaman asal. */
-      html.ph-entering::after {
-        content: "";
-        position: fixed;
-        inset: 0;
-        z-index: 9999;
-        background-color: #f9fafb;
-        pointer-events: none;
-        opacity: 1;
-        animation: ph-curtain-out 0.42s ease-out forwards;
-      }
-      @keyframes ph-curtain-out {
-        from {
-          opacity: 1;
-        }
-        to {
-          opacity: 0;
-        }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        html.ph-entering::after {
-          animation: none;
-          opacity: 0;
-        }
-      }
-    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Detail Wisata Bromo - Pasuruan Info</title>
 
@@ -50,6 +44,47 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="../../public/css/styles.css" />
     <link rel="stylesheet" href="../../public/vendor/leaflet/leaflet.css" />
+    <!-- Equal Height Columns + Fixed Line-Height & Min-Height (Owner 2026-10-14).
+         Wisata pattern (design.md §66.5): raw CSS scoped — tanpa build:css dan
+         tanpa class Tailwind baru dari JS. Semua kartu dalam grid rekomendasi
+         (Serupa/Lainnya/Sekitar) dibuat sama tinggi; judul & deskripsi memakai
+         line-height tetap + min-height 2 baris agar tinggi kartu tidak berubah
+         oleh panjang teks. -->
+    <style>
+      #reco-serupa,
+      #reco-lainnya,
+      #reco-sekitar {
+        grid-auto-rows: minmax(0, 1fr);
+      }
+      #reco-serupa > a,
+      #reco-lainnya > a,
+      #reco-sekitar > a,
+      #reco-serupa article,
+      #reco-lainnya article,
+      #reco-sekitar article {
+        height: 100%;
+      }
+      #reco-serupa article h3,
+      #reco-lainnya article h3,
+      #reco-sekitar article h3 {
+        line-height: 1.4;
+        min-height: 2.8em;
+      }
+      #reco-serupa article h3 + p,
+      #reco-lainnya article h3 + p,
+      #reco-sekitar article h3 + p {
+        line-height: 1.5;
+        min-height: 3em;
+      }
+      #reco-serupa article > div:last-child > div:last-child,
+      #reco-lainnya article > div:last-child > div:last-child,
+      #reco-sekitar article > div:last-child > div:last-child {
+        margin-top: auto;
+      }
+    </style>
+    <!-- GSAP Animation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" defer></script>
     <script src="../../public/js/opening-hours-util.js" defer></script>
     <script src="../../public/js/add-sources-data.js" defer></script>
   </head>
@@ -69,7 +104,7 @@
             >Wisata Pasuruan</a
           >
           <span aria-hidden="true">/</span>
-          <span id="crumb-name" class="text-gray-900 font-semibold truncate"
+          <span id="crumb-name" class="text-red-600 font-semibold truncate"
             >Detail Wisata</span
           >
         </nav>
@@ -81,16 +116,21 @@
       <div
         class="relative rounded-2xl overflow-hidden shadow-sm h-[340px] sm:h-[420px] lg:h-[440px]"
       >
-        <!-- Hero Media (placeholder hingga foto tersedia) -->
+        <!-- Hero Media (foto langsung; paritas detail_acara.html, Owner 2026-10-16) -->
          <div
            id="hero-media"
-           class="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-900 via-stone-800 to-slate-900"
+           class="w-full h-full bg-gradient-to-br from-amber-900 via-stone-800 to-slate-900"
            role="img"
-           aria-label="Foto destinasi (segera hadir)"
+           aria-label="Foto destinasi"
          >
-           <span id="hero-media-label" class="text-white/70 text-sm font-semibold px-6 text-center"
-             >Foto destinasi segera hadir</span
-           >
+           <img
+             id="hero-media-img"
+             src="../../public/assets/images/poster-dummy.svg"
+             alt="Foto destinasi (placeholder)"
+             fetchpriority="high"
+             decoding="async"
+             class="w-full h-full object-cover"
+           />
          </div>
 
          <!-- Dark Overlay Gradient -->
@@ -139,14 +179,15 @@
       </div>
     </section>
 
-    <!-- MAIN CONTENT GRID -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 space-y-6">
-      <!-- ROW 1: Tentang + Lokasi & Space -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-max lg:auto-rows-fr">
-        
-        <!-- LEFT: Tentang Wisata (lg:col-span-2, h-full) -->
-        <section class="lg:col-span-2 bg-gray-100 rounded-2xl p-5 sm:p-7 h-full" aria-labelledby="tentang-title">
-          <h2 id="tentang-title" class="text-lg sm:text-xl font-bold text-gray-900 mb-4">
+     <!-- MAIN CONTENT GRID -->
+     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 space-y-6">
+       <!-- ROW 1: Tentang + Lokasi & Space — BALANCED 2-COLUMN (SAMA LEBAR) -->
+       <!-- Mobile: 1 col stacked | Tablet: 1 col stacked | Desktop: 2 col equal width (centered) -->
+       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 auto-rows-max lg:auto-rows-fr">
+         
+        <!-- LEFT: Tentang Wisata (lg:col-span-1, sama lebar dengan Lokasi) -->
+        <section class="lg:col-span-1 bg-gray-100 rounded-2xl p-5 sm:p-7 h-full" aria-labelledby="tentang-title">
+          <h2 id="tentang-title" class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
             Tentang Wisata
           </h2>
           <!-- Diisi dari field `description` (paragraf milik Owner) via detail-wisata.js -->
@@ -200,54 +241,58 @@
                </dt>
                <dd id="info-fasilitas" class="font-bold text-gray-800 text-right">-</dd>
              </div>
-           </dl>
+            </dl>
 
-          <!-- Sumber Informasi & Status Verifikasi (bagian dari Tentang Wisata) -->
-          <div class="mt-8 pt-6 border-t border-gray-200">
-            <h3 class="text-sm font-bold text-gray-900 mb-4">Sumber & Verifikasi</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p class="text-xs text-gray-600 font-semibold mb-2">Sumber Informasi</p>
-                <div id="source-info" class="text-xs text-gray-600">
-                  <p>Memuat sumber informasi...</p>
-                </div>
-              </div>
-              <div>
-                <p class="text-xs text-gray-600 font-semibold mb-2">Status Verifikasi</p>
-                <div id="verification-info" class="text-xs text-gray-600">
-                  <p>Memuat status verifikasi...</p>
-                </div>
-              </div>
-            </div>
-          </div>
+           <!-- Sumber Informasi & Status Verifikasi (bagian dari Tentang Wisata) -->
+           <div class="mt-8 pt-6 border-t border-gray-200">
+             <dl class="text-xs sm:text-sm space-y-2.5">
+               <!-- SUMBER INFORMASI -->
+               <div class="flex items-start justify-between gap-4 py-2.5 border-b border-gray-200">
+                 <dt class="flex items-center gap-2 text-gray-500 font-medium shrink-0">
+                   Sumber Informasi
+                 </dt>
+                 <dd id="source-info" class="text-gray-800 text-right">
+                   <p>Memuat sumber informasi...</p>
+                 </dd>
+               </div>
+               
+               <!-- STATUS VERIFIKASI -->
+               <div class="flex items-start justify-between gap-4 py-2.5">
+                 <dt class="flex items-center gap-2 text-gray-500 font-medium shrink-0">
+                   Status Verifikasi
+                 </dt>
+                 <dd id="verification-info" class="text-gray-800 text-right">
+                   <p>Memuat status verifikasi...</p>
+                 </dd>
+               </div>
+             </dl>
+           </div>
          </section>
 
-        <!-- RIGHT: Lokasi & Space (lg:col-span-1, h-full flex flex-col) -->
-        <div class="space-y-6 h-full flex flex-col">
-          
-          <!-- LOKASI & RUTE CARD (flex-1) -->
-          <section class="bg-gray-100 rounded-2xl p-5 sm:p-7 flex-1" aria-labelledby="lokasi-title">
-            <h2 id="lokasi-title" class="text-lg sm:text-xl font-bold text-gray-900 mb-3">
+         <!-- RIGHT: Lokasi & Space (lg:col-span-1, sama lebar dengan Tentang) -->
+         <div class="lg:col-span-1 space-y-6 h-full flex flex-col">
+           
+           <!-- LOKASI & RUTE CARD (flex-1) -->
+           <section class="bg-gray-100 rounded-2xl p-5 sm:p-7 flex-1" aria-labelledby="lokasi-title">
+            <h2 id="lokasi-title" class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
               Lokasi &amp; Rute
             </h2>
             <p id="lokasi-desc" class="text-xs sm:text-sm text-gray-600 leading-relaxed mb-4">
               Informasi lokasi dan rute menuju destinasi wisata ini.
             </p>
 
-            <!-- Peta: diisi Leaflet dengan titik koordinat destinasi (data-wisata.js)
-                 melalui detail-wisata.js. Lapisan fallback tetap tampil bila
-                 Leaflet belum/gagal dimuat. -->
-            <div
-              id="lokasi-map"
-              class="relative w-full h-44 rounded-xl overflow-hidden bg-gray-300 mb-4"
-              role="img"
-              aria-label="Peta lokasi wisata"
-            >
-              <div id="lokasi-map-fallback" class="absolute inset-0">
-                <div class="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-400"></div>
-                <span class="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-gray-500 bg-white/80 rounded px-2 py-0.5">Peta lokasi wisata</span>
-              </div>
-            </div>
+              <!-- FIX #1: Peta Indonesia penuh dengan marker user + destinasi + jarak visual -->
+              <div
+                id="lokasi-map"
+                class="relative w-full h-48 sm:h-56 lg:h-64 rounded-xl overflow-hidden bg-gray-300 mb-4"
+                role="img"
+                aria-label="Peta Indonesia - lokasi destinasi dan user location"
+              >
+               <div id="lokasi-map-fallback" class="absolute inset-0">
+                 <div class="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-400"></div>
+                 <span class="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-gray-500 bg-white/80 rounded px-2 py-0.5">Peta Indonesia - lokasi destinasi</span>
+               </div>
+             </div>
 
             <dl class="text-xs sm:text-sm space-y-2.5 mb-5">
               <div class="flex items-start gap-2">
@@ -290,9 +335,9 @@
             </button>
           </section>
 
-          <!-- SPACE IKLAN PLACEHOLDER -->
-          <div class="bg-gray-100 rounded-2xl p-8 text-center h-24 flex items-center justify-center">
-            <span class="text-gray-700 font-bold text-lg">Space Iklan</span>
+          <!-- FIX #4: SPACE IKLAN RESPONSIVE (mobile/tablet/desktop) -->
+          <div class="bg-gray-100 rounded-2xl p-4 sm:p-6 lg:p-8 text-center h-32 sm:h-40 lg:h-48 flex items-center justify-center">
+            <span class="text-gray-700 font-bold text-sm sm:text-base lg:text-lg">Space Iklan</span>
           </div>
         </div>
 
@@ -303,9 +348,17 @@
         
         <!-- LEFT: Galeri Foto & Video (lg:col-span-2, h-full) -->
         <section class="lg:col-span-2 bg-gray-100 rounded-2xl p-5 sm:p-7 h-full" aria-label="Galeri foto dan video wisata">
-          <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-3">
-            Galeri Foto &amp; Video
-          </h2>
+          <div class="flex items-start justify-between gap-4 mb-3">
+            <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">
+              Galeri Foto &amp; Video
+            </h2>
+            <a
+              href="galeri_wisata.html"
+              class="shrink-0 text-sm font-bold text-red-600 hover:text-red-700 flex items-center gap-1"
+            >
+              Lihat Semua Foto <svg class="inline h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+            </a>
+          </div>
           <!-- Deskripsi & isi galeri diisi dari field media[] via detail-wisata.js -->
           <p id="galeri-desc" class="text-xs sm:text-sm text-gray-600 leading-relaxed mb-4">
             Galeri foto destinasi.
@@ -320,7 +373,7 @@
            
            <!-- INFORMASI TAMBAHAN CARD (flex-1) -->
            <section class="bg-gray-100 rounded-2xl p-5 sm:p-7 flex-1" aria-label="Informasi tambahan">
-             <h3 class="font-bold text-gray-900 text-lg mb-4">Informasi Tambahan</h3>
+             <h3 class="font-bold text-gray-900 text-2xl md:text-3xl lg:text-4xl mb-4">Informasi Tambahan</h3>
              
              <!-- Cuaca Card: nilai contoh dari data-wisata.js (API cuaca menyusul),
                   tanggal memakai tanggal nyata hari ini. Diisi detail-wisata.js -->
@@ -518,5 +571,9 @@
     <script src="../../public/js/pages/nearby.js"></script>
     <script src="../../public/js/main.js" defer></script>
     <script src="../../public/js/pages/detail-wisata.js"></script>
+    <!-- GSAP Animation Script -->
+    <script src="../../public/js/pages/detail-wisata-animation.js" defer></script>
+    <script src="../../public/js/page-transition.js" defer></script>
+    <script src="../../public/js/pages/internal-nav.js" defer></script>
   </body>
 </html>

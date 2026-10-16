@@ -17,17 +17,25 @@
          wisata (tidak harus sesuai destinasi; nanti Owner ganti foto
          asli). Pemetaan deterministik dari id agar konsisten antar
          render/pagination. Jika nanti media[0].url terisi, dipakai
-         lebih dulu. ── */
+         lebih dulu.
+         Owner 2026-10-15: kartu grid kecil → pakai versi thumbnail WebP
+         (520px) agar ringan. Urutan/pemetaan identik dengan
+         data-wisata.js PHOTO_FALLBACK (versi penuh untuk hero detail). ── */
       const WISATA_FALLBACK_PHOTOS = [
-        "../../public/assets/images/wisata/bromo2.jpg",
-        "../../public/assets/images/wisata/bromo3.jpg",
-        "../../public/assets/images/wisata/bromo_banner.png",
-        "../../public/assets/images/wisata/purwodadi-botanic-garden.jpg",
-        "../../public/assets/images/wisata/taman_safari_indonesia_2.jpg",
-        "../../public/assets/images/wisata/air-terjun-kakek-bodo.png",
+        "../../public/assets/images/wisata/optimized/bromo2.thumb.webp",
+        "../../public/assets/images/wisata/optimized/bromo3.thumb.webp",
+        "../../public/assets/images/wisata/optimized/bromo_banner.thumb.webp",
+        "../../public/assets/images/wisata/optimized/purwodadi-botanic-garden.thumb.webp",
+        "../../public/assets/images/wisata/optimized/taman_safari_indonesia_2.thumb.webp",
+        "../../public/assets/images/wisata/optimized/air-terjun-kakek-bodo.thumb.webp",
       ];
       function wisataPhotoFor(d) {
-        if (d.media && d.media[0] && d.media[0].url) return d.media[0].url;
+        if (d.media && d.media[0]) {
+          /* Kartu listing kecil → pakai thumbnail (WebP 520px) bila ada;
+             url penuh milik hero detail/ galeri. */
+          if (d.media[0].thumbnail_url) return d.media[0].thumbnail_url;
+          if (d.media[0].url) return d.media[0].url;
+        }
         const id = d.id || d.slug || "x";
         let h = 0;
         for (let i = 0; i < id.length; i++) {
@@ -104,10 +112,10 @@
           d.id +
           '" data-dest-slug="' +
           d.slug +
-          '" class="wisata-card group h-full bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden flex flex-col cursor-pointer hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out will-change-transform">' +
+          '" class="wisata-card group h-full bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden flex flex-col cursor-pointer hover:-translate-y-2 hover:scale-[1.015] hover:shadow-2xl transition-all duration-300 ease-out will-change-transform">' +
             '<div class="relative h-44 sm:h-48 lg:h-52 overflow-hidden">' +
               mediaInner +
-              '<span class="absolute top-2 left-2 bg-slate-900/80 text-white text-[10px] px-2 py-0.5 rounded">' + d.category + "</span>" +
+              '<span class="absolute top-2 left-2 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded">' + d.category + "</span>" +
               '<div class="absolute top-2 right-2 flex items-center gap-1.5">' +
                 '<button type="button" data-like-btn aria-label="Sukai ' + d.name + '" aria-pressed="false" class="like-btn text-white bg-black/30 p-1.5 rounded-full hover:text-red-400 transition-all duration-200">' + ICON_HEART + "</button>" +
                 '<button type="button" data-bookmark-btn aria-label="Simpan ' + d.name + '" aria-pressed="false" class="bookmark-btn text-white bg-black/30 p-1.5 rounded-full hover:text-yellow-400 transition-all duration-200">' + ICON_BOOKMARK + "</button>" +
@@ -124,7 +132,11 @@
 
       let destFilter = "Semua";
       let destPage = 1;
-      const DEST_PER_PAGE = 12;
+      // Owner 2026-10-14: di mobile tampilkan 6 kartu per halaman,
+      // di layar lebih besar tetap 12.
+      function destPerPage() {
+        return window.matchMedia("(max-width: 639px)").matches ? 6 : 12;
+      }
       const destPager = document.getElementById("dest-pager");
       const PAGER_BASE = "min-w-[2rem] h-8 px-2 rounded-md text-xs font-bold transition-colors";
       const PAGER_ACTIVE = "bg-red-600 text-white";
@@ -149,7 +161,31 @@
       }
 
       function destTotalPages(list) {
-        return Math.max(1, Math.ceil(list.length / DEST_PER_PAGE));
+        return Math.max(1, Math.ceil(list.length / destPerPage()));
+      }
+
+      /* Owner 2026-10-14: indikator halaman ringkas — jendela tetap 3 angka
+         yang berakhir di halaman aktif, diikuti halaman terakhir; angka lama
+         hilang (digeser keluar) agar jumlah angka TIDAK bertambah.
+         Contoh: hal.1 -> 1 2 3 … 10, hal.5 -> 3 4 5 … 10,
+         hal.10 -> 1 … 8 9 10. Panah kiri/kanan berpindah halaman. */
+      function pagerItems(current, total) {
+        const size = 3; // jumlah angka di jendela (tetap)
+        const start = Math.max(1, Math.min(current - (size - 1), total - size + 1));
+        const end = Math.min(total, start + size - 1);
+        const items = [];
+        // Angka awal muncul kembali hanya saat jendela menyentuh halaman
+        // terakhir (mis. 1 … 8 9 10), bukan saat berada di tengah.
+        if (start > 1 && end >= total) {
+          items.push(1);
+          if (start > 2) items.push("…");
+        }
+        for (let i = start; i <= end; i++) items.push(i);
+        if (end < total) {
+          items.push("…");
+          items.push(total);
+        }
+        return items;
       }
 
       function renderPager(pages) {
@@ -162,13 +198,18 @@
           '<button type="button" data-pager-prev aria-label="Halaman sebelumnya" ' +
           (destPage <= 1 ? "disabled" : "") +
           ' class="' + PAGER_BASE + " " + PAGER_IDLE + ' disabled:opacity-40">&lsaquo;</button>';
-        for (let i = 1; i <= pages; i++) {
-          const on = i === destPage;
+        pagerItems(destPage, pages).forEach((it) => {
+          if (it === "…") {
+            html +=
+              '<span aria-hidden="true" class="' + PAGER_BASE + ' text-slate-400 select-none">&hellip;</span>';
+            return;
+          }
+          const on = it === destPage;
           html +=
-            '<button type="button" data-page-btn data-page="' + i + '" ' +
+            '<button type="button" data-page-btn data-page="' + it + '" ' +
             (on ? 'aria-current="page" ' : "") +
-            'aria-label="Halaman ' + i + '" class="' + PAGER_BASE + " " + (on ? PAGER_ACTIVE : PAGER_IDLE) + '">' + i + "</button>";
-        }
+            'aria-label="Halaman ' + it + '" class="' + PAGER_BASE + " " + (on ? PAGER_ACTIVE : PAGER_IDLE) + '">' + it + "</button>";
+        });
         html +=
           '<button type="button" data-pager-next aria-label="Halaman berikutnya" ' +
           (destPage >= pages ? "disabled" : "") +
@@ -262,10 +303,14 @@
         if (next === destPage) return;
         destPage = next;
         const token = ++destRenderToken;
-        /* Transisi pagination smooth: fade-out grid lama -> render baru
-           (renderDestinations memicu tween tinggi grid + fade-in stagger). */
+        const section = destGrid ? (destGrid.closest('section') || destGrid) : null;
         const reducedMotion =
           window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (section) {
+          try { section.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' }); } catch (e) {}
+        }
+        /* Transisi pagination smooth: fade-out grid lama -> render baru
+           (renderDestinations memicu tween tinggi grid + fade-in stagger). */
         if (destGrid.animate && !reducedMotion && destGrid.children.length > 0 && !destGrid.classList.contains("hidden")) {
           const startHeight = destGrid.offsetHeight;
           const out = destGrid.animate(
@@ -282,16 +327,18 @@
 
       function renderDestinations(fromHeight) {
         const list = destFilteredList();
+        const per = destPerPage();
         const pages = destTotalPages(list);
         if (destPage > pages) destPage = pages;
-        const items = list.slice((destPage - 1) * DEST_PER_PAGE, destPage * DEST_PER_PAGE);
+        const items = list.slice((destPage - 1) * per, destPage * per);
         const prevHeight = typeof fromHeight === "number" ? fromHeight : destGrid.offsetHeight;
         destGrid.innerHTML = items.map(destCardHTML).join("");
         const empty = list.length === 0;
         destEmpty.classList.toggle("hidden", !empty);
         destGrid.classList.toggle("hidden", empty);
         renderPager(pages);
-        // Klik kartu → halaman detail destinasi tersebut
+        // Klik kartu → LANGSUNG ke halaman detail (Owner 2026-10-16: tanpa
+        // tirai transisi — paritas acara, navigasi langsung agar responsif <100ms).
         Array.from(destGrid.querySelectorAll("[data-dest-slug]")).forEach((card) => {
           card.addEventListener("click", (e) => {
             if (e.target.closest("button")) return;
@@ -375,6 +422,42 @@
       window.addEventListener("wisata:mapchange", () => {
         destPage = 1;
         renderDestinations();
+      });
+
+      // Kembali dari halaman detail (bfcache): tampilkan SEMUA lagi —
+      // filter kategori, halaman, dan peta di-reset (Owner 2026-10-16;
+      // pola acara-listing.js, tanpa syarat "filter eksplisit").
+      window.addEventListener("pageshow", (e) => {
+        if (!e || !e.persisted) return;
+        destFilter = "Semua";
+        destPage = 1;
+        filterBtns.forEach((b) => {
+          const on = b.getAttribute("data-filter") === "Semua";
+          b.setAttribute("aria-pressed", on ? "true" : "false");
+          b.className = FILTER_BASE + " " + (on ? FILTER_ACTIVE : FILTER_IDLE);
+        });
+        if (window.PasuruanWisataMap) {
+          try {
+            // resetFilters() memicu wisata:mapchange → renderDestinations(),
+            // jadi JANGAN render manual lagi (hindari render + animasi ganda).
+            window.PasuruanWisataMap.resetFilters();
+            return;
+          } catch (err) {
+            /* gagal memicu peta: fallback render manual di bawah */
+          }
+        }
+        renderDestinations();
+      });
+
+      // Berubah jumlah kartu per halaman saat melewati breakpoint mobile.
+      let destLastPerPage = destPerPage();
+      window.addEventListener("resize", () => {
+        const per = destPerPage();
+        if (per !== destLastPerPage) {
+          destLastPerPage = per;
+          destPage = 1;
+          renderDestinations();
+        }
       });
 
       renderDestinations();

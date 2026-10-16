@@ -22,6 +22,21 @@
   var mapEl = document.getElementById("acara-map");
   if (!DATA || !mapEl || !window.L) return;
 
+  // FOTO SEMENTARA (Owner 2026-10-14): gambar contoh domain untuk kartu
+  // featured; media.url dipakai bila ada. Ganti foto asli menyusul.
+  var ACARA_FALLBACK_PHOTOS = [
+    "../../public/assets/images/acara/optimized/bromo-marathon.thumb.webp",
+    "../../public/assets/images/acara/optimized/Hari-Jadi-Kota-Pasuruan.thumb.webp",
+    "../../public/assets/images/acara/optimized/Pekan-Raya-Pasuruan-(PRP).thumb.webp"
+  ];
+  function acaraPhotoFor(d) {
+    if (d && d.media && d.media[0] && d.media[0].url) return d.media[0].url;
+    var key = d && d.id != null ? String(d.id) : "";
+    var sum = 0;
+    for (var i = 0; i < key.length; i++) sum += key.charCodeAt(i);
+    return ACARA_FALLBACK_PHOTOS[sum % ACARA_FALLBACK_PHOTOS.length];
+  }
+
   var reducedMotion =
     window.matchMedia &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -275,6 +290,11 @@
         });
         kecamatanLayer.addLayer(layer);
         kecamatanRefs.push({ layer: layer, regionId: regionId });
+        if (!regionBoundsCache[regionId]) {
+          regionBoundsCache[regionId] = layer.getBounds();
+        } else {
+          regionBoundsCache[regionId].extend(layer.getBounds());
+        }
         rendered++;
       });
     }
@@ -303,21 +323,76 @@
   }
 
   var kabupatenBoundsCache = null;
+  var regionBoundsCache = {}; // Cache bounds per wilayah untuk flyTo (paritas kuliner/wisata).
 
   function fullBounds() {
     return kabupatenBoundsCache || PASURUAN_BOUNDS;
   }
 
+  /* ── Transisi viewport halus (paritas kuliner/wisata) ─────────────
+     Pilih wilayah / reset / pilih acara memakai flyTo() supaya
+     zoom-out selalu beranimasi mulus (fitBounds bawaan "snap"). */
+  var FLY_DURATION = 0.9; // detik
+  var FLY_EASE = 0.25;
+  var REGION_MAX_ZOOM = 16;
+
+  function fullViewZoom() {
+    return map.getBoundsZoom(fullBounds());
+  }
+
   function defaultView(instant) {
-    map.fitBounds(fullBounds(), { animate: instant ? false : !reducedMotion });
+    var b = fullBounds();
+    if (instant || reducedMotion) {
+      map.fitBounds(b, { animate: false });
+      return;
+    }
+    map.flyTo(b.getCenter(), fullViewZoom(), {
+      animate: true,
+      duration: FLY_DURATION,
+      easeLinearity: FLY_EASE,
+    });
+  }
+
+  /* Bingkai satu wilayah: zoom ideal dari bounds-nya, minimal 1 level
+     lebih dekat dari tampilan penuh (paritas kuliner/wisata). */
+  function regionView(id) {
+    var b = regionBoundsCache[id];
+    if (b && b.isValid()) {
+      var fit = map.getBoundsZoom(b, false, window.L.point(24, 24));
+      var z = Math.min(Math.max(fit, fullViewZoom() + 1), REGION_MAX_ZOOM);
+      return { center: b.getCenter(), zoom: z };
+    }
+    var r = findById(DATA.regions, id);
+    if (
+      r &&
+      r.center &&
+      Number.isFinite(r.center.latitude) &&
+      Number.isFinite(r.center.longitude)
+    ) {
+      return {
+        center: window.L.latLng(r.center.latitude, r.center.longitude),
+        zoom: Math.min(Math.max(r.zoom || 0, fullViewZoom() + 1), REGION_MAX_ZOOM),
+      };
+    }
+    return null;
+  }
+
+  function flyToRegion(id) {
+    var v = regionView(id);
+    if (!v) return;
+    map.flyTo(v.center, v.zoom, {
+      animate: !reducedMotion,
+      duration: reducedMotion ? 0 : FLY_DURATION,
+      easeLinearity: FLY_EASE,
+    });
   }
 
   /* ── chips, count, detail ──────────────────────────── */
 
   var CHIP_BASE =
     "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors";
-  var CHIP_ACTIVE = "bg-red-600 text-white";
-  var CHIP_IDLE = "bg-red-100 text-red-700 hover:bg-red-200";
+  var CHIP_ACTIVE = "bg-green-600 text-white";
+  var CHIP_IDLE = "bg-green-100 text-green-700";
 
   function chipButton(label, pressed, attrs) {
     var btn = document.createElement("button");
@@ -392,12 +467,47 @@
     );
   }
 
-  var ICON_PIN_SM =
-    '<svg class="h-3.5 w-3.5 shrink-0 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>';
-  var ICON_CLOCK_SM =
-    '<svg class="h-3.5 w-3.5 shrink-0 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
-  var ICON_TAG_SM =
-    '<svg class="h-3.5 w-3.5 shrink-0 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" /><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" /></svg>';
+  // Ikon baris info panel memakai file aset lokal (selaras kartu daftar).
+  var MAP_ICON_BASE = "../../public/assets/icons/";
+  function mapInfoIcon(file, label) {
+    return '<img src="' + MAP_ICON_BASE + file + '" alt="" aria-hidden="true" loading="lazy" class="h-3.5 w-3.5 shrink-0 object-contain" title="' + label + '" />';
+  }
+  var ICON_PIN_SM = mapInfoIcon("icon_lokasi-hitam.svg", "Lokasi");
+  var ICON_CAL_SM = mapInfoIcon("icon_kalender.svg", "Tanggal acara");
+  var ICON_CLOCK_SM = mapInfoIcon("icon_waktu.svg", "Waktu acara");
+  var ICON_TAG_SM = mapInfoIcon("icon_harga-tiket.svg", "Harga tiket");
+
+  /* Turunan tampilan dari field schema (event_occurrences/event_tickets):
+     jadwal diformat dari starts_at/ends_at; tipe tiket dari price. */
+  var MAP_DAYS = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  var MAP_MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+  function mapPad(n) {
+    return (n < 10 ? "0" : "") + n;
+  }
+  function mapFmtDate(startsAt) {
+    if (!startsAt) return "";
+    var s = new Date(startsAt);
+    if (isNaN(s.getTime())) return "";
+    return MAP_DAYS[s.getDay()] + ", " + s.getDate() + " " + MAP_MONTHS[s.getMonth()] + " " + s.getFullYear();
+  }
+  function mapFmtTime(startsAt, endsAt) {
+    if (!startsAt) return "";
+    var s = new Date(startsAt);
+    if (isNaN(s.getTime())) return "";
+    var t = mapPad(s.getHours()) + ":" + mapPad(s.getMinutes());
+    if (endsAt) {
+      var e = new Date(endsAt);
+      if (!isNaN(e.getTime())) t += " - " + mapPad(e.getHours()) + ":" + mapPad(e.getMinutes());
+    }
+    return t;
+  }
+  function mapTicketType(price) {
+    return price != null && Number(price) > 0 ? "Berbayar" : "Gratis";
+  }
+  function mapPriceText(price) {
+    if (price == null || Number(price) <= 0 || isNaN(Number(price))) return "";
+    return "Rp " + String(Math.round(Number(price))).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
 
   /* Bersihkan penanda mock dari teks TAMPILAN (sumber data tetap mock).
      UI tidak boleh memajang kata "Mock"; fallback netral bila kosong. */
@@ -411,49 +521,56 @@
       .trim();
   }
 
+  var ICON_ORG_SM = mapInfoIcon("icon_penyelenggara.svg", "Penyelenggara");
+
   function renderDetail() {
     var panel = document.getElementById("evt-detail");
     if (!panel) return;
     var e = state.selectedEvent ? getEvent(state.selectedEvent) : null;
 
+    /* Belum ada pilihan → tampilkan pesan terpusat (paritas kuliner/wisata),
+       bukan fallback ke item pertama (Owner 2026-10-15: samakan kosong). */
     if (!e || !isValidEvent(e)) {
       panel.innerHTML =
-        '<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">' +
-        '<div class="px-4 pt-4"><span class="text-sm font-bold text-gray-900">Acara</span></div>' +
-        '<div class="p-4">' +
-        '<div class="w-full h-36 rounded-lg mb-3 bg-gradient-to-b from-blue-600 to-blue-800" role="img" aria-label="Ilustrasi acara (placeholder)"></div>' +
-        '<p class="text-sm text-gray-500">Pilih penanda pada peta untuk melihat detail acara.</p>' +
-        "</div></div>";
+        '<div class="bg-white rounded-xl shadow-sm border-2 p-4 flex flex-col flex-1">' +
+        '<span class="font-bold text-gray-800 text-2xl block mb-3">Acara</span>' +
+        '<p class="text-sm text-gray-500 text-center flex items-center justify-center flex-1">Pilih penanda pada peta atau kartu acara untuk melihat detail.</p>' +
+        "</div>";
       return;
     }
 
     var displayName = cleanMockText(e.name) || "Acara Pasuruan";
     var displayDesc = cleanMockText(e.short_description);
-    var schedule = cleanMockText(e.occurrences && e.occurrences[0] ? e.occurrences[0].label : null);
+    var occ = e.occurrences && e.occurrences[0] ? e.occurrences[0] : null;
+    var price = e.tickets && e.tickets[0] ? e.tickets[0].price : null;
     var venue = cleanMockText(e.venue_address) || "Lokasi menyusul, Pasuruan";
-    var ticketInfo = cleanMockText(e.tickets && e.tickets[0] ? e.tickets[0].price_label : null) || "Informasi tiket menyusul";
+    var ticketInfo = mapPriceText(price) || (mapTicketType(price) + " · Info di lokasi acara");
     var organizer = cleanMockText(e.organizer_name) || "Menyusul";
 
-    /* Baris meta berlabel sesuai mockup: Lokasi / Waktu / Harga Tiket / Penyelenggara. */
-    function detailRow(label, value) {
-      return (
-        '<div class="flex items-start gap-2 text-[11px] text-gray-600">' +
-        '<span class="w-20 shrink-0 text-gray-400">' +
-        label +
-        "</span>" +
-        '<span class="font-medium text-gray-700">' +
-        (value || "-") +
-        "</span>" +
-        "</div>"
-      );
+    // Baris info panel: lokasi, tanggal, waktu, harga tiket, penyelenggara.
+    var dateStr = (occ && mapFmtDate(occ.starts_at)) || "";
+    var timeStr = (occ && mapFmtTime(occ.starts_at, occ.ends_at)) || "";
+    var rows = metaRow(ICON_PIN_SM, venue);
+    if (dateStr) rows += metaRow(ICON_CAL_SM, dateStr);
+    if (timeStr) rows += metaRow(ICON_CLOCK_SM, timeStr);
+    if (ticketInfo) rows += metaRow(ICON_TAG_SM, ticketInfo);
+    rows += metaRow(ICON_ORG_SM, organizer);
+
+    var cta = "";
+    if (e.googleMapsUrl) {
+      cta =
+        '<a href="' +
+        e.googleMapsUrl +
+        '" target="_blank" rel="noopener noreferrer" class="evt-btn-green mt-4 inline-flex items-center justify-center w-full px-4 py-2 rounded-md text-xs font-bold text-white bg-green-600 transition-colors">Buka Google Maps' +
+        '<span class="sr-only"> (tautan eksternal)</span></a>';
     }
 
-    var rows = detailRow("Lokasi", venue);
-    if (schedule) rows += detailRow("Waktu", schedule);
-    if (ticketInfo) rows += detailRow("Harga Tiket", ticketInfo);
-    rows += detailRow("Penyelenggara", organizer);
+    var detailLink =
+      '<a href="detail_acara.html?slug=' +
+      e.slug +
+      '" class="evt-link-green mt-2 inline-flex items-center justify-center w-full px-4 py-2 rounded-md text-xs font-bold text-green-700 transition-colors">Lihat Halaman Detail &rarr;</a>';
 
-    var photo = e.media && e.media[0] && e.media[0].url;
+    var photo = acaraPhotoFor(e);
     var photoBox = photo
       ? '<img src="' +
         photo +
@@ -465,26 +582,28 @@
         ' (placeholder)"></div>';
 
     panel.innerHTML =
-      '<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">' +
-      '<div class="px-4 pt-4"><span class="text-sm font-bold text-gray-900">Acara</span></div>' +
-      '<div class="p-4">' +
+      '<div class="bg-white rounded-xl shadow-sm border-2 p-4 flex flex-col flex-1">' +
+      "<div>" +
+      '<span class="font-bold text-gray-800 text-2xl block mb-3">Acara</span>' +
       photoBox +
-      '<p class="text-[11px] font-semibold text-blue-700 uppercase">' +
+      '<p class="text-[11px] font-semibold text-green-700 uppercase">' +
       regionName(e.regionId) +
       " · " +
       categoryName(e.categoryId) +
       "</p>" +
-      '<h3 class="font-bold text-base text-gray-900 mt-1">' +
+      '<h3 class="font-bold text-base text-gray-900">' +
       displayName +
       "</h3>" +
       (displayDesc
         ? '<p class="text-xs text-gray-500 mt-1 leading-relaxed">' + displayDesc + "</p>"
         : "") +
-      '<div class="mt-3 space-y-1.5">' +
+      "</div>" +
+      '<div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-gray-100 text-[11px] text-gray-600">' +
       rows +
       "</div>" +
-      '<p class="mt-3 text-[10px] text-gray-400">Informasi tiket/registrasi bersifat tampilan saja. Tautan eksternal belum terverifikasi.</p>' +
-      "</div></div>";
+      cta +
+      detailLink +
+      "</div>";
   }
 
   function highlightDaftarCard() {
@@ -520,6 +639,14 @@
     state.selectedEvent = null;
     updateAll();
     notifyDaftar();
+
+    // Zoom otomatis mulus ke wilayah terpilih (paritas kuliner/wisata);
+    // toggle off → zoom-out mulus ke tampilan penuh.
+    if (id) {
+      flyToRegion(id);
+    } else {
+      defaultView(false);
+    }
   }
 
   function selectCategory(id) {
@@ -534,12 +661,43 @@
   }
 
   function selectEvent(id) {
+    /* Klik pin/kartu memfilter Daftar mengikuti regionId item itu (paritas
+       kuliner selectCulinary). Klik item yang sama lagi = toggle reset ke
+       semua + zoom-out mulus. */
+    if (id && state.selectedEvent === id) {
+      state.selectedEvent = null;
+      state.selectedRegion = null;
+      updateAll();
+      notifyDaftar();
+      defaultView(false); // zoom-out mulus (paritas kuliner/wisata).
+      return;
+    }
     var e = getEvent(id);
     if (!e || !isValidEvent(e)) return;
     state.selectedEvent = id;
-    renderMarkers();
-    renderDetail();
-    highlightDaftarCard();
+    if (e.regionId && state.selectedRegion !== e.regionId) {
+      state.selectedRegion = e.regionId;
+    }
+    /* Bila kategori map aktif menyembunyikan item yang diklik,
+       longgarkan kategori agar pin terpilih tetap terlihat. */
+    if (state.selectedCategory && e.categoryId !== state.selectedCategory) {
+      var stillVisible = getFilteredEvents().some(function (x) {
+        return x.id === e.id;
+      });
+      if (!stillVisible) state.selectedCategory = null;
+    }
+    updateAll();
+    notifyDaftar();
+
+    // Zoom mulus ke lokasi acara terpilih (level 15, paritas kuliner/wisata).
+    if (e.place && Number.isFinite(e.place.latitude) && Number.isFinite(e.place.longitude)) {
+      setTimeout(function () {
+        map.flyTo([e.place.latitude, e.place.longitude], 15, {
+          animate: !reducedMotion,
+          duration: 0.8,
+        });
+      }, 100);
+    }
   }
 
   function resetFilters() {
@@ -573,24 +731,6 @@
 
   var resetBtn = document.getElementById("map-reset");
   if (resetBtn) resetBtn.addEventListener("click", resetFilters);
-
-  // Pilih sorotan awal agar 1 card detail langsung terisi saat halaman
-  // dibuka (sesuai mockup acara.png). Klik pin/wilayah mengubahnya nanti.
-  (function selectDefaultEvent() {
-    if (state.selectedEvent) return;
-    var first = null;
-    var fallback = null;
-    for (var i = 0; i < DATA.events.length; i++) {
-      var cand = DATA.events[i];
-      if (!isValidEvent(cand)) continue;
-      if (!fallback) fallback = cand;
-      if (cand.featured) {
-        first = cand;
-        break;
-      }
-    }
-    if (first || fallback) state.selectedEvent = (first || fallback).id;
-  })();
 
   renderRegionChips();
   renderCategoryChips();

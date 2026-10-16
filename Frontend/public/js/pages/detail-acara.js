@@ -28,12 +28,53 @@
             .replace(/\s{2,}/g, " ")
             .trim();
         }
+        // Turunan tampilan dari field schema (paritas acara-listing.js).
+        var DET_DAYS = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+        var DET_MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        function detPad(n) {
+          return (n < 10 ? "0" : "") + n;
+        }
+        function detFmtFull(startsAt, endsAt) {
+          if (!startsAt) return "";
+          var s = new Date(startsAt);
+          if (isNaN(s.getTime())) return "";
+          var t = DET_DAYS[s.getDay()] + ", " + s.getDate() + " " + DET_MONTHS[s.getMonth()] + " " + s.getFullYear() +
+            " | " + detPad(s.getHours()) + ":" + detPad(s.getMinutes());
+          if (endsAt) {
+            var e = new Date(endsAt);
+            if (!isNaN(e.getTime())) t += " - " + detPad(e.getHours()) + ":" + detPad(e.getMinutes());
+          }
+          return t;
+        }
+        function detTicketType(price) {
+          return price != null && Number(price) > 0 ? "Berbayar" : "Gratis";
+        }
+        function detPriceText(price) {
+          if (price == null || Number(price) <= 0 || isNaN(Number(price))) return "";
+          return "Rp " + String(Math.round(Number(price))).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
           var DATA = window.PASINFO_ACARA;
           if (!DATA || !DATA.events || !DATA.events.length) return;
 
           // Enrich data dengan sources & verification
           if (window.AddSourcesData && window.AddSourcesData.enrichAcara) {
             window.AddSourcesData.enrichAcara(DATA);
+          }
+
+          // FOTO SEMENTARA (Owner 2026-10-14): gambar contoh domain, dipakai
+          // bergilir bila media.url null. Ganti foto asli menyusul.
+          // Owner 2026-10-15: hero/galeri → versi WebP penuh (1600px).
+          var ACARA_FALLBACK_PHOTOS = [
+            "../../public/assets/images/acara/optimized/bromo-marathon.webp",
+            "../../public/assets/images/acara/optimized/Hari-Jadi-Kota-Pasuruan.webp",
+            "../../public/assets/images/acara/optimized/Pekan-Raya-Pasuruan-(PRP).webp"
+          ];
+          function acaraPhotoFor(d) {
+            if (d && d.media && d.media[0] && d.media[0].url) return d.media[0].url;
+            var key = d && d.id != null ? String(d.id) : "";
+            var sum = 0;
+            for (var i = 0; i < key.length; i++) sum += key.charCodeAt(i);
+            return ACARA_FALLBACK_PHOTOS[sum % ACARA_FALLBACK_PHOTOS.length];
           }
 
           function catName(id) {
@@ -72,20 +113,20 @@
           if (isPlaceholderRaw(raw)) return fb;
           return cleanText(raw) || fb;
         }
-        var rawSchedule = current.occurrences && current.occurrences[0] ? current.occurrences[0].label : null;
-        var scheduleFull = realOr(rawSchedule, FALLBACK_SCHEDULE);
+        var detOcc = current.occurrences && current.occurrences[0] ? current.occurrences[0] : null;
+        var scheduleFull = (detOcc && detFmtFull(detOcc.starts_at, detOcc.ends_at)) || FALLBACK_SCHEDULE;
         var schedParts = String(scheduleFull).split("|");
         var scheduleDate = (schedParts[0] || "").trim() || "Minggu, 10 September 2027";
         var scheduleTime = (schedParts[1] || "").trim() || "08:00 - 12:00";
-        var venue = realOr(current.venue_address, FALLBACK_LOCATION);
-        var organizer = realOr(current.organizer_name, FALLBACK_ORGANIZER);
+        // Venue/organizer kini terisi mock per event di data (mentah bertanda
+        // MOCK, dibersihkan saat tampil) — tidak lagi dianggap placeholder.
+        var venue = cleanText(current.venue_address) || FALLBACK_LOCATION;
+        var organizer = cleanText(current.organizer_name) || FALLBACK_ORGANIZER;
         var contactRaw = cleanText(current.organizer_phone);
         var contact = contactRaw && !isPlaceholderRaw(current.organizer_phone) ? contactRaw : "—";
-        var rawTicket = current.tickets && current.tickets[0] ? current.tickets[0].price_label : null;
-        var ticketType = current.tickets && current.tickets[0] ? cleanText(current.tickets[0].ticket_type) : "";
-        var ticketLabel = !isPlaceholderRaw(rawTicket) && cleanText(rawTicket)
-          ? cleanText(rawTicket)
-          : (ticketType ? ticketType + " \u00B7 Info di lokasi acara" : "Info di lokasi acara");
+        var detPrice = current.tickets && current.tickets[0] ? current.tickets[0].price : null;
+        var ticketType = detTicketType(detPrice);
+        var ticketLabel = detPriceText(detPrice) || (ticketType + " · Info di lokasi acara");
         var category = catName(current.categoryId) || "Acara";
         var desc = cleanText(current.description || current.short_description) || "Informasi acara di Pasuruan.";
         var rangkaian = cleanText(current.short_description) || desc;
@@ -119,10 +160,109 @@
           setText("evt-organizer", organizer);
           setText("info-kategori", category);
         setText("info-tiket", ticketLabel);
-        setText("info-kuota", FALLBACK_QUOTA);
+        // Kuota peserta dari `capacity` (mock; null = Tanpa Batas).
+        // CATATAN BACKEND: kandidat kolom `events.capacity` (INT nullable).
+        var capacityTxt = FALLBACK_QUOTA;
+        if (current.capacity != null && !isNaN(Number(current.capacity)) && Number(current.capacity) > 0) {
+          capacityTxt = "Maksimal " + Number(current.capacity) + " peserta";
+        }
+        setText("info-kuota", capacityTxt);
         setText("info-kontak", contact);
         setText("info-penyelenggara", organizer);
-        setText("lokasi-alamat", venue);
+
+        /* ── Lokasi & Rute: geolokasi + peta live + estimasi (pola
+           detail-kuliner). Jarak dihitung (haversine), bukan disimpan. ── */
+        var userLocation = null;
+        var userLocationName = "-";
+        function getUserLocation(callback) {
+          if (!navigator.geolocation) { callback(null); return; }
+          navigator.geolocation.getCurrentPosition(
+            function (pos) { callback({ lat: pos.coords.latitude, lng: pos.coords.longitude }); },
+            function () { callback(null); },
+            { timeout: 5000, maximumAge: 0 }
+          );
+        }
+        function evtDistKm(a, b) {
+          if (window.PasinfoNearby && window.PasinfoNearby.haversineKm) {
+            try {
+              return window.PasinfoNearby.haversineKm(a, b);
+            } catch (e) {}
+          }
+          var R = 6371;
+          var dLat = (b.lat - a.lat) * Math.PI / 180;
+          var dLng = (b.lng - a.lng) * Math.PI / 180;
+          var sLat = Math.sin(dLat / 2);
+          var sLng = Math.sin(dLng / 2);
+          var h = sLat * sLat + Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * sLng * sLng;
+          return 2 * R * Math.asin(Math.sqrt(h));
+        }
+        function evtFmtKm(km) {
+          if (window.PasinfoNearby && window.PasinfoNearby.fmtKm) {
+            try {
+              return window.PasinfoNearby.fmtKm(km);
+            } catch (e) {}
+          }
+          if (km == null || !isFinite(km)) return "-";
+          return "±" + km.toFixed(1).replace(".", ",") + " km";
+        }
+        function evtRefPoint(item) {
+          if (window.PasinfoNearby && window.PasinfoNearby.refPoint) {
+            try {
+              var rp = window.PasinfoNearby.refPoint(item, (DATA && DATA.regions) || []);
+              if (rp) return rp;
+            } catch (e) {}
+          }
+          var p = item && item.place;
+          if (p && Number.isFinite(p.latitude) && Number.isFinite(p.longitude)) {
+            return { lat: p.latitude, lng: p.longitude };
+          }
+          return null;
+        }
+        function translateLatLngToRegion(lat, lng) {
+          var regions = (DATA && DATA.regions) || [];
+          var best = null;
+          var minD = Infinity;
+          for (var i = 0; i < regions.length; i++) {
+            var r = regions[i];
+            if (r.center && Number.isFinite(r.center.latitude) && Number.isFinite(r.center.longitude)) {
+              var dd = evtDistKm({ lat: lat, lng: lng }, { lat: r.center.latitude, lng: r.center.longitude });
+              if (dd < minD) { minD = dd; best = r; }
+            }
+          }
+          return best ? best.name : "Pasuruan";
+        }
+        function formatEstimasi(km, transportType) {
+          if (km == null || !isFinite(km)) return "-";
+          var speedKmH = transportType === "motor" ? 40 : 30;
+          var totalMenit = Math.ceil(km / speedKmH * 60);
+          var jam = Math.floor(totalMenit / 60);
+          var menit = totalMenit % 60;
+          var iconPath = transportType === "motor"
+            ? "../../public/assets/icons/icon_motor.svg"
+            : "../../public/assets/icons/icon_mobil.svg";
+          var label = transportType === "motor" ? "motor" : "mobil";
+          return '<img src="' + iconPath + '" alt="" class="w-4 h-4 inline mr-1" />' + label + ": " + (jam > 0 ? jam + " jam " : "") + menit + " menit";
+        }
+        function setRouteHTML(id, html) {
+          var el = $(id);
+          if (el) el.innerHTML = html;
+        }
+        setText("route-lokasi", venue);
+        getUserLocation(function (loc) {
+          if (loc) {
+            userLocation = loc;
+            userLocationName = translateLatLngToRegion(loc.lat, loc.lng);
+            var ref = evtRefPoint(current);
+            if (ref) {
+              var distKm = evtDistKm(loc, ref);
+              setText("route-dari", userLocationName);
+              setText("route-jarak", evtFmtKm(distKm));
+              setRouteHTML("route-estimasi", formatEstimasi(distKm, "mobil") + " | " + formatEstimasi(distKm, "motor"));
+            }
+          } else {
+            setText("route-dari", "Izinkan lokasi untuk melihat rute");
+          }
+        });
 
         // Display Source & Verification Info (pola detail_wisata, Tier 1.7)
         (function () {
@@ -134,7 +274,7 @@
             var html = '<div class="text-sm">';
             html += '<p class="font-semibold text-gray-900">' + (source.name || "Sumber Tidak Diketahui") + '</p>';
             if (source.url) {
-              html += '<p class="text-xs text-blue-600 mt-1"><a href="' + source.url + '" target="_blank" rel="noopener">Kunjungi sumber →</a></p>';
+              html += '<p class="text-xs text-green-700 mt-1"><a href="' + source.url + '" target="_blank" rel="noopener">Kunjungi sumber →</a></p>';
             }
             html += '</div>';
             sourceEl.innerHTML = html;
@@ -161,8 +301,8 @@
           }
         })();
 
-        // Foto hero: pakai media.url bila ada, bila tidak tetap placeholder.
-        var photoUrl = current.media && current.media[0] ? current.media[0].url : null;
+        // Foto hero: pakai media.url bila ada; bila tidak pakai gambar contoh domain.
+        var photoUrl = acaraPhotoFor(current);
         if (photoUrl) {
           var heroImg = $("evt-hero-img");
           if (heroImg) {
@@ -173,56 +313,201 @@
           if (heroWrap) heroWrap.setAttribute("aria-label", "Foto " + name);
         }
 
-        // Tautan rute: hanya aktif bila URL terverifikasi tersedia.
-        var rute = $("rute-link");
-        if (rute) {
-          if (current.googleMapsUrl) {
-            rute.href = current.googleMapsUrl;
-            rute.setAttribute("aria-disabled", "false");
-            rute.title = "Buka rute menuju lokasi acara";
-            rute.target = "_blank";
-            rute.rel = "noopener noreferrer";
+        /* Peta live + fallback (pola detail-kuliner, label Acara):
+           Leaflet + OSM bila tersedia; kanvas SVG offline bila tidak.
+           Inisialisasi malas saat section mendekati viewport. */
+        function initEvtLeafletMap(box, destLat, destLng) {
+          try {
+            var map = window.L.map(box, {
+              scrollWheelZoom: false,
+              zoomControl: true,
+              attributionControl: false,
+              dragging: true,
+              touchZoom: true,
+              doubleClickZoom: true,
+              keyboard: false,
+              preferCanvas: true,
+            }).setView([destLat, destLng], 14);
+            window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+              attribution: "© OpenStreetMap contributors",
+              maxZoom: 19,
+              updateWhenIdle: true,
+              updateWhenZooming: false,
+              keepBuffer: 1,
+            }).addTo(map);
+            window.L.circleMarker([destLat, destLng], {
+              radius: 10, color: "#ffffff", weight: 3, fillColor: "#dc2626", fillOpacity: 1,
+            }).bindPopup(name).addTo(map);
+            if (userLocation) {
+              window.L.circleMarker([userLocation.lat, userLocation.lng], {
+                radius: 8, color: "#ffffff", weight: 2, fillColor: "#2563eb", fillOpacity: 1,
+              }).bindPopup("Lokasi Anda: " + userLocationName).addTo(map);
+              window.L.polyline([[userLocation.lat, userLocation.lng], [destLat, destLng]],
+                { color: "#f59e0b", weight: 2, opacity: 0.7, dashArray: "5, 5" }).addTo(map);
+            }
+            var fallback = $("lokasi-map-fallback");
+            if (fallback) fallback.setAttribute("aria-hidden", "true");
+            return true;
+          } catch (e) {
+            return false;
           }
         }
+        function initEvtCanvasMap(box, destLat, destLng) {
+          try {
+            var canvasWidth = box.offsetWidth || 400;
+            var canvasHeight = box.offsetHeight || 300;
+            var svgNS = "http://www.w3.org/2000/svg";
+            var svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("width", canvasWidth);
+            svg.setAttribute("height", canvasHeight);
+            svg.setAttribute("viewBox", "0 0 " + canvasWidth + " " + canvasHeight);
+            svg.setAttribute("class", "absolute inset-0");
+            svg.style.pointerEvents = "none";
+            var cx = canvasWidth / 2;
+            var cy = canvasHeight / 2;
+            var destMarker = document.createElementNS(svgNS, "circle");
+            destMarker.setAttribute("cx", cx);
+            destMarker.setAttribute("cy", cy);
+            destMarker.setAttribute("r", "10");
+            destMarker.setAttribute("fill", "#dc2626");
+            destMarker.setAttribute("stroke", "#ffffff");
+            destMarker.setAttribute("stroke-width", "3");
+            svg.appendChild(destMarker);
+            var destLabel = document.createElementNS(svgNS, "text");
+            destLabel.setAttribute("x", cx);
+            destLabel.setAttribute("y", cy - 15);
+            destLabel.setAttribute("text-anchor", "middle");
+            destLabel.setAttribute("fill", "#dc2626");
+            destLabel.setAttribute("font-size", "12");
+            destLabel.setAttribute("font-weight", "bold");
+            destLabel.textContent = "Acara";
+            svg.appendChild(destLabel);
+            box.innerHTML = "";
+            box.appendChild(svg);
+            var fallback = $("lokasi-map-fallback");
+            if (fallback) fallback.setAttribute("aria-hidden", "true");
+            return true;
+          } catch (e) {
+            return false;
+          }
+        }
+        function initEvtFullMap() {
+          var box = $("lokasi-map");
+          if (!box) return false;
+          var destLat = current.place && Number.isFinite(current.place.latitude) ? current.place.latitude : null;
+          var destLng = current.place && Number.isFinite(current.place.longitude) ? current.place.longitude : null;
+          if (destLat === null || destLng === null) return false;
+          try {
+            if (window.L && window.L.map) return initEvtLeafletMap(box, destLat, destLng);
+            return initEvtCanvasMap(box, destLat, destLng);
+          } catch (e) {
+            return false;
+          }
+        }
+        (function scheduleEvtMapInit() {
+          var box = $("lokasi-map");
+          if (!box) return;
+          function start() {
+            var attempts = 0;
+            var timer = setInterval(function () {
+              attempts++;
+              var ready =
+                box.offsetHeight > 0 &&
+                box.offsetWidth > 0 &&
+                window.L &&
+                window.L.map;
+              if (ready || attempts >= 50) {
+                clearInterval(timer);
+                setTimeout(initEvtFullMap, 60);
+              }
+            }, 100);
+          }
+          if (!("IntersectionObserver" in window)) {
+            setTimeout(start, 300);
+            return;
+          }
+          var started = false;
+          var io = new IntersectionObserver(
+            function (entries) {
+              var visible = entries.some(function (en) {
+                return en.isIntersecting;
+              });
+              if (!visible || started) return;
+              started = true;
+              io.disconnect();
+              start();
+            },
+            { rootMargin: "250px 0px", threshold: 0 }
+          );
+          io.observe(box);
+        })();
 
-        var ICON_PIN = '<svg class="h-3 w-3 shrink-0 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>';
-        var ICON_CAL = '<svg class="h-3 w-3 shrink-0 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>';
-        var ICON_USER = '<svg class="h-3 w-3 shrink-0 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>';
+        var ruteBtn = $("ruteBtn");
+        if (ruteBtn) {
+          ruteBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            if (current.googleMapsUrl) {
+              window.open(current.googleMapsUrl, "_blank");
+              return;
+            }
+            if (current.place && Number.isFinite(current.place.latitude) && Number.isFinite(current.place.longitude)) {
+              window.open(
+                "https://www.google.com/maps/dir/?api=1&destination=" + current.place.latitude + "," + current.place.longitude,
+                "_blank"
+              );
+            }
+          });
+        }
+
+        // Ikon kartu memakai file aset lokal (paritas wisata: w-4 h-4).
+        var EVT_ASSET = "../../public/assets/icons/";
+        function evtCardIcon(file) {
+          return '<img src="' + EVT_ASSET + file + '" alt="" aria-hidden="true" loading="lazy" class="w-4 h-4 flex-shrink-0 object-contain" />';
+        }
 
         function photoInner(d, label) {
-          var url = d.media && d.media[0] ? d.media[0].url : null;
+          var url = acaraPhotoFor(d);
           if (url) {
-            return '<img src="' + url + '" alt="Foto ' + label + '" loading="lazy" class="w-full h-full object-cover" />';
+            return '<img src="' + url + '" alt="Foto ' + label + '" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />';
           }
-          return '<img src="../../public/assets/images/poster-dummy.svg" alt="Poster ' + label + ' (placeholder)" loading="lazy" class="w-full h-full object-cover" />';
+          return '<img src="../../public/assets/images/poster-dummy.svg" alt="Poster ' + label + ' (placeholder)" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />';
         }
 
         // Kartu event pola mockup: foto + badge gelap, nama, meta berikon, pill "Lihat Detail →".
-        // MOCK: pola sumber sama dgn listing acara.html (occurrences[0].label -> jadwal,
+        // MOCK: pola sumber sama dgn listing acara.html (starts_at -> jadwal,
         // venue_address -> lokasi); placeholder -> fallback generik. Peserta "—"
         // (listing acara.html tidak punya kolom peserta, jadi tanpa angka baru).
+        // Kartu rekomendasi pola wisata: pill kategori + badge jarak putih,
+        // foto, judul, deskripsi, meta lokasi + jadwal. Seluruh kartu link.
         function eventCardHTML(d) {
           var dName = cleanText(d.name) || "Acara Pasuruan";
-          var dRawSched = d.occurrences && d.occurrences[0] ? d.occurrences[0].label : null;
-          var dSchedule = realOr(dRawSched, FALLBACK_SCHEDULE);
-          var dVenue = realOr(d.venue_address, FALLBACK_LOCATION);
+          var dOcc = d.occurrences && d.occurrences[0] ? d.occurrences[0] : null;
+          var dSchedule = (dOcc && detFmtFull(dOcc.starts_at, dOcc.ends_at)) || FALLBACK_SCHEDULE;
+          var dVenue = cleanText(d.venue_address) || FALLBACK_LOCATION;
+          var dDesc = cleanText(d.short_description);
+          var dDist = distLabel(d);
           return (
-            '<a href="detail_acara.html?slug=' + d.slug + '" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow group">' +
-              '<div class="relative h-32 sm:h-40 overflow-hidden shrink-0">' +
-                photoInner(d, dName) +
-                '<span class="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 text-white text-[10px] font-semibold">' + dSchedule + "</span>" +
-              "</div>" +
-              '<div class="p-3 flex flex-1 flex-col">' +
-                '<h3 class="font-bold text-xs sm:text-sm text-gray-900 leading-snug group-hover:text-blue-700 transition-colors">' + dName + "</h3>" +
-                '<div class="mt-2 text-gray-500 space-y-1 text-[10px] sm:text-[11px]">' +
-                  '<p class="flex items-center gap-1">' + ICON_PIN + "<span class='truncate'>" + dVenue + "</span></p>" +
-                  '<p class="flex items-center gap-1">' + ICON_CAL + "<span class='truncate'>" + dSchedule + "</span></p>" +
-                  '<p class="flex items-center gap-1">' + ICON_USER + "<span>\u2014</span></p>" +
-                "</div>" +
-                '<div class="mt-auto pt-3 flex justify-end">' +
-                  '<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-600 text-white text-[10px] sm:text-[11px] font-bold">Lihat Detail <span aria-hidden="true">→</span></span>' +
-                "</div>" +
-              "</div>" +
+            '<a href="detail_acara.html?slug=' + d.slug + '" class="group block no-underline">' +
+            '<article class="relative rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">' +
+            '<div class="absolute top-3 left-3 right-3 flex items-center justify-between z-10">' +
+            '<span class="inline-block px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-md">' + (catName(d.categoryId) || "Acara") + "</span>" +
+            (dDist
+              ? '<span class="inline-block px-2.5 py-1 bg-white text-gray-900 text-xs font-semibold rounded-md flex items-center gap-1">' +
+                evtCardIcon("icon_jarak.svg") + dDist + "</span>"
+              : "") +
+            "</div>" +
+            '<div class="relative h-44 sm:h-48 lg:h-52 overflow-hidden bg-gray-200">' +
+              photoInner(d, dName) +
+            "</div>" +
+            '<div class="flex flex-col flex-1 p-4 bg-white">' +
+            '<h3 class="font-bold text-gray-900 text-base line-clamp-2 mb-2">' + dName + "</h3>" +
+            (dDesc ? '<p class="text-xs text-gray-600 line-clamp-2 mb-3">' + dDesc + "</p>" : "") +
+            '<div class="text-xs text-gray-600 space-y-1">' +
+            '<p class="flex items-center gap-1">' + evtCardIcon("icon_lokasi-hitam.svg") + "<span class='truncate'>" + dVenue + "</span></p>" +
+            '<p class="flex items-center gap-1">' + evtCardIcon("icon_kalender.svg") + "<span class='truncate'>" + dSchedule + "</span></p>" +
+            "</div>" +
+            "</div>" +
+            "</article>" +
             "</a>"
           );
         }
@@ -243,6 +528,19 @@
           return out;
         }
 
+        // Jarak badge dihitung dari acara ini ke tiap kartu (haversine via
+        // helper di atas; schema §8: jarak dihitung, bukan disimpan).
+        // Tampil apa adanya (sewilayah mock bisa ±100 m).
+        // NOTE: harus di-assign SEBELUM renderGrid di bawah (var hoisting
+        // tidak membawa nilai assignment).
+        var evtRef = evtRefPoint(current);
+        function distLabel(d) {
+          if (!d) return "";
+          var c = d.place;
+          if (!evtRef || !c || !Number.isFinite(c.latitude) || !Number.isFinite(c.longitude)) return "";
+          return evtFmtKm(evtDistKm(evtRef, { lat: c.latitude, lng: c.longitude }));
+        }
+
         var others = DATA.events.filter(function (d) { return d.slug !== current.slug; });
         var sameCat = others.filter(function (d) { return d.categoryId === current.categoryId; });
         var diffCat = others.filter(function (d) { return d.categoryId !== current.categoryId; });
@@ -257,25 +555,47 @@
         // Jelajah Destinasi Sekitar Event: 4 destinasi wisata TERDEKAT by jarak
         // real (nearby.js) + link detail_wisata (Owner 2026-10-09; menggantikan
         // pola lama "tetap domain acara" + jarak dummy).
-        function distLabel(d, i) {
-          if (d && d._distKm != null && window.PasinfoNearby) {
-            return window.PasinfoNearby.fmtKm(d._distKm);
-          }
-          return DISTANCES[i % DISTANCES.length];
+        // Kartu jelajah pola wisata: pill domain + badge putih, foto, judul,
+        // deskripsi, meta lokasi + jarak. Badge = RATING untuk non-budaya
+        // (Owner 2026-10-16); kartu domain/kategori budaya tetap badge JARAK.
+        function isBudayaCard(d) {
+          if (!d) return false;
+          if (d._href && d._href.indexOf("detail_budaya") !== -1) return true;
+          if (d._domain === "Budaya") return true;
+          return false;
         }
-        function jelajahCardHTML(d, i) {
-          var dName = cleanText(d.name) || "Acara Pasuruan";
+        function jelajahCardHTML(d) {
+          var dName = cleanText(d.name) || "Destinasi Sekitar";
           var href = d._href || ("detail_acara.html?slug=" + d.slug);
+          var dDesc = cleanText(d.short_description);
+          var dDist = distLabel(d);
+          var dVenue = cleanText(d.venue_address) || cleanText(d.address) || "Pasuruan";
+          var useRating = !isBudayaCard(d) && d.rating != null && d.rating !== "";
+          var badgeInner = useRating
+            ? evtCardIcon("icon_rating.svg") + d.rating
+            : (dDist ? evtCardIcon("icon_jarak.svg") + dDist : "");
           return (
-            '<a href="' + href + '" class="block group">' +
-              '<div class="relative h-32 sm:h-40 rounded-xl overflow-hidden bg-blue-500">' +
-                photoInner(d, dName) +
-                '<span class="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/70 text-amber-300 text-[10px] font-bold">' +
-                  '<svg class="h-3 w-3 text-amber-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" /></svg>' +
-                  "4.6</span>" +
-              "</div>" +
-              '<h3 class="mt-2 font-bold text-xs sm:text-sm text-gray-900 group-hover:text-blue-700 transition-colors">' + dName + "</h3>" +
-              '<p class="text-[10px] sm:text-[11px] text-gray-500">' + distLabel(d, i) + "</p>" +
+            '<a href="' + href + '" class="group block no-underline">' +
+            '<article class="relative rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">' +
+            '<div class="absolute top-3 left-3 right-3 flex items-center justify-between z-10">' +
+            '<span class="inline-block px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-md">Wisata</span>' +
+            (badgeInner
+              ? '<span class="inline-block px-2.5 py-1 bg-white text-gray-900 text-xs font-semibold rounded-md flex items-center gap-1">' +
+                badgeInner + "</span>"
+              : "") +
+            "</div>" +
+            '<div class="relative h-44 sm:h-48 lg:h-52 overflow-hidden bg-gray-200">' +
+              photoInner(d, dName) +
+            "</div>" +
+            '<div class="flex flex-col flex-1 p-4 bg-white">' +
+            '<h3 class="font-bold text-gray-900 text-base line-clamp-2 mb-2">' + dName + "</h3>" +
+            (dDesc ? '<p class="text-xs text-gray-600 line-clamp-2 mb-3">' + dDesc + "</p>" : "") +
+            '<div class="text-xs text-gray-600 space-y-1">' +
+            '<p class="flex items-center gap-1">' + evtCardIcon("icon_lokasi-hitam.svg") + "<span class='truncate'>" + dVenue + "</span></p>" +
+            (dDist ? '<p class="flex items-center gap-1">' + evtCardIcon("icon_jarak.svg") + "<span class='truncate'>" + dDist + "</span></p>" : "") +
+            "</div>" +
+            "</div>" +
+            "</article>" +
             "</a>"
           );
         }

@@ -24,8 +24,10 @@
  *   UI existing sudah punya fallback ("-", grid kosong, rating default).
  * - featured = false semua (tanpa sinyal editorial); fallback UI
  *   (slice 0-4) yang tampil. Hero slides tetap hardcoded terpisah.
- * - Bagian CALENDAR/GALLERY budaya (teaser mock terpisah) dipertahankan
- *   apa adanya — di luar scope data baru ini.
+ * - Bagian CALENDAR/GALLERY/STORIES budaya (teaser mock terpisah)
+ *   dipertahankan apa adanya (extractSection) — di luar scope data baru ini.
+ *   BUDAYA_CALENDAR kini membawa field `status` (akan-datang/berlangsung/
+ *   selesai) AUTHORED (mock) + cultureId menunjuk slug budaya REAL.
  */
 const fs = require("fs");
 const path = require("path");
@@ -73,6 +75,44 @@ function esc(s) {
   return JSON.stringify(s == null ? "" : String(s));
 }
 
+// --- Override dummy (rating/harga/jam/menu) ---------------------------------
+// Sumber: public/data/kuliner-overrides.json (dikelola Owner; data SEMENTARA).
+// Dipetakan ke format UI yang sudah ada (mirror wisata/kuliner):
+//   rating -> number | reviews_count -> "N Ulasan" | hours[0] -> "HH.MM - HH.MM WIB"
+//   price_min/max -> price_range "Rp X - Rp Y" | prices[] -> menus [{name, price}]
+function formatID(n) {
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function formatRupiah(n) {
+  return "Rp " + formatID(n);
+}
+
+function hoursLabel(hours) {
+  if (!Array.isArray(hours) || !hours.length) return null;
+  var h = hours[0] || {};
+  if (!h.open || !h.close) return null;
+  return String(h.open).replace(":", ".") + " - " + String(h.close).replace(":", ".") + " WIB";
+}
+
+function applyKulinerOverride(item, ov) {
+  if (!ov) return item;
+  if (ov.rating != null) item.rating = ov.rating;
+  if (ov.reviews_count != null) item.reviews_label = formatID(ov.reviews_count) + " Ulasan";
+  var label = hoursLabel(ov.hours);
+  if (label) item.opening_hours = label;
+  if (ov.price_min != null && ov.price_max != null) {
+    item.price_range = formatRupiah(ov.price_min) + " - " + formatRupiah(ov.price_max);
+  }
+  if (Array.isArray(ov.prices) && ov.prices.length) {
+    item.menus = ov.prices.map(function (p) {
+      return { name: p.item, price: formatRupiah(p.price) };
+    });
+  }
+  item.is_dummy = !!ov.is_dummy;
+  return item;
+}
+
 function baseItem(d, file) {
   var addr = d.desa_kelurahan + ", Kec. " + d.kecamatan;
   return {
@@ -98,7 +138,7 @@ function baseItem(d, file) {
   };
 }
 
-function kulinerJS(list) {
+function kulinerJS(list, overrides) {
   var items = list.map(function (d) {
     var b = baseItem(d, "destinasi-kuliner-pasuruan.json");
     b.categoryId = kulCat(d.subkategori);
@@ -107,6 +147,8 @@ function kulinerJS(list) {
     b.prices = [];
     b.operational_status = null;
     b.menus = [];
+    b.is_dummy = false;
+    applyKulinerOverride(b, overrides[d.id]);
     return b;
   });
   var lines = items.map(function (it) {
@@ -156,6 +198,7 @@ function extractSection(src, startMark, endMark) {
 function main() {
   var kul = JSON.parse(fs.readFileSync(path.join(DATA, "destinasi-kuliner-pasuruan.json"), "utf8"));
   var bud = JSON.parse(fs.readFileSync(path.join(DATA, "destinasi-budaya-pasuruan.json"), "utf8"));
+  var overrides = JSON.parse(fs.readFileSync(path.join(DATA, "kuliner-overrides.json"), "utf8"));
 
   var kSrc = fs.readFileSync(path.join(JS, "data-kuliner.js"), "utf8");
   var bSrc = fs.readFileSync(path.join(JS, "data-budaya.js"), "utf8");
@@ -172,6 +215,9 @@ function main() {
     " * - place.latitude/longitude REAL per tempat (dipakai peta + jarak Sekitar).",
     " * - media[].url null → UI memakai placeholder lokal (tanpa foto).",
     " * - Field tanpa data (menu, harga, jam, rating) = null/[] — fallback UI.",
+    " *   KECUALI bila ada override di public/data/kuliner-overrides.json",
+    " *   (DATA DUMMY Owner, sementara): rating, reviews_label, opening_hours,",
+    " *   price_range, menus diisi dari override + ditandai item.is_dummy.",
     " * - Kategori halaman dipertahankan (tradisional/camilan/kopi/seafood);",
     " *   pemetaan subkategori→kategori via tabel di tools/build-kuliner-budaya.js.",
     " *   kopi-minuman + camilan-oleh-oleh = 0 item (tab kosong = empty-state).",
@@ -203,8 +249,9 @@ function main() {
   var bCats = extractSection(bSrc, "const BUDAYA_CATEGORIES", "];");
   var bCal = extractSection(bSrc, "const BUDAYA_CALENDAR", "];");
   var bGal = extractSection(bSrc, "const BUDAYA_GALLERY", "];");
+  var bStories = extractSection(bSrc, "// CERITA DI BALIK BUDAYA", "];");
 
-  var k = kulinerJS(kul);
+  var k = kulinerJS(kul, overrides);
   var b = budayaJS(bud);
 
   var outK = [
@@ -238,12 +285,15 @@ function main() {
     "",
     bGal,
     "",
+    bStories,
+    "",
     "const PASINFO_BUDAYA = {",
     "  categories: BUDAYA_CATEGORIES,",
     "  cultures: BUDAYA_CULTURES,",
     "  regions: BUDAYA_REGIONS,",
     "  calendar: BUDAYA_CALENDAR,",
     "  gallery: BUDAYA_GALLERY,",
+    "  stories: BUDAYA_STORIES,",
     "};",
     'if (typeof window !== "undefined") {',
     "  window.PASINFO_BUDAYA = PASINFO_BUDAYA;",

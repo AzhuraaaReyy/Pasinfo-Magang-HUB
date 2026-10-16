@@ -2,6 +2,10 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
+    <!-- Tirai transisi halaman: CSS di src/input.css, logika di page-enter.js
+         (HTML bersih). Harus sinkron di <head> agar kelas tirai terpasang
+         sebelum paint pertama. -->
+    <script src="../../public/js/page-enter.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pasuruan Info - Galeri Budaya</title>
     <link rel="icon" href="data:," />
@@ -12,6 +16,41 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../../public/css/styles.css" />
+    <!-- Aksen Budaya = UNGU (violet), warna miliknya sendiri (Owner 2026-10-16).
+         Utility Tailwind violet/purple solid tidak ada di styles.css
+         terkompilasi dan build:css tidak dijalankan (§66.5) → didefinisikan
+         di sini. Identik dengan budaya.html §O + detail_budaya.html. -->
+    <style>
+      :root {
+        --bud-accent: #6d28d9;
+        --bud-accent-dark: #5b21b6;
+        --bud-accent-soft: #ede9fe;
+      }
+      .bud-accent {
+        background-color: var(--bud-accent);
+        color: #fff;
+      }
+      .bud-accent:hover {
+        background-color: var(--bud-accent-dark);
+      }
+      .bud-accent-soft {
+        background-color: var(--bud-accent-soft);
+        color: var(--bud-accent);
+      }
+      .bud-accent-text {
+        color: var(--bud-accent);
+      }
+      .bud-accent-text:hover {
+        color: var(--bud-accent-dark);
+      }
+      .bud-accent-ring {
+        box-shadow: 0 0 0 2px var(--bud-accent);
+      }
+      /* group-hover bukan utility Tailwind (class custom) → rule eksplisit. */
+      .group:hover .bud-accent-hover {
+        color: var(--bud-accent);
+      }
+    </style>
   </head>
   <body
     class="bg-white text-gray-800 font-sans"
@@ -24,7 +63,7 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <!-- BREADCRUMB -->
       <nav class="flex items-center text-xs text-gray-500 mb-4 gap-1" aria-label="Breadcrumb">
-        <a href="../../index.html" class="hover:text-blue-600" aria-label="Beranda">
+        <a href="../../index.html" class="bud-accent-text" aria-label="Beranda">
           <svg
             class="w-3.5 h-3.5 inline"
             fill="none"
@@ -40,9 +79,9 @@
           </svg>
         </a>
         <span>&gt;</span>
-        <a href="budaya.html" class="hover:text-blue-600">Budaya</a>
+        <a href="budaya.html" class="bud-accent-text">Budaya</a>
         <span>&gt;</span>
-        <span class="text-blue-600 font-medium">Galeri</span>
+        <span class="bud-accent-text font-medium">Galeri</span>
       </nav>
 
       <!-- HERO BANNER CARD -->
@@ -50,10 +89,8 @@
         class="relative w-full rounded-2xl overflow-hidden h-[340px] sm:h-[420px] lg:h-[440px] mb-6 flex items-center"
       >
         <div
-          class="absolute inset-0 bg-cover bg-center"
-          style="
-            background-image: url(&quot;../../public/assets/mockup/galeri_budaya.png&quot;);
-          "
+          id="galeri-hero-bg"
+          class="absolute inset-0 bg-cover bg-center bg-gray-900"
         ></div>
         <div class="absolute inset-0 bg-black/60"></div>
         <div class="relative z-10 p-6 sm:p-10 text-white max-w-xl">
@@ -61,17 +98,13 @@
             Galeri Budaya<br />Pasuruan
           </h1>
           <p class="text-xs sm:text-sm text-gray-200 leading-relaxed">
-            Lorem ipsum is simply dummy text of the printing and typesetting
-            industry. Lorem Ipsum has been the industry's standard dummy text
-            ever since 1966.
+            Jelajahi kekayaan budaya Pasuruan Raya melalui galeri foto pilihan.
           </p>
         </div>
       </section>
 
-      <!-- FILTER TAB KAPSUL (SEMUA / FOTO / VIDEO) -->
-      <div id="gallery-media-filters" class="flex gap-2 mb-6">
-        <!-- Button tab dirender via JS -->
-      </div>
+      <!-- FILTER MEDIA (SEMUA / FOTO / VIDEO) DIHAPUS
+           (Owner 2026-10-16) — galeri budaya hanya berisi foto budaya. -->
 
       <!-- MAIN CONTENT: SIDEBAR + GRID GALERI -->
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
@@ -103,7 +136,7 @@
             >
             <button
               type="button"
-              class="bg-blue-600 text-white text-xs font-semibold px-4 py-1.5 rounded-full hover:bg-blue-700 transition"
+              class="bud-accent text-white text-xs font-semibold px-4 py-1.5 rounded-full transition"
             >
               Terbaru ▾
             </button>
@@ -139,31 +172,29 @@
         </div>
       </div>
 
-      <!-- REKOMENDASI SECTION & SIDEBAR IKLAN -->
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-        <div class="lg:col-span-3 space-y-6">
+      <!-- REKOMENDASI SECTION -->
+      <div class="mb-8">
+        <div class="space-y-6">
           <!-- Rekomendasi Budaya Serupa -->
           <section class="bg-gray-50 border border-gray-100 rounded-2xl p-5">
-            <div class="flex items-start justify-between mb-2">
+            <div class="flex flex-col items-start justify-between sm:flex-row mb-2">
               <div>
-                <h3 class="font-bold text-sm text-gray-900">
+                <h3 class="font-bold text-2xl md:text-3xl lg:text-4xl text-gray-900">
                   Rekomendasi Budaya Serupa
                 </h3>
-                <p class="text-[11px] text-gray-500 max-w-lg mt-0.5">
-                  Lorem ipsum is simply dummy text of the printing and
-                  typesetting industry. Lorem Ipsum has been the industry's
-                  standard dummy text.
+                <p class="text-xs sm:text-sm text-gray-500 max-w-lg mt-0.5">
+                  Rekomendasi budaya serupa di Pasuruan Raya.
                 </p>
               </div>
               <a
                 href="budaya.html"
-                class="text-[11px] font-semibold text-blue-600 hover:underline whitespace-nowrap"
+                class="text-[11px] font-semibold bud-accent-text hover:underline whitespace-nowrap mt-2 sm:mt-0"
                 >Jelajah Sekarang →</a
               >
             </div>
             <div
               id="reco-serupa-grid"
-              class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 items-stretch"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 items-stretch auto-rows-fr"
             >
               <!-- Cards dirender via JS -->
             </div>
@@ -171,26 +202,24 @@
 
           <!-- Rekomendasi Budaya Lainnya -->
           <section class="bg-gray-50 border border-gray-100 rounded-2xl p-5">
-            <div class="flex items-start justify-between mb-2">
+            <div class="flex flex-col items-start justify-between sm:flex-row mb-2">
               <div>
-                <h3 class="font-bold text-sm text-gray-900">
+                <h3 class="font-bold text-2xl md:text-3xl lg:text-4xl text-gray-900">
                   Rekomendasi Budaya Lainnya
                 </h3>
-                <p class="text-[11px] text-gray-500 max-w-lg mt-0.5">
-                  Lorem ipsum is simply dummy text of the printing and
-                  typesetting industry. Lorem Ipsum has been the industry's
-                  standard dummy text.
+                <p class="text-xs sm:text-sm text-gray-500 max-w-lg mt-0.5">
+                  Rekomendasi budaya lain di Pasuruan Raya.
                 </p>
               </div>
               <a
                 href="budaya.html"
-                class="text-[11px] font-semibold text-blue-600 hover:underline whitespace-nowrap"
+                class="text-[11px] font-semibold bud-accent-text hover:underline whitespace-nowrap mt-2 sm:mt-0"
                 >Jelajah Sekarang →</a
               >
             </div>
             <div
               id="reco-lainnya-grid"
-              class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 items-stretch"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 items-stretch auto-rows-fr"
             >
               <!-- Cards dirender via JS -->
             </div>
@@ -198,41 +227,29 @@
 
           <!-- Jelajah Destinasi Sekitar Budaya -->
           <section class="bg-gray-50 border border-gray-100 rounded-2xl p-5">
-            <div class="flex items-start justify-between mb-2">
+            <div class="flex flex-col items-start justify-between sm:flex-row mb-2">
               <div>
-                <h3 class="font-bold text-sm text-gray-900">
+                <h3 class="font-bold text-2xl md:text-3xl lg:text-4xl text-gray-900">
                   Jelajah Destinasi Sekitar Budaya
                 </h3>
-                <p class="text-[11px] text-gray-500 max-w-lg mt-0.5">
-                  Lorem ipsum is simply dummy text of the printing and
-                  typesetting industry. Lorem Ipsum has been the industry's
-                  standard dummy text.
+                <p class="text-xs sm:text-sm text-gray-500 max-w-lg mt-0.5">
+                  Jelajahi destinasi wisata di sekitar budaya pilihan.
                 </p>
               </div>
               <a
                 href="wisata.html"
-                class="text-[11px] font-semibold text-blue-600 hover:underline whitespace-nowrap"
+                class="text-[11px] font-semibold bud-accent-text hover:underline whitespace-nowrap mt-2 sm:mt-0"
                 >Jelajah Sekarang →</a
               >
             </div>
             <div
               id="reco-destinasi-grid"
-              class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 items-stretch"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 items-stretch auto-rows-fr"
             >
               <!-- Cards dirender via JS -->
             </div>
           </section>
         </div>
-
-        <!-- Space Iklan Vertikal Samping Rekomendasi -->
-        <aside
-          class="hidden lg:flex bg-gray-100 border border-gray-200 rounded-2xl items-center justify-center p-4 min-h-[500px]"
-        >
-          <span
-            class="font-bold text-gray-600 text-sm writing-mode-vertical uppercase tracking-wider"
-            >Space Iklan</span
-          >
-        </aside>
       </div>
 
       <!-- BANNER IKLAN HORISONTAL BOTTOM -->
@@ -246,93 +263,6 @@
     <!-- FOOTER -->
     <div data-layout-footer></div>
 
-    <!-- LIGHTBOX / MODAL -->
-    <div
-      id="gallery-modal"
-      class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-      role="dialog"
-      aria-hidden="true"
-    >
-      <div
-        class="relative w-full max-w-3xl max-h-[90vh] flex flex-col bg-white rounded-2xl overflow-hidden shadow-2xl"
-      >
-        <button
-          type="button"
-          id="gallery-modal-close"
-          class="absolute top-4 right-4 z-10 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow transition-colors"
-        >
-          <svg
-            class="h-5 w-5 text-gray-800"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
-
-        <div
-          class="flex-1 overflow-auto bg-black flex items-center justify-center"
-        >
-          <img
-            id="modal-image"
-            src=""
-            alt=""
-            class="max-h-[70vh] w-auto object-contain"
-          />
-        </div>
-
-        <div class="bg-white p-4 border-t border-gray-100">
-          <h2 id="modal-title" class="text-base font-bold text-gray-900"></h2>
-          <p id="modal-desc" class="text-xs text-gray-600 mt-1"></p>
-        </div>
-
-        <button
-          type="button"
-          id="modal-prev"
-          class="absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow transition-colors"
-        >
-          <svg
-            class="h-4 w-4 text-gray-800"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2.5"
-              d="M15.75 19.5L8.25 12l7.5-7.5"
-            />
-          </svg>
-        </button>
-        <button
-          type="button"
-          id="modal-next"
-          class="absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow transition-colors"
-        >
-          <svg
-            class="h-4 w-4 text-gray-800"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2.5"
-              d="M8.25 4.5l7.5 7.5-7.5 7.5"
-            />
-          </svg>
-        </button>
-      </div>
-    </div>
-
     <script src="../../public/js/data-budaya.js"></script>
     <script src="../../public/js/data-wisata.js"></script>
     <script src="../../public/js/pages/galeri-budaya.js"></script>
@@ -340,6 +270,8 @@
     <script src="./partials/pasinfo-header.js" defer></script>
     <script src="./partials/pasinfo-footer.js" defer></script>
     <script src="./partials/pasinfo-layout.js" defer></script>
+    <script src="../../public/js/page-transition.js" defer></script>
+    <script src="../../public/js/pages/internal-nav.js" defer></script>
     <script src="../../public/js/main.js" defer></script>
   </body>
 </html>

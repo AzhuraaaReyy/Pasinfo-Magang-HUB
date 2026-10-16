@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="../../public/js/page-enter.js"></script>
     <title>Menu & Harga - Soto Ayam Kambing - Pasuruan Info</title>
 
     <link rel="icon" href="data:," />
@@ -10,6 +11,31 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="../../public/css/styles.css" />
+    <style>
+      /* Filter kategori: di mobile jadi baris yang bisa digeser horizontal
+         (scrollbar disembunyikan). Tablet ke atas tetap wrap seperti semula.
+         Scoped <style> sesuai aturan build:css (Owner) — tidak menambah
+         utility Tailwind baru dari public/js. */
+      @media (max-width: 639.98px) {
+        #menu-filter-row {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+          padding-bottom: 2px;
+        }
+        #menu-filter-row::-webkit-scrollbar {
+          display: none;
+        }
+        #menu-filter-row > button {
+          flex: 0 0 auto;
+        }
+      }
+    </style>
+    <!-- GSAP Animations (Owner override design.md §49-50): CDN + ScrollTrigger,
+         urutan terjaga: gsap → ScrollTrigger → menu-kuliner-animation. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" defer></script>
   </head>
   <body class="bg-gray-50 text-gray-800 font-sans antialiased" data-page-active="kuliner" data-asset-prefix="../../public" data-wisata-href="wisata.html" data-home-href="../../index.html">
     <!-- HEADER / NAVBAR -->
@@ -41,6 +67,18 @@
 
         <!-- Dark Overlay Gradient -->
         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20"></div>
+
+        <!-- Tombol kanan atas: Simpan (putih) + Bagikan (mirror detail_kuliner.html) -->
+        <div class="absolute top-4 right-4 flex items-center gap-2">
+          <button id="btn-simpan" type="button" title="Simpan kuliner ini (segera hadir)" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-gray-800 text-xs font-bold shadow hover:bg-gray-100 transition-colors">
+            <img src="../../public/assets/icons/icon_bookmark-kuning%201.svg" alt="" aria-hidden="true" class="h-3.5 w-3.5 object-contain" />
+            Simpan
+          </button>
+          <button id="btn-bagikan" type="button" title="Bagikan kuliner ini (segera hadir)" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-blue-700 text-white text-xs font-bold shadow hover:bg-blue-600 transition-colors">
+            <img src="../../public/assets/icons/icon_share.svg" alt="" aria-hidden="true" class="h-3.5 w-3.5 object-contain" />
+            Bagikan
+          </button>
+        </div>
 
         <!-- Content Overlay -->
         <div class="absolute inset-0 flex flex-col justify-center px-5 sm:p-8 text-white">
@@ -74,7 +112,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
       <nav class="bg-gray-50 rounded-lg px-4 py-3 flex items-center gap-6 text-xs sm:text-sm border-b border-gray-200" aria-label="Navigasi section kuliner">
         <a id="tab-utama" href="detail_kuliner.html" class="pb-3 font-semibold text-gray-700 border-b-2 border-transparent hover:text-blue-700 hover:border-blue-700 transition-colors">Informasi Utama</a>
-        <a id="tab-menu" href="#" aria-current="page" class="pb-3 font-bold text-blue-700 border-b-2 border-blue-700 transition-colors">Menu & Harga</a>
+        <a id="tab-menu" href="menu_kuliner.html" aria-current="page" class="pb-3 font-bold text-blue-700 border-b-2 border-blue-700 transition-colors">Menu &amp; Harga</a>
         <a id="tab-ulasan" href="ulasan.html" class="pb-3 font-semibold text-gray-700 border-b-2 border-transparent hover:text-blue-700 hover:border-blue-700 transition-colors">Ulasan</a>
       </nav>
     </div>
@@ -82,16 +120,17 @@
     <!-- MAIN CONTENT -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 space-y-8">
       <!-- MENU KULINER SECTION -->
-      <section class="space-y-6">
+      <section class="space-y-6 scroll-mt-24">
         <div>
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">Menu Kuliner</h2>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">Menu &amp; Harga</h2>
           <p class="text-xs sm:text-sm text-gray-600">
-            Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard
+            Daftar menu dan harga yang tersedia di tempat kuliner ini. Gunakan
+            kategori di bawah untuk menyaring makanan, minuman, atau cemilan.
           </p>
         </div>
 
-        <!-- FILTER BUTTONS -->
-        <div class="flex flex-wrap gap-3">
+        <!-- FILTER BUTTONS (mobile: geser horizontal, scrollbar disembunyikan) -->
+        <div id="menu-filter-row" class="flex flex-wrap gap-3">
           <button class="px-4 py-2 rounded-full font-semibold text-sm transition-colors bg-blue-600 text-white hover:bg-blue-700" data-filter="semua">
             Semua
           </button>
@@ -122,44 +161,31 @@
         </div>
       </section>
 
-      <!-- REKOMENDASI KULINER LAINNYA (sesuai mockup menu_kuliner.png) -->
-      <section class="space-y-6" aria-label="Rekomendasi kuliner lainnya">
-        <div>
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h3 class="text-2xl font-extrabold text-gray-900">Rekomendasi Kuliner Lainnya</h3>
-              <p class="text-xs sm:text-sm text-gray-500">Kuliner lain yang mungkin menarik bagi Anda</p>
-            </div>
-            <a href="kuliner.html" class="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-              Jelajah <svg class="inline h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-            </a>
+      <!-- REKOMENDASI KULINER LAINNYA (sepenutup detail_kuliner.html) -->
+      <section aria-label="Rekomendasi kuliner lainnya">
+        <div class="bg-gray-100 rounded-2xl p-5 sm:p-7">
+          <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">Rekomendasi Kuliner Lainnya</h2>
+          <p class="text-xs sm:text-sm text-gray-500 mt-1">Rekomendasi kuliner lain di Pasuruan.</p>
+          <div class="flex justify-end mt-2">
+            <a href="kuliner.html" class="px-3.5 py-1.5 rounded-full bg-blue-700 hover:bg-blue-600 text-white text-[11px] sm:text-xs font-bold shadow transition-colors">Jelajah →</a>
           </div>
 
-          <div id="reco-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div id="reco-grid" class="mt-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <!-- Kartu rekomendasi dirender via JavaScript -->
           </div>
         </div>
       </section>
 
-      <!-- SPACE IKLAN 2 -->
-      <div class="bg-gray-100 rounded-2xl p-8 text-center h-32 flex items-center justify-center">
-        <span class="text-gray-700 font-bold text-lg">Space Iklan</span>
-      </div>
-
-      <!-- JELAJAH DESTINASI SEKITAR KULINER -->
-      <section class="space-y-6">
-        <div>
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h3 class="text-2xl font-extrabold text-gray-900">Jelajah Destinasi Sekitar Kuliner</h3>
-              <p class="text-xs sm:text-sm text-gray-500">Destinasi wisata, budaya, dan acara di sekitar lokasi ini</p>
-            </div>
-            <a href="wisata.html" class="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-              Lihat Semua <svg class="inline h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-            </a>
+      <!-- JELAJAH DESTINASI SEKITAR KULINER (sepenutup detail_kuliner.html) -->
+      <section aria-label="Jelajah destinasi sekitar kuliner">
+        <div class="bg-gray-100 rounded-2xl p-5 sm:p-7">
+          <h2 id="sekitar-title" class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">Jelajah Destinasi Sekitar Kuliner</h2>
+          <p id="sekitar-desc" class="text-xs sm:text-sm text-gray-500 mt-1">Jelajahi destinasi di sekitar area kuliner ini.</p>
+          <div class="flex justify-end mt-2">
+            <a href="wisata.html" class="px-3.5 py-1.5 rounded-full bg-blue-700 hover:bg-blue-600 text-white text-[11px] sm:text-xs font-bold shadow transition-colors">Jelajah →</a>
           </div>
 
-          <div id="nearby-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div id="nearby-grid" class="mt-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <!-- Nearby destination cards akan dirender via JavaScript -->
           </div>
         </div>
@@ -174,13 +200,22 @@
     <!-- FOOTER -->
     <div data-layout-footer></div>
 
+    <!-- Toast dummy untuk aksi non-fungsional (Simpan/Bagikan) -->
+    <div id="toast" role="status" aria-live="polite" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs sm:text-sm font-semibold shadow-xl"></div>
+
     <!-- JAVASCRIPT -->
     <script src="./partials/pasinfo-header.js" defer></script>
     <script src="./partials/pasinfo-footer.js" defer></script>
     <script src="./partials/pasinfo-layout.js" defer></script>
+    <script src="../../public/js/page-transition.js" defer></script>
+    <script src="../../public/js/pages/internal-nav.js" defer></script>
     <script src="../../public/js/data-kuliner.js" defer></script>
+    <script src="../../public/js/data-kuliner-menus.js" defer></script>
     <script src="../../public/js/data-wisata.js"></script>
+    <script src="../../public/js/opening-hours-util.js"></script>
     <script src="../../public/js/pages/nearby.js"></script>
+    <script src="../../public/js/main.js" defer></script>
     <script src="../../public/js/pages/menu-kuliner.js"></script>
+    <script src="../../public/js/pages/menu-kuliner-animation.js" defer></script>
   </body>
 </html>

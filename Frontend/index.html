@@ -2,6 +2,9 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
+    <!-- Tirai transisi halaman: CSS di src/input.css, logika page-enter.js
+         (harus sinkron di <head> agar kelas tirai terpasang sebelum paint). -->
+    <script src="./public/js/page-enter.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <link
@@ -38,6 +41,15 @@
       rel="stylesheet"
     />
 
+    <!-- Font Awesome for icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      integrity="sha512-iecdLmaskl7CVJkEZSMUkrQ6usls8k3XUVdrETbaVVVVkbO7NToY9x8ntoJp2y0S2Cv+9vMQD3ig6Byp51N5dA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+
     <link rel="stylesheet" href="./public/css/styles.css" />
     <style>
       /* ══ ATURAN PRESISI HAGUE LAYOUT ══ */
@@ -58,7 +70,29 @@
           border-right: 1px solid #e5e7eb !important;
         }
       }
-
+      [data-hero-aside] {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        padding-top: 1.5rem !important;; 
+      }
+      [data-hero-aside] ul > li:last-child {
+        border-bottom: none !important;
+      }
+      /* Divider antar berita pada kartu grup kategori (Lokal/Nasional/
+         Internasional). Memakai pola yang sama dengan sidebar "Berita
+         Terbaru" (`.hague-divider-b`); garis dihilangkan pada item
+         terakhir agar tidak ada garis di bawah item paling bawah. */
+      [data-category-slider] section ul > li:last-child {
+        border-bottom: none !important;
+      }
+      [data-hero-mid] {
+        padding-bottom: 1.5rem !important; /* Tambahkan atau perbesar nilainya (misal: 1.5rem / 2rem) */
+      }
+      [data-hero-left] > article:last-child {
+        padding-bottom: 1.5rem !important; /* Tambahkan padding-bottom sesuai kebutuhan */
+      }
       /* Garis Pembatas Horizontal */
       .hague-divider-b {
         border-bottom: 1px solid #e5e7eb !important;
@@ -66,6 +100,404 @@
       .hague-header-border {
         border-bottom: 1px solid #111827 !important;
       }
+
+      /* ══ METADATA LAYOUT — SEJAJAR HORIZONTAL, TIDAK TERPOTONG ══
+         Item ditata satu baris (horizontal) selama lebar container cukup.
+         Bila container lebih sempit dari total lebar konten (mis. sidebar
+         "Berita Terbaru" / kartu sempit), item boleh turun ke baris kedua
+         dengan gap rapat. Ini menjamin TIDAK ADA overflow, sehingga teks
+         tidak pernah terpotong maupun menabrak elemen lain. */
+      .metadata-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.125rem 0.4rem;
+        font-size: 0.6875rem; /* 11px */
+        color: #9ca3af;
+        line-height: 1.4;
+      }
+
+      /* Varian ringkas untuk kolom sempit (mis. sidebar "Berita Terbaru"
+         dan kartu grup kategori). */
+      .metadata-wrapper.metadata-sm {
+        font-size: 0.625rem; /* 10px */
+        gap: 0.2rem 0.3rem;
+      }
+
+      .metadata-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .metadata-wrapper.metadata-sm .metadata-item {
+        gap: 0.2rem;
+      }
+
+      .metadata-separator {
+        display: inline;
+        color: #d1d5db;
+        flex-shrink: 0;
+      }
+
+      /* Icon styling - Penyetaraan Ukuran SVG & IMG */
+      .metadata-icon,
+      .metadata-item img,
+      .metadata-item svg {
+        height: 13px !important;
+        width: 13px !important;
+        min-width: 13px;
+        min-height: 13px;
+        opacity: 0.8;
+        display: inline-block;
+        vertical-align: middle;
+        flex-shrink: 0;
+        object-fit: contain;
+      }
+
+      .metadata-wrapper.metadata-sm .metadata-icon,
+      .metadata-wrapper.metadata-sm .metadata-item img,
+      .metadata-wrapper.metadata-sm .metadata-item svg {
+        height: 12px !important;
+        width: 12px !important;
+        min-width: 12px;
+        min-height: 12px;
+      }
+
+      .metadata-item svg.metadata-icon {
+        stroke: currentColor;
+        color: #9ca3af;
+        fill: none;
+      }
+
+      /* ══ #15 EQUAL HEIGHT + BASELINE ALIGNMENT (kartu berita) ══
+         Kartu grid selalu sama tinggi (grid stretch). Agar blok teks antar
+         kartu sejajar, judul kartu Berita Pilihan dikunci 2 baris
+         (`line-clamp-2`, sesuai design.md §9.2 / §21.1) — excerpt juga
+         `line-clamp-2` — lalu diberi tinggi minimum 2 baris sehingga baris
+         metadata & excerpt berada pada baseline yang sama di semua kartu,
+         baik di mobile, tablet, maupun desktop. */
+      [aria-labelledby="pilihan-heading"] article h3 {
+        min-height: 2.75em;
+      }
+
+      /* ══ RESPONSIVE & TEXT PROTECTION ══ */
+
+      /* Mencegah Teks Terpotong pada Card & Headlines */
+      h2,
+      h3,
+      h4,
+      p {
+        overflow-wrap: break-word;
+        word-break: break-word;
+      }
+
+      /* Mobile spacing optimization (<768px) */
+      @media (max-width: 767.98px) {
+        .container-page {
+          @apply px-3;
+        }
+
+        .hague-divider-b {
+          padding-bottom: 1rem !important;
+          padding-top: 1rem !important;
+        }
+
+        /* Hero section mobile */
+        .grid.grid-cols-1 > div:first-child,
+        .grid.grid-cols-1 > article,
+        .grid.grid-cols-1 > aside {
+          padding-left: 0 !important;
+          padding-right: 0 !important;
+          border-left: none !important;
+          border-right: none !important;
+          border-bottom: 1px solid #e5e7eb !important;
+          padding-bottom: 1.5rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .grid.grid-cols-1 > aside {
+          padding-top: 0;
+          margin-bottom: 0;
+        }
+
+        /* Card title wrap pada mobile */
+        h3[class*="font-bold"] {
+          line-height: 1.4;
+        }
+
+        /* Metadata lebih compact */
+        .text-xs.text-gray-400 {
+          font-size: 11px;
+          line-height: 1.3;
+        }
+
+        /* Sidebar berita terbaru jadi full width */
+        [aria-labelledby="latest-heading"] {
+          margin-top: 1rem;
+        }
+
+        /* ── HERO MOBILE (<768px) ──────────────────────────────
+           Urutan visual: (1) main content [tengah] → (2) 2 card kiri
+           jadi horizontal (gambar kiri, teks kanan) → (3) Berita Terbaru.
+           Teks & info main content rata kiri. */
+        [data-hero-mid] {
+          grid-row: 1;
+        }
+
+        [data-hero-left] {
+          grid-row: 2;
+          display: grid !important;
+          grid-template-columns: minmax(0, 1fr) !important;
+          row-gap: 0 !important;
+        }
+
+        [data-hero-aside] {
+          grid-row: 3;
+        }
+
+        /* 2 card kiri → horizontal */
+        [data-hero-left] > article {
+          padding: 0 !important;
+          border-bottom: none !important;
+        }
+
+        [data-hero-left] > article > a {
+          flex-direction: row !important;
+          align-items: flex-start;
+          gap: 0.875rem;
+        }
+
+        [data-hero-left] [data-hero-media] {
+          width: 7rem !important;
+          flex: 0 0 auto !important;
+          aspect-ratio: 4 / 3 !important;
+          min-height: 0 !important;
+          margin-bottom: 0 !important;
+        }
+
+        [data-hero-left-text] {
+          flex: 1 1 auto;
+          min-width: 0;
+        }
+
+        /* Divider antar 2 card kiri */
+        [data-hero-left] > article:first-child {
+          padding-bottom: 1rem !important;
+          margin-bottom: 1rem !important;
+          border-bottom: 1px solid #e5e7eb !important;
+        }
+        [data-hero-aside] ul > li:last-child {
+          border-bottom: none !important;
+        }
+        /* Teks main content rata kiri */
+        [data-hero-text] {
+          align-items: flex-start !important;
+          text-align: left !important;
+          padding-left: 0 !important;
+          padding-right: 0 !important;
+        }
+      }
+
+      /* Tablet optimization (spacing) */
+      @media (min-width: 641px) and (max-width: 1023.98px) {
+        .container-page {
+          @apply px-4;
+        }
+
+        /* Section spacing */
+        section {
+          padding-top: 2rem;
+          padding-bottom: 2rem;
+        }
+      }
+
+      /* Tablet (md) — Hero 2 panel:
+         panel kiri (lebih lebar): main content (rata kiri) di atas,
+         lalu 2 card kiri berdampingan (divider vertikal);
+         panel kanan: Berita Terbaru (divider vertikal antar panel).
+         Kedua panel sama tinggi (grid); daftar Berita Terbaru diatur
+         mengisi tinggi panel agar mencapai bagian bawah.
+         Desktop (lg) tetap 3 kolom (3-6-3). */
+      @media (min-width: 768px) and (max-width: 1023.98px) {
+        [data-hero-grid] {
+          display: grid;
+          grid-template-columns: minmax(0, 7fr) minmax(0, 5fr) !important;
+          grid-template-rows: auto auto;
+          align-content: start;
+          gap: 1.5rem !important;
+        }
+
+        [data-hero-mid] {
+          grid-column: 1;
+          grid-row: 1;
+          padding: 0 0 1.5rem !important;
+          border-bottom: 1px solid #e5e7eb !important;
+        }
+
+        [data-hero-left] {
+          grid-column: 1;
+          grid-row: 2;
+          display: grid !important;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          column-gap: 1.25rem !important;
+          row-gap: 0 !important;
+          padding: 0 !important;
+          border-bottom: none !important;
+        }
+
+        /* Divider vertikal antara 2 card kiri */
+        [data-hero-left] > article:first-child {
+          padding: 0 1.25rem 0 0 !important;
+          border-right: 1px solid #e5e7eb !important;
+          border-bottom: none !important;
+        }
+
+        [data-hero-left] > article:last-child {
+          padding: 0 !important;
+          border-bottom: none !important;
+        }
+
+        /* Panel kanan · Berita Terbaru (span 2 baris) */
+        [data-hero-aside] {
+          grid-column: 2;
+          grid-row: 1 / span 2;
+          padding: 0 0 0 1.5rem !important;
+          border-left: 1px solid #e5e7eb !important;
+        }
+
+        /* Teks main content rata kiri */
+        [data-hero-text] {
+          align-items: flex-start !important;
+          text-align: left !important;
+          padding-left: 0 !important;
+          padding-right: 0 !important;
+        }
+
+        /* Berita Terbaru mengisi penuh tinggi panel kanan (konsep sama
+           tinggi). Bila panel kiri lebih tinggi, item daftar ikut
+           merenggang sehingga daftar mencapai bagian bawah. */
+        [data-hero-aside] > ul {
+          flex: 1 1 auto;
+        }
+
+        [data-hero-aside] > ul > li {
+          flex: 1 1 auto;
+          display: flex;
+          align-items: center;
+        }
+      }
+
+      /* Berita Terbaru (tablet + desktop): judul + info (tanggal · waktu ·
+         sumber) di KIRI, thumbnail (gambar) di KANAN. `nowrap` mencegah
+         thumbnail turun ke baris kedua. */
+      @media (min-width: 768px) {
+        [data-hero-aside] li > a {
+          flex-wrap: nowrap;
+        }
+      }
+
+      /* Desktop (lg and up) */
+      @media (min-width: 1024px) {
+        .container-page {
+          @apply px-6;
+        }
+
+        /* ── HERO DESKTOP = SETINGGI LAYAR ─────────────────────
+           Header sticky = 4rem (h-16) + 1px border = 65px.
+           Section utama dibuat pas 1 layar; konten kolom kiri
+           dipadatkan agar selalu muat, Berita Terbaru boleh
+           scroll internal dengan scrollbar disembunyikan. */
+        [data-hero-section] {
+          height: calc(100vh - 65px);
+          overflow: hidden;
+        }
+
+        [data-hero-section] > .container-page,
+        [data-hero-grid] {
+          height: 100%;
+        }
+
+        [data-hero-left],
+        [data-hero-mid],
+        [data-hero-aside] {
+          min-height: 0;
+        }
+
+        /* Kolom kiri: 2 card berbagi tinggi tersedia */
+        [data-hero-left] > article {
+          flex: 1 1 0;
+          min-height: 0;
+        }
+
+        [data-hero-left] > article > a,
+        [data-hero-mid] > a {
+          height: 100%;
+          min-height: 0;
+        }
+
+        [data-hero-left] [data-hero-media] {
+          flex: 1 1 auto;
+          min-height: 0;
+          aspect-ratio: auto;
+        }
+
+        [data-hero-mid] [data-hero-media] {
+          flex: 1 1 auto;
+          min-height: 0;
+          max-height: 62vh;
+        }
+
+        /* Berita Terbaru: scroll bila tidak muat (scrollbar hidden) */
+        [data-hero-aside] {
+          overflow-y: auto;
+          overscroll-behavior: contain;
+        }
+
+        [data-hero-aside] > * {
+          flex: 0 0 auto;
+        }
+      }
+
+      /* Typography responsive */
+      @media (max-width: 768px) {
+        .text-2xl,
+        .text-3xl,
+        .text-4xl {
+          font-size: 1.5rem;
+          line-height: 1.4;
+        }
+
+        .text-base {
+          font-size: 0.95rem;
+        }
+
+        .text-sm {
+          font-size: 0.875rem;
+        }
+      }
+
+      /* Image aspect ratio responsive */
+      @media (max-width: 767.98px) {
+        .aspect-\[16\/10\],
+        .aspect-\[4\/3\],
+        .aspect-\[16\/9\] {
+          aspect-ratio: auto;
+          min-height: 200px;
+        }
+      }
+
+      /* Button & CTA responsive */
+      @media (max-width: 767.98px) {
+        button[type="button"],
+        a[class*="text-brand"] {
+          min-height: 44px;
+          min-width: 44px;
+        }
+      }
+
     </style>
   </head>
 
@@ -91,28 +523,35 @@
     <div data-layout-header></div>
 
     <main id="main-content">
-      <!-- ══ HERO SECTION (Presisi Divider Kiri & Kanan) ══ -->
-      <!-- ══ HERO SECTION (Presisi Divider + 8 Berita Terbaru) ══ -->
+      <!-- ══ HERO SECTION ══ -->
       <section
-        class="w-full bg-white py-6 md:py-8 hague-divider-b"
+        data-hero-section
+        class="w-full bg-[#F5F7FA] py-6 md:py-8 "
         aria-labelledby="hero-heading"
       >
         <div class="container-page">
           <h1 id="hero-heading" class="sr-only">Berita Utama & Pilihan</h1>
 
           <!-- Grid 3 Kolom Layout HAGUE (3 - 6 - 3) -->
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-0">
+          <!-- Desktop 3 kolom (3-6-3); tablet 2 grid:
+               [konten utama | berita terbaru] lalu [konten kiri 2 kolom]. -->
+          <div
+            data-hero-grid
+            class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-0"
+          >
             <!-- ══ KOLOM 1 (KIRI) ══ -->
             <div
+              data-hero-left
               class="flex flex-col lg:col-span-3 lg:pr-6 hague-divider-b pb-6 lg:border-b-0 lg:pb-0"
             >
               <!-- Kartu Vertikal 1 (Atas) -->
               <article class="flex flex-col pb-6 hague-divider-b">
                 <a
-                  href="#"
+                  href="./src/views/detail_news.html?slug=kolaborasi-warga-petugas-aksi-bersih-lingkungan"
                   class="group flex flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   <div
+                    data-hero-media
                     class="aspect-[4/3] w-full overflow-hidden bg-gray-100 mb-3"
                   >
                     <img
@@ -121,23 +560,26 @@
                       class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                     />
                   </div>
-                  <span class="hague-badge mb-1">LOKAL</span>
-                  <h3
-                    class="text-base font-bold text-gray-900 group-hover:text-brand transition leading-snug"
-                  >
-                    Kolaborasi Warga dan Petugas dalam Aksi Bersih Lingkungan
-                  </h3>
-                  <p class="mt-1.5 text-xs text-gray-400">10 Okt 2026</p>
+                  <div data-hero-left-text class="flex min-w-0 flex-col">
+                    <span class="hague-badge mb-1">LOKAL</span>
+                    <h3
+                      class="text-base font-bold text-gray-900 group-hover:text-brand transition leading-snug"
+                    >
+                      Kolaborasi Warga dan Petugas dalam Aksi Bersih Lingkungan
+                    </h3>
+                    <p class="mt-1.5 text-xs text-gray-400">10 Okt 2026</p>
+                  </div>
                 </a>
               </article>
 
               <!-- Kartu Vertikal 2 (Bawah) -->
               <article class="flex flex-col pt-6">
                 <a
-                  href="#"
+                  href="./src/views/detail_news.html?slug=koordinasi-pejabat-pemerintah-program-pembangunan"
                   class="group flex flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   <div
+                    data-hero-media
                     class="aspect-[4/3] w-full overflow-hidden bg-gray-100 mb-3"
                   >
                     <img
@@ -146,32 +588,36 @@
                       class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                     />
                   </div>
-                  <div class="flex items-center gap-1.5 mb-1">
-                    <span class="hague-badge">WISATA</span>
-                    <span class="text-[10px] text-gray-300">•</span>
-                    <span class="hague-badge text-gray-500">POLITIK</span>
+                  <div data-hero-left-text class="flex min-w-0 flex-col">
+                    <div class="flex items-center gap-1.5 mb-1">
+                      <span class="hague-badge">WISATA</span>
+                      <span class="text-[10px] text-gray-300">•</span>
+                      <span class="hague-badge text-gray-500">POLITIK</span>
+                    </div>
+                    <h3
+                      class="text-base font-bold text-gray-900 group-hover:text-brand transition leading-snug"
+                    >
+                      Koordinasi Pejabat Pemerintah Jadi Bagian Penting
+                      Pembangunan
+                    </h3>
+                    <p class="mt-1.5 text-xs text-gray-400">08 Okt 2026</p>
                   </div>
-                  <h3
-                    class="text-base font-bold text-gray-900 group-hover:text-brand transition leading-snug"
-                  >
-                    Koordinasi Pejabat Pemerintah Jadi Bagian Penting
-                    Pembangunan
-                  </h3>
-                  <p class="mt-1.5 text-xs text-gray-400">08 Okt 2026</p>
                 </a>
               </article>
             </div>
 
-            <!-- ══ KOLOM 2 (TENGAH) - Divider Kiri & Kanan ══ -->
+            <!-- ══ KOLOM 2 (TENGAH) ══ -->
             <article
+              data-hero-mid
               class="flex flex-col lg:col-span-6 lg:px-6 hague-divider-l hague-divider-r hague-divider-b py-6 lg:py-0 lg:border-b-0"
             >
               <a
-                href="#"
+                href="./src/views/detail_news.html?slug=ketika-kita-menyampaikan-kebenaran-kepada-masyarakat"
                 class="group flex flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
               >
                 <!-- Gambar Berita Utama -->
                 <div
+                  data-hero-media
                   class="aspect-[16/10] w-full overflow-hidden bg-gray-100 mb-5"
                 >
                   <img
@@ -182,7 +628,10 @@
                 </div>
 
                 <!-- Konten Teks Tengah -->
-                <div class="flex flex-col items-center text-center px-2">
+                <div
+                  data-hero-text
+                  class="flex flex-col items-center text-center px-2"
+                >
                   <span class="hague-badge mb-2">OPINI / UTAMA</span>
                   <h2
                     class="text-2xl font-extrabold text-gray-900 md:text-3xl lg:text-4xl leading-tight group-hover:text-brand transition max-w-xl"
@@ -190,7 +639,7 @@
                     Ketika Kita Menyampaikan Kebenaran Kepada Masyarakat
                   </h2>
                   <p
-                    class="mt-3 text-sm text-gray-600 line-clamp-3 leading-relaxed max-w-xl"
+                    class="mt-3 text-sm text-gray-600 leading-relaxed max-w-xl"
                   >
                     Kegiatan bersih lingkungan menjadi salah satu bentuk
                     kepedulian masyarakat terhadap kebersihan dan kelestarian
@@ -212,7 +661,8 @@
 
             <!-- ══ KOLOM 3 (KANAN) ══ -->
             <aside
-              class="flex flex-col lg:col-span-3 lg:pl-6 pt-6 lg:pt-0"
+              data-hero-aside
+              class="no-scrollbar flex flex-col lg:col-span-3 lg:pl-6 pt-6 lg:pt-0"
               aria-labelledby="latest-heading"
             >
               <!-- Header Sidebar -->
@@ -229,12 +679,12 @@
                 <!-- Item 1 -->
                 <li class="py-3 first:pt-0 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=kolaborasi-warga-petugas-aksi-bersih-lingkungan"
                     class="group flex items-start justify-between gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div class="flex-1 min-w-0">
                       <h3
-                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition line-clamp-2 leading-snug"
+                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition leading-snug"
                       >
                         Kolaborasi Warga dan Petugas dalam Aksi Bersih
                       </h3>
@@ -253,12 +703,12 @@
                 <!-- Item 2 -->
                 <li class="py-3 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=sinergi-pemerintah-masyarakat-dukung-pembangunan"
                     class="group flex items-start justify-between gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div class="flex-1 min-w-0">
                       <h3
-                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition line-clamp-2 leading-snug"
+                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition leading-snug"
                       >
                         Sinergi Pemerintah dan Masyarakat Berperan Penting
                       </h3>
@@ -277,12 +727,12 @@
                 <!-- Item 3 -->
                 <li class="py-3 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=peran-media-menyampaikan-informasi-kepada-masyarakat"
                     class="group flex items-start justify-between gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div class="flex-1 min-w-0">
                       <h3
-                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition line-clamp-2 leading-snug"
+                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition leading-snug"
                       >
                         Peran Media dalam Menyampaikan Informasi
                       </h3>
@@ -301,12 +751,12 @@
                 <!-- Item 4 -->
                 <li class="py-3 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=koordinasi-pejabat-pemerintah-program-pembangunan"
                     class="group flex items-start justify-between gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div class="flex-1 min-w-0">
                       <h3
-                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition line-clamp-2 leading-snug"
+                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition leading-snug"
                       >
                         Koordinasi Pejabat Pemerintah Jadi Bagian Penting
                       </h3>
@@ -325,12 +775,12 @@
                 <!-- Item 5 -->
                 <li class="py-3 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=selamat-datang-portal-berita-informasi-pasuruan"
                     class="group flex items-start justify-between gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div class="flex-1 min-w-0">
                       <h3
-                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition line-clamp-2 leading-snug"
+                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition leading-snug"
                       >
                         Selamat Datang di Portal Berita & Informasi Pasuruan
                       </h3>
@@ -349,12 +799,12 @@
                 <!-- Item Tambahan 6 -->
                 <li class="py-3 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=peningkatan-layanan-publik-program-digitalisasi"
                     class="group flex items-start justify-between gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div class="flex-1 min-w-0">
                       <h3
-                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition line-clamp-2 leading-snug"
+                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition leading-snug"
                       >
                         Peningkatan Layanan Publik Melalui Program Digitalisasi
                       </h3>
@@ -373,12 +823,12 @@
                 <!-- Item Tambahan 7 -->
                 <li class="py-3 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=penguatan-ekonomi-lokal-pembinaan-umkm-pasuruan"
                     class="group flex items-start justify-between gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div class="flex-1 min-w-0">
                       <h3
-                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition line-clamp-2 leading-snug"
+                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition leading-snug"
                       >
                         Penguatan Ekonomi Lokal Lewat Pembinaan UMKM Pasuruan
                       </h3>
@@ -394,15 +844,15 @@
                   </a>
                 </li>
 
-                <!-- Item Tambahan 8 (Lengkap dengan Garis Bawah Divider) -->
+                <!-- Item Tambahan 8 -->
                 <li class="py-3 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=dukungan-sektor-pariwisata-pertumbuhan-daerah"
                     class="group flex items-start justify-between gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div class="flex-1 min-w-0">
                       <h3
-                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition line-clamp-2 leading-snug"
+                        class="text-xs md:text-sm font-bold text-gray-900 group-hover:text-brand transition leading-snug"
                       >
                         Dukungan Sektor Pariwisata untuk Dorong Pertumbuhan
                         Daerah
@@ -423,8 +873,9 @@
           </div>
         </div>
       </section>
+
       <section
-        class="container-page py-8 md:py-12"
+        class="container-page"
         aria-label="Iklan"
         data-reveal
       >
@@ -434,14 +885,18 @@
           Space Iklan
         </div>
       </section>
+
       <!-- ══ BERITA PILIHAN ═══════════════════════════════════════ -->
       <section
-        class="container-page py-12 md:py-16"
+        class="w-full bg-[#F5F7FA] py-12 md:py-16"
         aria-labelledby="pilihan-heading"
       >
-        <div class="mb-6 flex items-end justify-between gap-4" data-reveal>
-          <div class="flex items-center gap-3">
-            <div class="h-8 w-1.5 rounded-full bg-brand"></div>
+        <div class="container-page">
+        <div
+          class="mb-8 flex flex-col items-center text-center gap-2"
+          data-reveal
+        >
+          <div class="flex items-center justify-center gap-3">
             <h2
               id="pilihan-heading"
               class="text-2xl md:text-3xl font-bold text-gray-900"
@@ -449,37 +904,23 @@
               Berita Pilihan
             </h2>
           </div>
-          <a
-            href="#"
-            class="link-underline hidden shrink-0 py-1 text-sm font-semibold text-brand transition hover:text-brand-alt md:inline-flex md:items-center md:gap-1"
-          >
-            Lihat Semua
-            <svg
-              class="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </a>
+          <p class="text-sm md:text-base text-gray-600 max-w-2xl">
+            Kumpulan informasi terkini dan terpercaya seputar Pasuruan dan
+            sekitarnya. Menyajikan kabar penting, kebijakan pemerintah, hingga
+            aksi nyata masyarakat secara transparan.
+          </p>
         </div>
 
         <div
           data-reveal
           class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 md:gap-6"
         >
+          <!-- Article 1 -->
           <article
             class="flex flex-col overflow-hidden rounded-xl bg-white border border-gray-100 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md"
           >
             <a
-              href="#"
+              href="./src/views/detail_news.html?slug=kolaborasi-warga-petugas-aksi-bersih-lingkungan"
               class="group flex h-full flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               <div class="relative aspect-[16/9] overflow-hidden bg-gray-200">
@@ -499,32 +940,42 @@
                   >
                 </div>
                 <h3
-                  class="text-base font-semibold leading-snug text-gray-900 min-h-[44px]"
+                  class="text-base font-semibold leading-snug text-gray-900 line-clamp-2 transition group-hover:text-brand"
                 >
                   Kolaborasi Warga dan Petugas dalam Aksi Bersih Lingkungan
                 </h3>
-                <p class="mt-2 text-xs text-gray-400">
-                  <time
-                    class="inline-flex items-center gap-1 whitespace-nowrap"
-                    datetime="2026-10-09T22:00:00Z"
-                    ><img
-                      class="h-2.5 w-auto align-[-2px] opacity-70"
+                <div class="metadata-wrapper metadata-sm mt-3">
+                  <time class="metadata-item" datetime="2026-10-09T22:00:00Z">
+                    <img
+                      class="metadata-icon"
                       src="./public/assets/icons/icon_kalender.svg"
                       alt=""
                       aria-hidden="true"
-                    />10 Okt 2026</time
-                  >
-                  <span aria-hidden="true">•</span>
-                  <span class="inline-flex items-center gap-1 whitespace-nowrap"
-                    ><img
-                      class="h-2.5 w-auto align-[-2px] opacity-70"
+                    />
+                    <span>10 Okt 2026</span>
+                  </time>
+                  <span class="metadata-separator" aria-hidden="true">•</span>
+                  <span class="metadata-item">
+                    <img
+                      class="metadata-icon"
                       src="./public/assets/icons/icon_waktu.svg"
                       alt=""
                       aria-hidden="true"
-                    />05:00 WIB</span
-                  >
-                </p>
-                <p class="mt-2 text-sm text-gray-500">
+                    />
+                    <span>05:00 WIB</span>
+                  </span>
+                  <span class="metadata-separator" aria-hidden="true">•</span>
+                  <span class="metadata-item">
+                    <img
+                      class="metadata-icon"
+                      src="./public/assets/icons/icon_sumber.svg"
+                      alt=""
+                      aria-hidden="true"
+                    />
+                    <span>Pasuruan Info</span>
+                  </span>
+                </div>
+                <p class="mt-2.5 text-sm text-gray-500 line-clamp-2">
                   Kegiatan bersih lingkungan menjadi salah satu bentuk
                   kepedulian masyarakat terhadap kebersihan dan kelestarian
                   kawasan sekitar.
@@ -533,11 +984,12 @@
             </a>
           </article>
 
+          <!-- Article 2 -->
           <article
             class="flex flex-col overflow-hidden rounded-xl bg-white border border-gray-100 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md"
           >
             <a
-              href="#"
+              href="./src/views/detail_news.html?slug=peran-media-menyampaikan-informasi-kepada-masyarakat"
               class="group flex h-full flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               <div class="relative aspect-[16/9] overflow-hidden bg-gray-200">
@@ -557,32 +1009,42 @@
                   >
                 </div>
                 <h3
-                  class="text-base font-semibold leading-snug text-gray-900 min-h-[44px]"
+                  class="text-base font-semibold leading-snug text-gray-900 line-clamp-2 transition group-hover:text-brand"
                 >
                   Peran Media dalam Menyampaikan Informasi kepada Masyarakat
                 </h3>
-                <p class="mt-2 text-xs text-gray-400">
-                  <time
-                    class="inline-flex items-center gap-1 whitespace-nowrap"
-                    datetime="2026-10-08T22:30:00Z"
-                    ><img
-                      class="h-2.5 w-auto align-[-2px] opacity-70"
+                <div class="metadata-wrapper metadata-sm mt-3">
+                  <time class="metadata-item" datetime="2026-10-08T22:30:00Z">
+                    <img
+                      class="metadata-icon"
                       src="./public/assets/icons/icon_kalender.svg"
                       alt=""
                       aria-hidden="true"
-                    />09 Okt 2026</time
-                  >
-                  <span aria-hidden="true">•</span>
-                  <span class="inline-flex items-center gap-1 whitespace-nowrap"
-                    ><img
-                      class="h-2.5 w-auto align-[-2px] opacity-70"
+                    />
+                    <span>09 Okt 2026</span>
+                  </time>
+                  <span class="metadata-separator" aria-hidden="true">•</span>
+                  <span class="metadata-item">
+                    <img
+                      class="metadata-icon"
                       src="./public/assets/icons/icon_waktu.svg"
                       alt=""
                       aria-hidden="true"
-                    />05:30 WIB</span
-                  >
-                </p>
-                <p class="mt-2 text-sm text-gray-500">
+                    />
+                    <span>05:30 WIB</span>
+                  </span>
+                  <span class="metadata-separator" aria-hidden="true">•</span>
+                  <span class="metadata-item">
+                    <img
+                      class="metadata-icon"
+                      src="./public/assets/icons/icon_sumber.svg"
+                      alt=""
+                      aria-hidden="true"
+                    />
+                    <span>Pasuruan Info</span>
+                  </span>
+                </div>
+                <p class="mt-2.5 text-sm text-gray-500 line-clamp-2">
                   Media memiliki peran penting dalam menyampaikan informasi
                   mengenai berbagai peristiwa kepada masyarakat.
                 </p>
@@ -590,11 +1052,12 @@
             </a>
           </article>
 
+          <!-- Article 3 -->
           <article
             class="flex flex-col overflow-hidden rounded-xl bg-white border border-gray-100 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md"
           >
             <a
-              href="#"
+              href="./src/views/detail_news.html?slug=koordinasi-pejabat-pemerintah-program-pembangunan"
               class="group flex h-full flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               <div class="relative aspect-[16/9] overflow-hidden bg-gray-200">
@@ -614,33 +1077,43 @@
                   >
                 </div>
                 <h3
-                  class="text-base font-semibold leading-snug text-gray-900 min-h-[44px]"
+                  class="text-base font-semibold leading-snug text-gray-900 line-clamp-2 transition group-hover:text-brand"
                 >
                   Koordinasi Pejabat Pemerintah Jadi Bagian Penting dalam
                   Program Pembangunan
                 </h3>
-                <p class="mt-2 text-xs text-gray-400">
-                  <time
-                    class="inline-flex items-center gap-1 whitespace-nowrap"
-                    datetime="2026-10-07T23:00:00Z"
-                    ><img
-                      class="h-2.5 w-auto align-[-2px] opacity-70"
+                <div class="metadata-wrapper metadata-sm mt-3">
+                  <time class="metadata-item" datetime="2026-10-07T23:00:00Z">
+                    <img
+                      class="metadata-icon"
                       src="./public/assets/icons/icon_kalender.svg"
                       alt=""
                       aria-hidden="true"
-                    />08 Okt 2026</time
-                  >
-                  <span aria-hidden="true">•</span>
-                  <span class="inline-flex items-center gap-1 whitespace-nowrap"
-                    ><img
-                      class="h-2.5 w-auto align-[-2px] opacity-70"
+                    />
+                    <span>08 Okt 2026</span>
+                  </time>
+                  <span class="metadata-separator" aria-hidden="true">•</span>
+                  <span class="metadata-item">
+                    <img
+                      class="metadata-icon"
                       src="./public/assets/icons/icon_waktu.svg"
                       alt=""
                       aria-hidden="true"
-                    />06:00 WIB</span
-                  >
-                </p>
-                <p class="mt-2 text-sm text-gray-500">
+                    />
+                    <span>06:00 WIB</span>
+                  </span>
+                  <span class="metadata-separator" aria-hidden="true">•</span>
+                  <span class="metadata-item">
+                    <img
+                      class="metadata-icon"
+                      src="./public/assets/icons/icon_sumber.svg"
+                      alt=""
+                      aria-hidden="true"
+                    />
+                    <span>Pasuruan Info</span>
+                  </span>
+                </div>
+                <p class="mt-2.5 text-sm text-gray-500 line-clamp-2">
                   Koordinasi antarpemangku kepentingan merupakan salah satu
                   aspek penting dalam mendukung pelaksanaan program pembangunan.
                 </p>
@@ -648,11 +1121,12 @@
             </a>
           </article>
 
+          <!-- Article 4 -->
           <article
             class="flex flex-col overflow-hidden rounded-xl bg-white border border-gray-100 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md"
           >
             <a
-              href="#"
+              href="./src/views/detail_news.html?slug=sinergi-pemerintah-masyarakat-dukung-pembangunan"
               class="group flex h-full flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               <div class="relative aspect-[16/9] overflow-hidden bg-gray-200">
@@ -672,33 +1146,43 @@
                   >
                 </div>
                 <h3
-                  class="text-base font-semibold leading-snug text-gray-900 min-h-[44px]"
+                  class="text-base font-semibold leading-snug text-gray-900 line-clamp-2 transition group-hover:text-brand"
                 >
                   Sinergi Pemerintah dan Masyarakat Berperan dalam Mendukung
                   Pembangunan
                 </h3>
-                <p class="mt-2 text-xs text-gray-400">
-                  <time
-                    class="inline-flex items-center gap-1 whitespace-nowrap"
-                    datetime="2026-10-06T23:30:00Z"
-                    ><img
-                      class="h-2.5 w-auto align-[-2px] opacity-70"
+                <div class="metadata-wrapper metadata-sm mt-3">
+                  <time class="metadata-item" datetime="2026-10-06T23:30:00Z">
+                    <img
+                      class="metadata-icon"
                       src="./public/assets/icons/icon_kalender.svg"
                       alt=""
                       aria-hidden="true"
-                    />07 Okt 2026</time
-                  >
-                  <span aria-hidden="true">•</span>
-                  <span class="inline-flex items-center gap-1 whitespace-nowrap"
-                    ><img
-                      class="h-2.5 w-auto align-[-2px] opacity-70"
+                    />
+                    <span>07 Okt 2026</span>
+                  </time>
+                  <span class="metadata-separator" aria-hidden="true">•</span>
+                  <span class="metadata-item">
+                    <img
+                      class="metadata-icon"
                       src="./public/assets/icons/icon_waktu.svg"
                       alt=""
                       aria-hidden="true"
-                    />06:30 WIB</span
-                  >
-                </p>
-                <p class="mt-2 text-sm text-gray-500">
+                    />
+                    <span>06:30 WIB</span>
+                  </span>
+                  <span class="metadata-separator" aria-hidden="true">•</span>
+                  <span class="metadata-item">
+                    <img
+                      class="metadata-icon"
+                      src="./public/assets/icons/icon_sumber.svg"
+                      alt=""
+                      aria-hidden="true"
+                    />
+                    <span>Pasuruan Info</span>
+                  </span>
+                </div>
+                <p class="mt-2.5 text-sm text-gray-500 line-clamp-2">
                   Pembangunan yang berkelanjutan membutuhkan kerja sama berbagai
                   pihak, termasuk pemerintah, masyarakat, dan sektor terkait.
                 </p>
@@ -712,10 +1196,10 @@
           <div
             id="category-slider"
             data-category-slider
-            class="-mx-4 flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory no-scrollbar overscroll-x-contain px-4 scroll-px-4 [-webkit-overflow-scrolling:touch] md:-mx-6 md:gap-6 md:px-6 md:scroll-px-6 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:px-0"
+            class="-mx-4 flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory no-scrollbar overscroll-x-contain px-4 py-1.5 scroll-px-4 [-webkit-overflow-scrolling:touch] md:-mx-6 md:gap-6 md:px-6 md:scroll-px-6 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:px-0"
           >
             <section
-              class="w-full shrink-0 snap-start rounded-xl bg-white p-4 shadow-md md:w-[calc(50%-0.75rem)] lg:w-auto"
+              class="w-full shrink-0 snap-start rounded-xl bg-white p-4 shadow-md transition duration-300 hover:-translate-y-1 hover:shadow-lg md:w-[calc(50%-0.75rem)] lg:w-auto"
               aria-labelledby="cat-lokal"
             >
               <div
@@ -738,15 +1222,15 @@
                   Lokal
                 </h3>
                 <a
-                  href="#"
+                  href="./src/views/LayoutNews.html?category=lokal"
                   class="link-underline -mr-1 flex min-h-[24px] items-center gap-1 rounded px-1 text-xs font-semibold text-brand transition hover:text-brand-alt focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >Lihat semua &rarr;</a
                 >
               </div>
-              <ul class="space-y-3">
-                <li>
+              <ul class="flex flex-col">
+                <li class="py-3 first:pt-0 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=kolaborasi-warga-petugas-aksi-bersih-lingkungan"
                     class="group flex gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div
@@ -755,46 +1239,190 @@
                       <img
                         src="./public/assets/images/news/berita1.jpg"
                         alt="Warga dan petugas bekerja sama dalam kegiatan bersih lingkungan"
-                        class="h-full w-full object-cover"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                       />
                     </div>
                     <div class="min-w-0">
                       <h4
-                        class="text-sm font-medium text-gray-900 min-h-[40px]"
+                        class="text-sm font-medium text-gray-900 leading-snug line-clamp-2 transition group-hover:text-brand"
                       >
                         Kolaborasi Warga dan Petugas dalam Aksi Bersih
                         Lingkungan
                       </h4>
-                      <p
-                        class="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-gray-400"
-                      >
+                      <div class="metadata-wrapper mt-1.5">
                         <time
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
+                          class="metadata-item"
                           datetime="2026-10-09T22:00:00Z"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        >
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_kalender.svg"
                             alt=""
                             aria-hidden="true"
-                          />10 Okt 2026</time
+                          />
+                          <span>10 Okt 2026</span>
+                        </time>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                        <span aria-hidden="true">•</span>
-                        <span
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_waktu.svg"
                             alt=""
                             aria-hidden="true"
-                          />05:00 WIB</span
+                          />
+                          <span>05:00 WIB</span>
+                        </span>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                      </p>
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_sumber.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span class="font-semibold text-gray-600"
+                            >Pasuruan.com</span
+                          >
+                        </span>
+                      </div>
                     </div>
                   </a>
                 </li>
-                <li>
+                <li class="py-3 first:pt-0 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=kolaborasi-warga-petugas-aksi-bersih-lingkungan"
+                    class="group flex gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  >
+                    <div
+                      class="h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-200"
+                    >
+                      <img
+                        src="./public/assets/images/news/berita1.jpg"
+                        alt="Warga dan petugas bekerja sama dalam kegiatan bersih lingkungan"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                    <div class="min-w-0">
+                      <h4
+                        class="text-sm font-medium text-gray-900 leading-snug line-clamp-2 transition group-hover:text-brand"
+                      >
+                        Kolaborasi Warga dan Petugas dalam Aksi Bersih
+                        Lingkungan
+                      </h4>
+                      <div class="metadata-wrapper mt-1.5">
+                        <time
+                          class="metadata-item"
+                          datetime="2026-10-09T22:00:00Z"
+                        >
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_kalender.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span>10 Okt 2026</span>
+                        </time>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
+                        >
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_waktu.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span>05:00 WIB</span>
+                        </span>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
+                        >
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_sumber.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span class="font-semibold text-gray-600"
+                            >Pasuruan.com</span
+                          >
+                        </span>
+                      </div>
+                    </div>
+                  </a>
+                </li>
+                <li class="py-3 first:pt-0 hague-divider-b">
+                  <a
+                    href="./src/views/detail_news.html?slug=kolaborasi-warga-petugas-aksi-bersih-lingkungan"
+                    class="group flex gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  >
+                    <div
+                      class="h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-200"
+                    >
+                      <img
+                        src="./public/assets/images/news/berita1.jpg"
+                        alt="Warga dan petugas bekerja sama dalam kegiatan bersih lingkungan"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                    <div class="min-w-0">
+                      <h4
+                        class="text-sm font-medium text-gray-900 leading-snug line-clamp-2 transition group-hover:text-brand"
+                      >
+                        Kolaborasi Warga dan Petugas dalam Aksi Bersih
+                        Lingkungan
+                      </h4>
+                      <div class="metadata-wrapper mt-1.5">
+                        <time
+                          class="metadata-item"
+                          datetime="2026-10-09T22:00:00Z"
+                        >
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_kalender.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span>10 Okt 2026</span>
+                        </time>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
+                        >
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_waktu.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span>05:00 WIB</span>
+                        </span>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
+                        >
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_sumber.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span class="font-semibold text-gray-600"
+                            >Pasuruan.com</span
+                          >
+                        </span>
+                      </div>
+                    </div>
+                  </a>
+                </li>
+                <li class="py-3 first:pt-0 hague-divider-b">
+                  <a
+                    href="./src/views/detail_news.html?slug=peran-media-menyampaikan-informasi-kepada-masyarakat"
                     class="group flex gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div
@@ -803,46 +1431,62 @@
                       <img
                         src="./public/assets/images/news/berita2.png"
                         alt="Presenter berita menyampaikan informasi di studio televisi"
-                        class="h-full w-full object-cover"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                       />
                     </div>
                     <div class="min-w-0">
                       <h4
-                        class="text-sm font-medium text-gray-900 min-h-[40px]"
+                        class="text-sm font-medium text-gray-900 leading-snug line-clamp-2 transition group-hover:text-brand"
                       >
                         Peran Media dalam Menyampaikan Informasi kepada
                         Masyarakat
                       </h4>
-                      <p
-                        class="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-gray-400"
-                      >
+                      <div class="metadata-wrapper mt-1.5">
                         <time
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
+                          class="metadata-item"
                           datetime="2026-10-08T22:30:00Z"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        >
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_kalender.svg"
                             alt=""
                             aria-hidden="true"
-                          />09 Okt 2026</time
+                          />
+                          <span>09 Okt 2026</span>
+                        </time>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                        <span aria-hidden="true">•</span>
-                        <span
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_waktu.svg"
                             alt=""
                             aria-hidden="true"
-                          />05:30 WIB</span
+                          />
+                          <span>05:30 WIB</span>
+                        </span>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                      </p>
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_sumber.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span class="font-semibold text-gray-600"
+                            >Pasuruan.com</span
+                          >
+                        </span>
+                      </div>
                     </div>
                   </a>
                 </li>
-                <li>
+                <li class="py-3 first:pt-0 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=koordinasi-pejabat-pemerintah-program-pembangunan"
                     class="group flex gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div
@@ -851,40 +1495,56 @@
                       <img
                         src="./public/assets/images/news/berita3.png"
                         alt="Sejumlah pejabat pemerintah berjalan bersama dalam sebuah kegiatan"
-                        class="h-full w-full object-cover"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                       />
                     </div>
                     <div class="min-w-0">
                       <h4
-                        class="text-sm font-medium text-gray-900 min-h-[40px]"
+                        class="text-sm font-medium text-gray-900 leading-snug line-clamp-2 transition group-hover:text-brand"
                       >
                         Koordinasi Pejabat Pemerintah Jadi Bagian Penting dalam
                         Program Pembangunan
                       </h4>
-                      <p
-                        class="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-gray-400"
-                      >
+                      <div class="metadata-wrapper mt-1.5">
                         <time
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
+                          class="metadata-item"
                           datetime="2026-10-07T23:00:00Z"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        >
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_kalender.svg"
                             alt=""
                             aria-hidden="true"
-                          />08 Okt 2026</time
+                          />
+                          <span>08 Okt 2026</span>
+                        </time>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                        <span aria-hidden="true">•</span>
-                        <span
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_waktu.svg"
                             alt=""
                             aria-hidden="true"
-                          />06:00 WIB</span
+                          />
+                          <span>06:00 WIB</span>
+                        </span>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                      </p>
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_sumber.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span class="font-semibold text-gray-600"
+                            >Pasuruan.com</span
+                          >
+                        </span>
+                      </div>
                     </div>
                   </a>
                 </li>
@@ -892,7 +1552,7 @@
             </section>
 
             <section
-              class="w-full shrink-0 snap-start rounded-xl bg-white p-4 shadow-md md:w-[calc(50%-0.75rem)] lg:w-auto"
+              class="w-full shrink-0 snap-start rounded-xl bg-white p-4 shadow-md transition duration-300 hover:-translate-y-1 hover:shadow-lg md:w-[calc(50%-0.75rem)] lg:w-auto"
               aria-labelledby="cat-nasional"
             >
               <div
@@ -915,15 +1575,15 @@
                   Nasional
                 </h3>
                 <a
-                  href="#"
+                  href="./src/views/LayoutNews.html?category=nasional"
                   class="link-underline -mr-1 flex min-h-[24px] items-center gap-1 rounded px-1 text-xs font-semibold text-brand transition hover:text-brand-alt focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >Lihat semua &rarr;</a
                 >
               </div>
-              <ul class="space-y-3">
-                <li>
+              <ul class="flex flex-col">
+                <li class="py-3 first:pt-0 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=sinergi-pemerintah-masyarakat-dukung-pembangunan"
                     class="group flex gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div
@@ -932,46 +1592,190 @@
                       <img
                         src="./public/assets/images/news/berita4.png"
                         alt="Pejabat negara menyampaikan pidato resmi di podium"
-                        class="h-full w-full object-cover"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                       />
                     </div>
                     <div class="min-w-0">
                       <h4
-                        class="text-sm font-medium text-gray-900 min-h-[40px]"
+                        class="text-sm font-medium text-gray-900 leading-snug line-clamp-2 transition group-hover:text-brand"
                       >
                         Sinergi Pemerintah dan Masyarakat Berperan dalam
                         Mendukung Pembangunan
                       </h4>
-                      <p
-                        class="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-gray-400"
-                      >
+                      <div class="metadata-wrapper mt-1.5">
                         <time
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
+                          class="metadata-item"
                           datetime="2026-10-06T23:30:00Z"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        >
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_kalender.svg"
                             alt=""
                             aria-hidden="true"
-                          />07 Okt 2026</time
+                          />
+                          <span>07 Okt 2026</span>
+                        </time>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                        <span aria-hidden="true">•</span>
-                        <span
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_waktu.svg"
                             alt=""
                             aria-hidden="true"
-                          />06:30 WIB</span
+                          />
+                          <span>06:30 WIB</span>
+                        </span>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                      </p>
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_sumber.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span class="font-semibold text-gray-600"
+                            >Pasuruan.com</span
+                          >
+                        </span>
+                      </div>
                     </div>
                   </a>
                 </li>
-                <li>
+                <li class="py-3 first:pt-0 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=sinergi-pemerintah-masyarakat-dukung-pembangunan"
+                    class="group flex gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  >
+                    <div
+                      class="h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-200"
+                    >
+                      <img
+                        src="./public/assets/images/news/berita4.png"
+                        alt="Pejabat negara menyampaikan pidato resmi di podium"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                    <div class="min-w-0">
+                      <h4
+                        class="text-sm font-medium text-gray-900 leading-snug line-clamp-2 transition group-hover:text-brand"
+                      >
+                        Sinergi Pemerintah dan Masyarakat Berperan dalam
+                        Mendukung Pembangunan
+                      </h4>
+                      <div class="metadata-wrapper mt-1.5">
+                        <time
+                          class="metadata-item"
+                          datetime="2026-10-06T23:30:00Z"
+                        >
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_kalender.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span>07 Okt 2026</span>
+                        </time>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
+                        >
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_waktu.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span>06:30 WIB</span>
+                        </span>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
+                        >
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_sumber.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span class="font-semibold text-gray-600"
+                            >Pasuruan.com</span
+                          >
+                        </span>
+                      </div>
+                    </div>
+                  </a>
+                </li>
+                <li class="py-3 first:pt-0 hague-divider-b">
+                  <a
+                    href="./src/views/detail_news.html?slug=sinergi-pemerintah-masyarakat-dukung-pembangunan"
+                    class="group flex gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  >
+                    <div
+                      class="h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-200"
+                    >
+                      <img
+                        src="./public/assets/images/news/berita4.png"
+                        alt="Pejabat negara menyampaikan pidato resmi di podium"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                    <div class="min-w-0">
+                      <h4
+                        class="text-sm font-medium text-gray-900 leading-snug line-clamp-2 transition group-hover:text-brand"
+                      >
+                        Sinergi Pemerintah dan Masyarakat Berperan dalam
+                        Mendukung Pembangunan
+                      </h4>
+                      <div class="metadata-wrapper mt-1.5">
+                        <time
+                          class="metadata-item"
+                          datetime="2026-10-06T23:30:00Z"
+                        >
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_kalender.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span>07 Okt 2026</span>
+                        </time>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
+                        >
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_waktu.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span>06:30 WIB</span>
+                        </span>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
+                        >
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_sumber.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span class="font-semibold text-gray-600"
+                            >Pasuruan.com</span
+                          >
+                        </span>
+                      </div>
+                    </div>
+                  </a>
+                </li>
+                <li class="py-3 first:pt-0 hague-divider-b">
+                  <a
+                    href="./src/views/detail_news.html?slug=kolaborasi-warga-petugas-aksi-bersih-lingkungan"
                     class="group flex gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div
@@ -980,46 +1784,62 @@
                       <img
                         src="./public/assets/images/news/berita1.jpg"
                         alt="Warga dan petugas bekerja sama dalam kegiatan bersih lingkungan"
-                        class="h-full w-full object-cover"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                       />
                     </div>
                     <div class="min-w-0">
                       <h4
-                        class="text-sm font-medium text-gray-900 min-h-[40px]"
+                        class="text-sm font-medium text-gray-900 leading-snug line-clamp-2 transition group-hover:text-brand"
                       >
                         Kolaborasi Warga dan Petugas dalam Aksi Bersih
                         Lingkungan
                       </h4>
-                      <p
-                        class="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-gray-400"
-                      >
+                      <div class="metadata-wrapper mt-1.5">
                         <time
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
+                          class="metadata-item"
                           datetime="2026-10-09T22:00:00Z"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        >
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_kalender.svg"
                             alt=""
                             aria-hidden="true"
-                          />10 Okt 2026</time
+                          />
+                          <span>10 Okt 2026</span>
+                        </time>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                        <span aria-hidden="true">•</span>
-                        <span
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_waktu.svg"
                             alt=""
                             aria-hidden="true"
-                          />05:00 WIB</span
+                          />
+                          <span>05:00 WIB</span>
+                        </span>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                      </p>
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_sumber.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span class="font-semibold text-gray-600"
+                            >Pasuruan.com</span
+                          >
+                        </span>
+                      </div>
                     </div>
                   </a>
                 </li>
-                <li>
+                <li class="py-3 first:pt-0 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=peran-media-menyampaikan-informasi-kepada-masyarakat"
                     class="group flex gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div
@@ -1028,40 +1848,56 @@
                       <img
                         src="./public/assets/images/news/berita2.png"
                         alt="Presenter berita menyampaikan informasi di studio televisi"
-                        class="h-full w-full object-cover"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                       />
                     </div>
                     <div class="min-w-0">
                       <h4
-                        class="text-sm font-medium text-gray-900 min-h-[40px]"
+                        class="text-sm font-medium text-gray-900 leading-snug line-clamp-2 transition group-hover:text-brand"
                       >
                         Peran Media dalam Menyampaikan Informasi kepada
                         Masyarakat
                       </h4>
-                      <p
-                        class="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-gray-400"
-                      >
+                      <div class="metadata-wrapper mt-1.5">
                         <time
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
+                          class="metadata-item"
                           datetime="2026-10-08T22:30:00Z"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        >
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_kalender.svg"
                             alt=""
                             aria-hidden="true"
-                          />09 Okt 2026</time
+                          />
+                          <span>09 Okt 2026</span>
+                        </time>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                        <span aria-hidden="true">•</span>
-                        <span
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_waktu.svg"
                             alt=""
                             aria-hidden="true"
-                          />05:30 WIB</span
+                          />
+                          <span>05:30 WIB</span>
+                        </span>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                      </p>
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_sumber.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span class="font-semibold text-gray-600"
+                            >Pasuruan.com</span
+                          >
+                        </span>
+                      </div>
                     </div>
                   </a>
                 </li>
@@ -1069,7 +1905,7 @@
             </section>
 
             <section
-              class="w-full shrink-0 snap-start rounded-xl bg-white p-4 shadow-md md:w-[calc(50%-0.75rem)] lg:w-auto"
+              class="w-full shrink-0 snap-start rounded-xl bg-white p-4 shadow-md transition duration-300 hover:-translate-y-1 hover:shadow-lg md:w-[calc(50%-0.75rem)] lg:w-auto"
               aria-labelledby="cat-internasional"
             >
               <div
@@ -1092,15 +1928,15 @@
                   Internasional
                 </h3>
                 <a
-                  href="#"
+                  href="./src/views/LayoutNews.html?category=internasional"
                   class="link-underline -mr-1 flex min-h-[24px] items-center gap-1 rounded px-1 text-xs font-semibold text-brand transition hover:text-brand-alt focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >Lihat semua &rarr;</a
                 >
               </div>
-              <ul class="space-y-3">
-                <li>
+              <ul class="flex flex-col">
+                <li class="py-3 first:pt-0 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=koordinasi-pejabat-pemerintah-program-pembangunan"
                     class="group flex gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div
@@ -1109,46 +1945,190 @@
                       <img
                         src="./public/assets/images/news/berita3.png"
                         alt="Sejumlah pejabat pemerintah berjalan bersama dalam sebuah kegiatan"
-                        class="h-full w-full object-cover"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                       />
                     </div>
                     <div class="min-w-0">
                       <h4
-                        class="text-sm font-medium text-gray-900 min-h-[40px]"
+                        class="text-sm font-medium text-gray-900 leading-snug line-clamp-2 transition group-hover:text-brand"
                       >
                         Koordinasi Pejabat Pemerintah Jadi Bagian Penting dalam
                         Program Pembangunan
                       </h4>
-                      <p
-                        class="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-gray-400"
-                      >
+                      <div class="metadata-wrapper mt-1.5">
                         <time
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
+                          class="metadata-item"
                           datetime="2026-10-07T23:00:00Z"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        >
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_kalender.svg"
                             alt=""
                             aria-hidden="true"
-                          />08 Okt 2026</time
+                          />
+                          <span>08 Okt 2026</span>
+                        </time>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                        <span aria-hidden="true">•</span>
-                        <span
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_waktu.svg"
                             alt=""
                             aria-hidden="true"
-                          />06:00 WIB</span
+                          />
+                          <span>06:00 WIB</span>
+                        </span>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                      </p>
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_sumber.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span class="font-semibold text-gray-600"
+                            >Pasuruan.com</span
+                          >
+                        </span>
+                      </div>
                     </div>
                   </a>
                 </li>
-                <li>
+                <li class="py-3 first:pt-0 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=koordinasi-pejabat-pemerintah-program-pembangunan"
+                    class="group flex gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  >
+                    <div
+                      class="h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-200"
+                    >
+                      <img
+                        src="./public/assets/images/news/berita3.png"
+                        alt="Sejumlah pejabat pemerintah berjalan bersama dalam sebuah kegiatan"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                    <div class="min-w-0">
+                      <h4
+                        class="text-sm font-medium text-gray-900 leading-snug line-clamp-2 transition group-hover:text-brand"
+                      >
+                        Koordinasi Pejabat Pemerintah Jadi Bagian Penting dalam
+                        Program Pembangunan
+                      </h4>
+                      <div class="metadata-wrapper mt-1.5">
+                        <time
+                          class="metadata-item"
+                          datetime="2026-10-07T23:00:00Z"
+                        >
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_kalender.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span>08 Okt 2026</span>
+                        </time>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
+                        >
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_waktu.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span>06:00 WIB</span>
+                        </span>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
+                        >
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_sumber.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span class="font-semibold text-gray-600"
+                            >Pasuruan.com</span
+                          >
+                        </span>
+                      </div>
+                    </div>
+                  </a>
+                </li>
+                <li class="py-3 first:pt-0 hague-divider-b">
+                  <a
+                    href="./src/views/detail_news.html?slug=koordinasi-pejabat-pemerintah-program-pembangunan"
+                    class="group flex gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  >
+                    <div
+                      class="h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-200"
+                    >
+                      <img
+                        src="./public/assets/images/news/berita3.png"
+                        alt="Sejumlah pejabat pemerintah berjalan bersama dalam sebuah kegiatan"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                    <div class="min-w-0">
+                      <h4
+                        class="text-sm font-medium text-gray-900 leading-snug line-clamp-2 transition group-hover:text-brand"
+                      >
+                        Koordinasi Pejabat Pemerintah Jadi Bagian Penting dalam
+                        Program Pembangunan
+                      </h4>
+                      <div class="metadata-wrapper mt-1.5">
+                        <time
+                          class="metadata-item"
+                          datetime="2026-10-07T23:00:00Z"
+                        >
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_kalender.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span>08 Okt 2026</span>
+                        </time>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
+                        >
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_waktu.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span>06:00 WIB</span>
+                        </span>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
+                        >
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_sumber.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span class="font-semibold text-gray-600"
+                            >Pasuruan.com</span
+                          >
+                        </span>
+                      </div>
+                    </div>
+                  </a>
+                </li>
+                <li class="py-3 first:pt-0 hague-divider-b">
+                  <a
+                    href="./src/views/detail_news.html?slug=sinergi-pemerintah-masyarakat-dukung-pembangunan"
                     class="group flex gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div
@@ -1157,46 +2137,62 @@
                       <img
                         src="./public/assets/images/news/berita4.png"
                         alt="Pejabat negara menyampaikan pidato resmi di podium"
-                        class="h-full w-full object-cover"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                       />
                     </div>
                     <div class="min-w-0">
                       <h4
-                        class="text-sm font-medium text-gray-900 min-h-[40px]"
+                        class="text-sm font-medium text-gray-900 leading-snug line-clamp-2 transition group-hover:text-brand"
                       >
                         Sinergi Pemerintah dan Masyarakat Berperan dalam
                         Mendukung Pembangunan
                       </h4>
-                      <p
-                        class="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-gray-400"
-                      >
+                      <div class="metadata-wrapper mt-1.5">
                         <time
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
+                          class="metadata-item"
                           datetime="2026-10-06T23:30:00Z"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        >
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_kalender.svg"
                             alt=""
                             aria-hidden="true"
-                          />07 Okt 2026</time
+                          />
+                          <span>07 Okt 2026</span>
+                        </time>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                        <span aria-hidden="true">•</span>
-                        <span
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_waktu.svg"
                             alt=""
                             aria-hidden="true"
-                          />06:30 WIB</span
+                          />
+                          <span>06:30 WIB</span>
+                        </span>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                      </p>
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_sumber.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span class="font-semibold text-gray-600"
+                            >Pasuruan.com</span
+                          >
+                        </span>
+                      </div>
                     </div>
                   </a>
                 </li>
-                <li>
+                <li class="py-3 first:pt-0 hague-divider-b">
                   <a
-                    href="#"
+                    href="./src/views/detail_news.html?slug=kolaborasi-warga-petugas-aksi-bersih-lingkungan"
                     class="group flex gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <div
@@ -1205,40 +2201,56 @@
                       <img
                         src="./public/assets/images/news/berita1.jpg"
                         alt="Warga dan petugas bekerja sama dalam kegiatan bersih lingkungan"
-                        class="h-full w-full object-cover"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                       />
                     </div>
                     <div class="min-w-0">
                       <h4
-                        class="text-sm font-medium text-gray-900 min-h-[40px]"
+                        class="text-sm font-medium text-gray-900 leading-snug line-clamp-2 transition group-hover:text-brand"
                       >
                         Kolaborasi Warga dan Petugas dalam Aksi Bersih
                         Lingkungan
                       </h4>
-                      <p
-                        class="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-gray-400"
-                      >
+                      <div class="metadata-wrapper mt-1.5">
                         <time
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
+                          class="metadata-item"
                           datetime="2026-10-09T22:00:00Z"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        >
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_kalender.svg"
                             alt=""
                             aria-hidden="true"
-                          />10 Okt 2026</time
+                          />
+                          <span>10 Okt 2026</span>
+                        </time>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                        <span aria-hidden="true">•</span>
-                        <span
-                          class="inline-flex items-center gap-1 whitespace-nowrap"
-                          ><img
-                            class="h-2.5 w-auto align-[-2px] opacity-70"
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
                             src="./public/assets/icons/icon_waktu.svg"
                             alt=""
                             aria-hidden="true"
-                          />05:00 WIB</span
+                          />
+                          <span>05:00 WIB</span>
+                        </span>
+                        <span class="metadata-separator" aria-hidden="true"
+                          >•</span
                         >
-                      </p>
+                        <span class="metadata-item">
+                          <img
+                            class="metadata-icon"
+                            src="./public/assets/icons/icon_sumber.svg"
+                            alt=""
+                            aria-hidden="true"
+                          />
+                          <span class="font-semibold text-gray-600"
+                            >Pasuruan.com</span
+                          >
+                        </span>
+                      </div>
                     </div>
                   </a>
                 </li>
@@ -1253,8 +2265,19 @@
             aria-label="Navigasi kartu kategori"
           ></div>
         </div>
+        </div>
       </section>
-
+      <section
+        class="container-page py-8 md:py-12"
+        aria-label="Iklan"
+        data-reveal
+      >
+        <div
+          class="flex h-32 items-center justify-center rounded-xl bg-gray-300 text-sm font-medium text-gray-600 md:h-40"
+        >
+          Space Iklan
+        </div>
+      </section>
       <!-- ══ PASINFO JELAJAH ═══════════════════════════════════════ -->
       <section
         class="bg-white py-12 md:py-16"
@@ -1266,8 +2289,10 @@
               Pasinfo Jelajah
             </h2>
             <p class="mx-auto mt-2 max-w-2xl text-sm text-gray-500">
-              Temukan keindahan alam, cita rasa kuliner, kekayaan budaya, dan
-              berbagai acara menarik di Pasuruan.
+              Ruang eksplorasi interaktif untuk mengenali keunikan dan kekayaan
+              daerah Pasuruan. Sajian informasi terpadu mulai dari spot liburan,
+              kelezatan kuliner, hingga tradisi lokal. Rencanakan perjalanan dan
+              petualangan terbaik Anda bersama Pasinfo Jelajah.
             </p>
           </div>
 
@@ -1282,7 +2307,7 @@
                 class="relative h-48 w-full shrink-0 overflow-hidden bg-gray-200"
               >
                 <img
-                  src="./public/assets/images/wisata/bromo 4.jpg"
+                  src="./public/assets/images/wisata/optimized/bromo 4.thumb.webp"
                   alt=""
                   loading="lazy"
                   data-fade
@@ -1291,7 +2316,7 @@
               </div>
               <div class="relative flex flex-1 flex-col p-5">
                 <span
-                  class="absolute -top-3.5 left-5 inline-flex items-center rounded-full bg-brand px-3 py-1 text-xs font-bold text-white shadow-sm ring-2 ring-white"
+                  class="absolute -top-3.5 left-5 inline-flex items-center rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white shadow-sm ring-2 ring-white"
                   >Wisata</span
                 >
                 <h3 class="mt-2 text-lg font-bold text-gray-900">
@@ -1303,6 +2328,7 @@
                 </p>
                 <a
                   href="./src/views/wisata.html"
+                  data-page-transition
                   class="link-underline mt-auto pt-4 text-sm font-bold text-brand transition hover:text-brand-alt flex items-center gap-1"
                   aria-disabled="true"
                   >Lihat Destinasi <span aria-hidden="true">&rarr;</span></a
@@ -1317,7 +2343,7 @@
                 class="relative h-48 w-full shrink-0 overflow-hidden bg-gray-200"
               >
                 <img
-                  src="./public/assets/images/kuliner/Nasi Punel.png"
+                  src="./public/assets/images/kuliner/optimized/Nasi Punel.thumb.webp"
                   alt=""
                   loading="lazy"
                   data-fade
@@ -1338,6 +2364,7 @@
                 </p>
                 <a
                   href="./src/views/kuliner.html"
+                  data-page-transition
                   class="link-underline mt-auto pt-4 text-sm font-bold text-brand transition hover:text-brand-alt flex items-center gap-1"
                   >Lihat Kuliner <span aria-hidden="true">&rarr;</span></a
                 >
@@ -1351,7 +2378,7 @@
                 class="relative h-48 w-full shrink-0 overflow-hidden bg-gray-200"
               >
                 <img
-                  src="./public/assets/images/budaya/Tradisi-Skilot.jpg"
+                  src="./public/assets/images/budaya/optimized/Tradisi-Skilot.thumb.webp"
                   alt=""
                   loading="lazy"
                   data-fade
@@ -1360,7 +2387,8 @@
               </div>
               <div class="relative flex flex-1 flex-col p-5">
                 <span
-                  class="absolute -top-3.5 left-5 inline-flex items-center rounded-full bg-brand px-3 py-1 text-xs font-bold text-white shadow-sm ring-2 ring-white"
+                  class="absolute -top-3.5 left-5 inline-flex items-center rounded-full px-3 py-1 text-xs font-bold text-white shadow-sm ring-2 ring-white"
+                  style="background-color: #6d28d9"
                   >Budaya</span
                 >
                 <h3 class="mt-2 text-lg font-bold text-gray-900">
@@ -1372,6 +2400,7 @@
                 </p>
                 <a
                   href="./src/views/budaya.html"
+                  data-page-transition
                   class="link-underline mt-auto pt-4 text-sm font-bold text-brand transition hover:text-brand-alt flex items-center gap-1"
                   >Lihat Budaya <span aria-hidden="true">&rarr;</span></a
                 >
@@ -1385,7 +2414,7 @@
                 class="relative h-48 w-full shrink-0 overflow-hidden bg-gray-200"
               >
                 <img
-                  src="./public/assets/images/acara/bromo-marathon.jpg"
+                  src="./public/assets/images/acara/optimized/bromo-marathon.thumb.webp"
                   alt=""
                   loading="lazy"
                   data-fade
@@ -1394,7 +2423,7 @@
               </div>
               <div class="relative flex flex-1 flex-col p-5">
                 <span
-                  class="absolute -top-3.5 left-5 inline-flex items-center rounded-full bg-brand px-3 py-1 text-xs font-bold text-white shadow-sm ring-2 ring-white"
+                  class="absolute -top-3.5 left-5 inline-flex items-center rounded-full bg-green-600 px-3 py-1 text-xs font-bold text-white shadow-sm ring-2 ring-white"
                   >Acara</span
                 >
                 <h3 class="mt-2 text-lg font-bold text-gray-900">
@@ -1406,6 +2435,7 @@
                 </p>
                 <a
                   href="./src/views/acara.html"
+                  data-page-transition
                   class="link-underline mt-auto pt-4 text-sm font-bold text-brand transition hover:text-brand-alt flex items-center gap-1"
                   >Lihat Acara <span aria-hidden="true">&rarr;</span></a
                 >
@@ -1416,17 +2446,6 @@
       </section>
 
       <!-- ══ SPACE IKLAN ═══════════════════════════════════════ -->
-      <section
-        class="container-page py-8 md:py-12"
-        aria-label="Iklan"
-        data-reveal
-      >
-        <div
-          class="flex h-32 items-center justify-center rounded-xl bg-gray-300 text-sm font-medium text-gray-600 md:h-40"
-        >
-          Space Iklan
-        </div>
-      </section>
     </main>
 
     <!-- ══ FOOTER ═══════════════════════════════════════════════ -->
@@ -1434,9 +2453,42 @@
 
     <!-- data -->
     <script src="./public/js/mock-data.js"></script>
+    <!-- GSAP: animasi entrance homepage -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" defer></script>
+    <script src="./public/js/homepage-sync.js" defer></script>
     <script src="./src/views/partials/pasinfo-header.js" defer></script>
     <script src="./src/views/partials/pasinfo-footer.js" defer></script>
     <script src="./src/views/partials/pasinfo-layout.js" defer></script>
+    <script src="./public/js/pages/homepage-gsap-animations.js" defer></script>
+    <script src="./public/js/page-transition.js" defer></script>
     <script src="./public/js/main.js" defer></script>
+    <script src="./public/js/pages/internal-nav.js" defer></script>
+    <script>
+      /* Transisi halus: tautan Pasinfo Jelajah → halaman tujuan.
+         Hanya menangani klik kiri biasa (modifier/middle-click tetap
+         membuka tab seperti biasa). */
+      (function () {
+        function bind() {
+          if (!window.PasInfoPageTransition) return;
+          var links = document.querySelectorAll("[data-page-transition]");
+          Array.prototype.forEach.call(links, function (a) {
+            a.addEventListener("click", function (e) {
+              if (e.defaultPrevented || e.button !== 0) return;
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+              var href = a.getAttribute("href");
+              if (!href || href.charAt(0) === "#") return;
+              e.preventDefault();
+              window.PasInfoPageTransition.go(href);
+            });
+          });
+        }
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", bind);
+        } else {
+          bind();
+        }
+      })();
+    </script>
   </body>
 </html>

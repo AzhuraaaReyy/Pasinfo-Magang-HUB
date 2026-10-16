@@ -37,6 +37,11 @@
     if (el) el.textContent = text === null || text === undefined ? "" : String(text);
   }
 
+  function setHTML(id, html) {
+    var el = $(id);
+    if (el) el.innerHTML = html === null || html === undefined ? "" : String(html);
+  }
+
   function esc(value) {
     return String(value === null || value === undefined ? "" : value)
       .replace(/&/g, "&amp;")
@@ -44,6 +49,20 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
+  }
+
+  /* Foto hero: elemen <img> sudah ada di HTML (Owner 2026-10-16: paritas
+     detail_acara.html). Tanpa placeholder teks & tanpa transisi fade —
+     langsung menyetel .src sehingga tidak ada "berkedip" mock/skeleton
+     dan gambar mulai diunduh lebih awal (fetchpriority=high). Bila gambar
+     gagal dimuat, <img> bawaan tetap tampil (tanpa error). */
+  function setHeroPhoto(el, url, name) {
+    if (!el || !url) return;
+    var img = el.querySelector("img");
+    if (!img) return;
+    img.src = url;
+    img.alt = "Foto " + name;
+    el.setAttribute("aria-label", "Foto " + name);
   }
 
   /* Pola bento galeri (sama dengan susunan sebelumnya: foto besar 2x2,
@@ -142,6 +161,7 @@
     /* Geolocation: jarak dari lokasi user sekarang ke destinasi */
     var userLocation = null;
     var userDistanceToDestination = "-";
+    var userLocationName = "-";
     
     function getUserLocation(callback) {
       if (!navigator.geolocation) {
@@ -171,23 +191,57 @@
       return "±" + km.toFixed(1) + " km";
     }
     
+    /* FIX #2: Translate lat/lng ke nama lokasi (frontend mapping) */
+    function translateLatLngToRegion(lat, lng) {
+      /* Mapping simple: cek region mana yang terdekat atau cek bounding box */
+      var regions = DATA.regions || [];
+      var closestRegion = null;
+      var minDist = Infinity;
+      for (var i = 0; i < regions.length; i++) {
+        var r = regions[i];
+        if (r.center && r.center.latitude && r.center.longitude) {
+          var dist = haversineDistance(lat, lng, r.center.latitude, r.center.longitude);
+          if (dist < minDist) {
+            minDist = dist;
+            closestRegion = r;
+          }
+        }
+      }
+      return closestRegion ? closestRegion.name : "Pasuruan";
+    }
+    
+    /* FIX #3: Format estimasi dengan jam-menit dan icon */
+    function formatEstimasi(km, transportType) {
+      if (!km && km !== 0) return "-";
+      var speedKmH = transportType === "motor" ? 40 : 30; // motor 40, mobil 30
+      var totalMenit = Math.ceil(km / speedKmH * 60);
+      var jam = Math.floor(totalMenit / 60);
+      var menit = totalMenit % 60;
+      /* Use icon files from /public/assets/icons/ */
+      var iconPath = transportType === "motor" 
+        ? "../../public/assets/icons/icon_motor.svg"
+        : "../../public/assets/icons/icon_mobil.svg";
+      var label = transportType === "motor" ? "motor" : "mobil";
+      return '<img src="' + iconPath + '" alt="" class="w-4 h-4 inline mr-1" />' + label + ': ' + (jam > 0 ? jam + ' jam ' : '') + menit + ' menit';
+    }
+     
      /* Init geolocation async (non-blocking) */
      getUserLocation(function(loc) {
        if (loc) {
          userLocation = loc;
+         userLocationName = translateLatLngToRegion(loc.lat, loc.lng);
+         
          if (dest.place && dest.place.latitude && dest.place.longitude) {
            var distKm = haversineDistance(loc.lat, loc.lng, dest.place.latitude, dest.place.longitude);
            userDistanceToDestination = formatDistance(distKm);
-         }
-         /* Populate route-dari with user location */
-         setText("route-dari", 
-           "Lat: " + loc.lat.toFixed(4) + ", Lng: " + loc.lng.toFixed(4)
-         );
-         /* Calculate and populate route-estimasi based on distance and average speed */
-         if (dest.place && dest.place.latitude && dest.place.longitude) {
-           var distKm = haversineDistance(loc.lat, loc.lng, dest.place.latitude, dest.place.longitude);
-           var estimasiMenit = Math.ceil(distKm / 30 * 60);
-           setText("route-estimasi", estimasiMenit + " menit");
+           
+           /* FIX #2: Populate route-dari with location name (not lat/lng) */
+           setText("route-dari", userLocationName);
+           
+      /* FIX #3: Calculate dual estimasi (mobil + motor) dengan format jam-menit + icon */
+            var estimasiMobil = formatEstimasi(distKm, "mobil");
+            var estimasiMotor = formatEstimasi(distKm, "motor");
+            setHTML("route-estimasi", estimasiMobil + " | " + estimasiMotor);
          }
        } else {
          /* Geolocation not available or denied */
@@ -212,14 +266,12 @@
     setText("detail-rating", ratingText || "Belum ada rating");
 
     /* Foto hero: media[0].url (aset lokal yang sudah ada sampai foto asli
-       tersedia; Owner akan mengganti). */
+       tersedia; Owner akan mengganti). Elemen <img> sudah ada di HTML —
+       .src disetel langsung (tanpa fade) agar tidak muncul kedipan
+       placeholder → foto. */
     var heroMedia = $("hero-media");
     var heroPhoto = wisataPhoto(dest);
-    if (heroMedia && heroPhoto) {
-      heroMedia.innerHTML =
-        '<img src="' + esc(heroPhoto) + '" alt="Foto ' + esc(dest.name) + '" class="w-full h-full object-cover" />';
-      heroMedia.setAttribute("aria-label", "Foto " + dest.name);
-    }
+    setHeroPhoto(heroMedia, heroPhoto, dest.name);
 
     /* ---------- 2. TENTANG WISATA (paragraf milik Owner) ---------- */
     var tentang = $("tentang-desc");
@@ -264,11 +316,11 @@
     var facilities = H && H.facilitiesOf ? H.facilitiesOf(dest) : [];
     if (fasilitasEl) {
       fasilitasEl.innerHTML = facilities.length
-        ? '<span class="flex flex-wrap gap-1.5 justify-end">' +
+        ? '<span class="flex flex-wrap gap-2 justify-end">' +
           facilities
             .map(function (f) {
               return (
-                '<span class="px-2 py-0.5 bg-gray-100 rounded text-xs font-semibold text-gray-600">' +
+                '<span class="px-2.5 py-1.5 bg-gray-100 rounded text-sm font-semibold text-gray-700">' +
                 esc(f.name) +
                 "</span>"
               );
@@ -288,74 +340,254 @@
     setText("route-lokasi", dest.address || "-");
     setText("route-jarak", userDistanceToDestination);
 
-    /* Peta mini: marker dari koordinat nyata (pola sama dengan halaman
-       wisata: tanpa tile, hanya penanda). Fallback tetap tampil bila
-       Leaflet tidak tersedia. */
-    function initMiniMap() {
-      var box = $("lokasi-map");
-      if (!box) return false;
-      if (!window.L) {
-        console.warn("[detail-wisata] Leaflet tidak tersedia saat initMiniMap dipanggil");
-        return false;
-      }
-      var lat = dest.place && typeof dest.place.latitude === "number" ? dest.place.latitude : null;
-      var lng = dest.place && typeof dest.place.longitude === "number" ? dest.place.longitude : null;
-      if (lat === null || lng === null) {
-        console.warn("[detail-wisata] Koordinat tidak valid:", {lat: lat, lng: lng});
-        return false;
-      }
-      try {
-        var mini = window.L.map(box, {
-          scrollWheelZoom: false,
-          zoomControl: false,
-          attributionControl: false,
-          dragging: false,
-          touchZoom: false,
-          doubleClickZoom: false,
-          keyboard: false,
-        }).setView([lat, lng], 13);
-        window.L.circleMarker([lat, lng], {
-          radius: 9,
-          color: "#ffffff",
-          weight: 3,
-          fillColor: "#dc2626",
-          fillOpacity: 1,
-        }).addTo(mini);
-        box.removeAttribute("role");
-        box.setAttribute("aria-label", "Peta titik lokasi " + dest.name);
-        var fallback = $("lokasi-map-fallback");
-        if (fallback) fallback.setAttribute("aria-hidden", "true");
-        console.log("[detail-wisata] Mini-map berhasil diinisialisasi untuk:", dest.name);
-        return true;
-      } catch (e) {
-        console.error("[detail-wisata] Error saat init mini-map:", e);
-        return false;
-      }
-    }
-    
-    /* Tunggu Leaflet tersedia sebelum inisialisasi map.
-       Leaflet dimuat dengan defer, jadi mungkin belum siap. */
-    function waitForLeafletAndInitMap() {
-      if (window.L) {
-        initMiniMap();
-      } else {
-        console.log("[detail-wisata] Leaflet belum tersedia, menunggu...");
-        var attempts = 0;
-        var maxAttempts = 50;
-        var checkInterval = setInterval(function() {
-          attempts++;
-          if (window.L) {
-            clearInterval(checkInterval);
-            console.log("[detail-wisata] Leaflet siap, inisialisasi mini-map");
-            initMiniMap();
-          } else if (attempts >= maxAttempts) {
-            clearInterval(checkInterval);
-            console.warn("[detail-wisata] Timeout menunggu Leaflet setelah " + (maxAttempts * 100) + "ms");
+     /* FIX #1: Peta Indonesia penuh dengan marker user location + destinasi + jarak visual 
+        ALTERNATIF: Canvas-based map (tidak perlu Leaflet library) */
+     function initFullIndonesiaMap() {
+       var box = $("lokasi-map");
+       if (!box) return false;
+       
+       var destLat = dest.place && typeof dest.place.latitude === "number" ? dest.place.latitude : null;
+       var destLng = dest.place && typeof dest.place.longitude === "number" ? dest.place.longitude : null;
+       if (destLat === null || destLng === null) {
+         console.warn("[detail-wisata] Koordinat destinasi tidak valid");
+         return false;
+       }
+       
+       try {
+         /* OPSI 1: Jika Leaflet tersedia, gunakan Leaflet */
+         if (window.L) {
+           return initLeafletMap(box, destLat, destLng);
+         }
+         
+         /* OPSI 2: Fallback ke canvas SVG map (selalu muncul) */
+         return initCanvasMap(box, destLat, destLng);
+       } catch (e) {
+         console.error("[detail-wisata] Error saat init peta:", e);
+         return false;
+       }
+     }
+     
+      /* Leaflet-based map (high quality) */
+      function initLeafletMap(box, destLat, destLng) {
+        try {
+          var indonesia = window.L.map(box, {
+            scrollWheelZoom: false,
+            zoomControl: true,
+            attributionControl: false,
+            dragging: true,
+            touchZoom: true,
+            doubleClickZoom: true,
+            keyboard: false,
+            preferCanvas: true,
+          }).setView([-2.5, 112.5], 5);
+          
+          /* Add tile layer (OpenStreetMap).
+             Perf: updateWhenIdle + keepBuffer kecil agar tile tidak terus
+             dimuat saat idle/pan — mengurangi beban jaringan & repaint. */
+          window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19,
+            updateWhenIdle: true,
+            updateWhenZooming: false,
+            keepBuffer: 1,
+          }).addTo(indonesia);
+          
+          /* Marker destinasi (red) */
+          window.L.circleMarker([destLat, destLng], {
+            radius: 10,
+            color: "#ffffff",
+            weight: 3,
+            fillColor: "#dc2626",
+            fillOpacity: 1,
+          }).bindPopup(dest.name).addTo(indonesia);
+          
+          /* Marker user location (blue) - jika tersedia */
+          if (userLocation) {
+            window.L.circleMarker([userLocation.lat, userLocation.lng], {
+              radius: 8,
+              color: "#ffffff",
+              weight: 2,
+              fillColor: "#2563eb",
+              fillOpacity: 1,
+            }).bindPopup("Lokasi Anda: " + userLocationName).addTo(indonesia);
+            
+            /* Garis jarak antara user dan destinasi */
+            window.L.polyline(
+              [[userLocation.lat, userLocation.lng], [destLat, destLng]],
+              { color: '#f59e0b', weight: 2, opacity: 0.7, dashArray: '5, 5' }
+            ).addTo(indonesia);
           }
-        }, 100);
+          
+          var fallback = $("lokasi-map-fallback");
+          if (fallback) fallback.setAttribute("aria-hidden", "true");
+          return true;
+        } catch (e) {
+          console.error("[detail-wisata] Error saat init Leaflet map:", e);
+          return false;
+        }
       }
-    }
-     waitForLeafletAndInitMap();
+     
+      /* Canvas SVG-based map (fallback, selalu muncul) */
+      function initCanvasMap(box, destLat, destLng) {
+        try {
+          /* Indonesia bounding box: lat -10.5 to 5.5, lng 95 to 141 */
+          var minLat = -10.5, maxLat = 5.5, minLng = 95, maxLng = 141;
+          var canvasWidth = box.offsetWidth || 400;
+          var canvasHeight = box.offsetHeight || 300;
+          
+          /* Fungsi konversi lat/lng ke pixel dalam canvas */
+          function latLngToPixel(lat, lng) {
+            var x = ((lng - minLng) / (maxLng - minLng)) * canvasWidth;
+            var y = ((maxLat - lat) / (maxLat - minLat)) * canvasHeight;
+            return {x: x, y: y};
+          }
+          
+          var destPixel = latLngToPixel(destLat, destLng);
+          var userPixel = userLocation ? latLngToPixel(userLocation.lat, userLocation.lng) : null;
+          
+          /* Create SVG overlay */
+          var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          svg.setAttribute("width", canvasWidth);
+          svg.setAttribute("height", canvasHeight);
+          svg.setAttribute("viewBox", "0 0 " + canvasWidth + " " + canvasHeight);
+          svg.setAttribute("class", "absolute inset-0");
+          svg.style.pointerEvents = "none";
+          
+          /* Background */
+          var bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          bg.setAttribute("width", canvasWidth);
+          bg.setAttribute("height", canvasHeight);
+          bg.setAttribute("fill", "#e5e7eb");
+          svg.appendChild(bg);
+          
+          /* Garis jarak (user ke destinasi) */
+          if (userPixel) {
+            var line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", userPixel.x);
+            line.setAttribute("y1", userPixel.y);
+            line.setAttribute("x2", destPixel.x);
+            line.setAttribute("y2", destPixel.y);
+            line.setAttribute("stroke", "#f59e0b");
+            line.setAttribute("stroke-width", "2");
+            line.setAttribute("stroke-dasharray", "5,5");
+            line.setAttribute("opacity", "0.8");
+            svg.appendChild(line);
+          }
+          
+          /* Marker destinasi (red) */
+          var destMarker = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          destMarker.setAttribute("cx", destPixel.x);
+          destMarker.setAttribute("cy", destPixel.y);
+          destMarker.setAttribute("r", "10");
+          destMarker.setAttribute("fill", "#dc2626");
+          destMarker.setAttribute("stroke", "#ffffff");
+          destMarker.setAttribute("stroke-width", "3");
+          svg.appendChild(destMarker);
+          
+          /* Label destinasi */
+          var destLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          destLabel.setAttribute("x", destPixel.x);
+          destLabel.setAttribute("y", destPixel.y - 15);
+          destLabel.setAttribute("text-anchor", "middle");
+          destLabel.setAttribute("fill", "#dc2626");
+          destLabel.setAttribute("font-size", "12");
+          destLabel.setAttribute("font-weight", "bold");
+          destLabel.textContent = "Destinasi";
+          svg.appendChild(destLabel);
+          
+          /* Marker user location (blue) - jika tersedia */
+          if (userPixel) {
+            var userMarker = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            userMarker.setAttribute("cx", userPixel.x);
+            userMarker.setAttribute("cy", userPixel.y);
+            userMarker.setAttribute("r", "8");
+            userMarker.setAttribute("fill", "#2563eb");
+            userMarker.setAttribute("stroke", "#ffffff");
+            userMarker.setAttribute("stroke-width", "2");
+            svg.appendChild(userMarker);
+            
+            /* Label user */
+            var userLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            userLabel.setAttribute("x", userPixel.x);
+            userLabel.setAttribute("y", userPixel.y - 15);
+            userLabel.setAttribute("text-anchor", "middle");
+            userLabel.setAttribute("fill", "#2563eb");
+            userLabel.setAttribute("font-size", "12");
+            userLabel.setAttribute("font-weight", "bold");
+            userLabel.textContent = "Anda";
+            svg.appendChild(userLabel);
+          }
+          
+          /* Clear existing content dan add SVG */
+          box.innerHTML = "";
+          box.appendChild(svg);
+          
+          /* Add legend */
+          var legend = document.createElement("div");
+          legend.className = "absolute bottom-2 left-2 bg-white/90 rounded px-2 py-1 text-xs";
+          legend.innerHTML = '<span style="display:inline-block; width:8px; height:8px; background:#dc2626; border-radius:50%; margin-right:4px;"></span>Destinasi ' +
+                             '<span style="display:inline-block; width:8px; height:8px; background:#2563eb; border-radius:50%; margin-left:8px; margin-right:4px;"></span>Anda';
+          box.appendChild(legend);
+          
+          var fallback = $("lokasi-map-fallback");
+          if (fallback) fallback.setAttribute("aria-hidden", "true");
+          return true;
+        } catch (e) {
+          console.error("[detail-wisata] Error saat init Canvas SVG map:", e);
+          return false;
+        }
+      }
+     
+      /* Tunggu Leaflet tersedia + DOM fully ready sebelum inisialisasi map.
+         Strategi: Tunggu sampai container siap, coba Leaflet, jika gagal fallback ke Canvas SVG */
+      function waitForLeafletAndInitMap() {
+        var attempts = 0;
+        var maxAttempts = 50; // 5 seconds timeout (50 × 100ms)
+        var initialDelay = 300; // Wait 300ms untuk DOM/layout fully ready
+
+        setTimeout(function() {
+          var checkInterval = setInterval(function() {
+            attempts++;
+            
+            var mapBox = $("lokasi-map");
+            var containerReady = mapBox && mapBox.offsetHeight > 0 && mapBox.offsetWidth > 0;
+            var leafletReady = window.L && window.L.map;
+            
+            if (leafletReady && containerReady) {
+              clearInterval(checkInterval);
+              setTimeout(function() {
+                initFullIndonesiaMap();
+              }, 60);
+            } else if (attempts >= maxAttempts) {
+              clearInterval(checkInterval);
+              initFullIndonesiaMap();
+            }
+          }, 100);
+        }, initialDelay);
+      }
+      
+      /* Lazy-init peta: baru mulai memuat tile OSM saat bagian peta mendekati
+         viewport. Ini mencegah tile dimuat saat transisi halaman (penyebab
+         lag saat pindah dari daftar wisata) dan menghemat data di mobile. */
+      function scheduleMapInit() {
+        var box = $("lokasi-map");
+        if (!box) return;
+        if (!("IntersectionObserver" in window)) {
+          waitForLeafletAndInitMap();
+          return;
+        }
+        var started = false;
+        var io = new IntersectionObserver(function(entries) {
+          var visible = entries.some(function(en) { return en.isIntersecting; });
+          if (!visible || started) return;
+          started = true;
+          io.disconnect();
+          waitForLeafletAndInitMap();
+        }, { rootMargin: "250px 0px", threshold: 0 });
+        io.observe(box);
+      }
+      
+      scheduleMapInit();
 
      /* Tombol: Dapatkan Arah & Rute (redirect ke Google Maps) */
      var ruteBtn = $("ruteBtn");
@@ -456,57 +688,48 @@
     /* ---------- 6b. SUMBER & VERIFIKASI ---------- */
     (function () {
       var sourceEl = $("source-info");
-      if (sourceEl) {
-        if (dest.sources && dest.sources.length) {
-          sourceEl.innerHTML = dest.sources
-            .map(function (s) {
-              var html = '<div class="text-sm">';
-              html += '<p class="font-semibold text-gray-800">' + esc(s.name) + "</p>";
-              if (s.url) {
-                html +=
-                  '<a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer" class="text-xs text-red-600 hover:text-red-700 font-semibold">Buka sumber' +
-                  '<span class="sr-only"> (tautan eksternal)</span></a>';
-              }
-              html += "</div>";
-              return html;
-            })
-            .join("");
-        } else if (dest.source) {
-          sourceEl.innerHTML =
-            '<p class="text-xs text-gray-600">Berkas data: ' + esc(dest.source) + "</p>";
-        } else {
-          sourceEl.innerHTML =
-            '<p class="text-xs text-gray-600">Informasi sumber belum tersedia</p>';
-        }
-      }
-
       var verificationEl = $("verification-info");
+      
+      /* Build SUMBER INFORMASI HTML (tanpa label, karena label di HTML) */
+      var sourceHtml = '';
+      if (dest.sources && dest.sources.length) {
+        sourceHtml = '<div class="space-y-2">';
+        dest.sources.forEach(function(s) {
+          sourceHtml += '<div class="text-sm">';
+          sourceHtml += '<p class="font-semibold text-gray-800">' + esc(s.name) + '</p>';
+          if (s.url) {
+            sourceHtml += '<a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer" class="text-xs text-red-600 hover:text-red-700 font-semibold">Buka sumber <span class="sr-only">(tautan eksternal)</span></a>';
+          }
+          sourceHtml += '</div>';
+        });
+        sourceHtml += '</div>';
+      } else if (dest.source) {
+        sourceHtml = '<p class="text-xs text-gray-600">Berkas data: ' + esc(dest.source) + '</p>';
+      } else {
+        sourceHtml = '<p class="text-xs text-gray-600">Informasi sumber belum tersedia</p>';
+      }
+      
+      /* Build VERIFIKASI HTML (tanpa label) */
+      var status = (dest.verification && dest.verification.status) || "pending";
+      var label = STATUS_LABELS[status] || "Menunggu Verifikasi";
+      var cls = STATUS_CLASS[status] || STATUS_CLASS.pending;
+      var verifyHtml = '<div class="text-sm">';
+      verifyHtml += '<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ' + cls + '">' + esc(label) + '</span>';
+      if (dest.verification && dest.verification.verified_at) {
+        var d = new Date(dest.verification.verified_at);
+        verifyHtml += '<p class="text-xs text-gray-600 mt-2">Diverifikasi pada ' + esc(d.toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" })) + '</p>';
+      }
+      if (dest.keyakinan) {
+        verifyHtml += '<p class="text-xs text-gray-600 mt-2">Keyakinan koordinat: ' + esc(CONFIDENCE_LABELS[dest.keyakinan] || dest.keyakinan) + '</p>';
+      }
+      verifyHtml += '</div>';
+      
+      /* Set ke masing-masing element */
+      if (sourceEl) {
+        sourceEl.innerHTML = sourceHtml;
+      }
       if (verificationEl) {
-        var status = (dest.verification && dest.verification.status) || "pending";
-        var label = STATUS_LABELS[status] || "Menunggu Verifikasi";
-        var cls = STATUS_CLASS[status] || STATUS_CLASS.pending;
-        var html = '<div class="text-sm">';
-        html +=
-          '<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ' +
-          cls +
-          '">' +
-          esc(label) +
-          "</span>";
-        if (dest.verification && dest.verification.verified_at) {
-          var d = new Date(dest.verification.verified_at);
-          html +=
-            '<p class="text-xs text-gray-600 mt-2">Diverifikasi pada ' +
-            esc(d.toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" })) +
-            "</p>";
-        }
-        if (dest.keyakinan) {
-          html +=
-            '<p class="text-xs text-gray-600 mt-2">Keyakinan koordinat: ' +
-            esc(CONFIDENCE_LABELS[dest.keyakinan] || dest.keyakinan) +
-            "</p>";
-        }
-        html += "</div>";
-        verificationEl.innerHTML = html;
+        verificationEl.innerHTML = verifyHtml;
       }
     })();
 
@@ -526,32 +749,56 @@
     }
 
     function recoCard(item) {
+      /* FIX #6: Calculate destination-to-destination distance (not user location) */
       var itemDist = "-";
-      if (userLocation && item.place && item.place.latitude && item.place.longitude) {
-        var distKm = haversineDistance(userLocation.lat, userLocation.lng, item.place.latitude, item.place.longitude);
+      if (dest.place && dest.place.latitude && dest.place.longitude &&
+          item.place && item.place.latitude && item.place.longitude) {
+        var distKm = haversineDistance(dest.place.latitude, dest.place.longitude, 
+                                       item.place.latitude, item.place.longitude);
         itemDist = formatDistance(distKm);
       }
       
+      /* FIX #7: Render badge dengan kategori domain yang benar */
       var domain = item._domain || 'Wisata';
-      var catName_val = H ? H.categoryName(item.categoryId || item.category_id) || "" : "";
+      var catId = item.categoryId || item.category_id;
+      var catName_val = "";
+      
+      /* Mapping kategori berdasarkan domain */
+      if (domain === 'Kuliner' && item.categories && item.categories.length) {
+        catName_val = item.categories[0];
+      } else if (domain === 'Budaya' && item.categories && item.categories.length) {
+        catName_val = item.categories[0];
+      } else if (domain === 'Acara' && item.categories && item.categories.length) {
+        catName_val = item.categories[0];
+      } else if (H) {
+        catName_val = H.categoryName(catId) || "";
+      }
+      
       var rating = item.rating || 0;
       var photo = wisataPhoto(item) || lainPhoto(item) || PLACEHOLDER_MEDIA;
       var cardName = getItemField(item, domain, 'name');
       var cardDesc = getItemField(item, domain, 'short_description');
       var cardLocation = getItemField(item, domain, 'address');
-      
+      // Badge lintas-domain mengikuti warna domain masing-masing
+      // (Owner 2026-10-16; pola detail-budaya): Kuliner biru, Budaya ungu,
+      // selainnya merah wisata.
+      var badgeBg = domain === 'Kuliner' ? '#2563eb' : domain === 'Budaya' ? '#6d28d9' : '#dc2626';
+
       return (
-        '<a href="' + esc(item._href || "#") + '" class="group block no-underline">' +
+        '<a href="' + esc(item._href || ("detail_wisata.html?slug=" + item.slug)) + '" class="group block no-underline">' +
         '<article class="relative rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">' +
-        
+
         '<div class="absolute top-3 left-3 right-3 flex items-center justify-between z-10">' +
-        '<span class="inline-block px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-md">' +
-        esc(catName_val) +
+        '<span class="inline-block px-3 py-1 text-white text-xs font-bold rounded-md" style="background-color:' + badgeBg + '">' +
+        esc(catName_val || domain) +
         '</span>' +
-        '<span class="inline-block px-2.5 py-1 bg-white text-gray-900 text-xs font-semibold rounded-md flex items-center gap-1">' +
-        '<img src="../../public/assets/icons/icon_fasilitas.svg" alt="" class="w-4 h-4" />' +
+        /* FIX #5: Use icon_rating.svg instead of icon_fasilitas.svg */
+        (domain === 'Budaya'
+        ? ''
+        : '<span class="inline-block px-2.5 py-1 bg-white text-gray-900 text-xs font-semibold rounded-md flex items-center gap-1">' +
+        '<img src="../../public/assets/icons/icon_rating.svg" alt="" class="w-4 h-4" />' +
         rating +
-        '</span>' +
+        '</span>') +
         '</div>' +
         
         '<div class="relative h-44 sm:h-48 lg:h-52 overflow-hidden bg-gray-200">' +

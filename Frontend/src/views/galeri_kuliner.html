@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Tirai transisi halaman: CSS di src/input.css, logika di page-enter.js
+         (HTML bersih). Harus sinkron di <head> agar kelas tirai terpasang
+         sebelum paint pertama. -->
+    <script src="../../public/js/page-enter.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pasuruan Info - Galeri Kuliner</title>
+    <link rel="icon" href="data:," />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../public/css/styles.css" />
+    <!-- Mirror galeri_budaya.html (Owner 2026-10-16, item 5): konsep UI/UX sama,
+         aksen mengikuti domain masing-masing. Aksen Kuliner = BIRU (bg-blue-600,
+         sama dengan badge hero kuliner.html). Semua utility yang dipakai
+         (bg-blue-600 / hover:bg-blue-700 / text-blue-600 / group-hover:text-blue-700)
+         sudah ada di styles.css terkompilasi → build:css tidak dijalankan
+         (disiplin §66.5). Tidak perlu rule scoped tambahan. -->
+  </head>
+  <body
+    class="bg-white text-gray-800 font-sans"
+    data-page-active="galeri-kuliner"
+    data-asset-prefix="../../public"
+  >
+    <!-- HEADER / NAVBAR -->
+    <div data-layout-header></div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <!-- BREADCRUMB -->
+      <nav class="flex items-center text-xs text-gray-500 mb-4 gap-1" aria-label="Breadcrumb">
+        <a href="../../index.html" class="text-blue-600" aria-label="Beranda">
+          <svg
+            class="w-3.5 h-3.5 inline"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 00-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+            />
+          </svg>
+        </a>
+        <span>&gt;</span>
+        <a href="kuliner.html" class="text-blue-600">Kuliner</a>
+        <span>&gt;</span>
+        <span class="text-blue-600 font-medium">Galeri</span>
+      </nav>
+
+      <!-- HERO BANNER CARD -->
+      <section
+        class="relative w-full rounded-2xl overflow-hidden h-[340px] sm:h-[420px] lg:h-[440px] mb-6 flex items-center"
+      >
+        <div
+          id="galeri-hero-bg"
+          class="absolute inset-0 bg-cover bg-center bg-gray-900"
+        ></div>
+        <div class="absolute inset-0 bg-black/60"></div>
+        <div class="relative z-10 p-6 sm:p-10 text-white max-w-xl">
+          <h1 class="text-3xl sm:text-4xl font-extrabold mb-3 leading-tight">
+            Galeri Kuliner<br />Pasuruan
+          </h1>
+          <p class="text-xs sm:text-sm text-gray-200 leading-relaxed">
+            Jelajahi cita rasa kuliner khas Pasuruan Raya melalui galeri foto
+            pilihan.
+          </p>
+        </div>
+      </section>
+
+      <!-- FILTER MEDIA DIHAPUS — galeri kuliner hanya berisi foto kuliner.
+           (Konsep sama dengan galeri_budaya.html.) -->
+
+      <!-- MAIN CONTENT: SIDEBAR + GRID GALERI -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+        <!-- SIDEBAR KIRI -->
+        <aside class="space-y-6">
+          <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4">
+            <h3 class="font-bold text-sm text-gray-900 mb-3">
+              Kategori Kuliner
+            </h3>
+            <ul id="category-sidebar" class="space-y-1.5 text-xs">
+              <!-- Menu Kategori dirender via JS -->
+            </ul>
+          </div>
+
+          <!-- Space Iklan Sidebar -->
+          <div
+            class="bg-gray-100 border border-gray-200 rounded-2xl h-48 flex items-center justify-center p-4"
+          >
+            <span class="font-bold text-gray-600 text-sm">Space Iklan</span>
+          </div>
+        </aside>
+
+        <!-- AREA GRID GALERI (RIGHT CONTENT) -->
+        <div class="lg:col-span-3">
+          <!-- Sub-header Grid -->
+          <div class="flex items-center justify-between mb-4">
+            <span id="gallery-count" class="text-xs font-bold text-gray-900"
+              >40 hasil ditemukan</span
+            >
+            <button
+              type="button"
+              class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition"
+            >
+              Terbaru ▾
+            </button>
+          </div>
+
+          <!-- Grid Galeri -->
+          <div
+            id="gallery-grid"
+            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6 items-stretch"
+          >
+            <!-- Items galeri dirender via JS -->
+          </div>
+
+          <p
+            id="gallery-empty"
+            class="hidden text-sm text-gray-500 text-center py-12"
+          >
+            Tidak ada galeri kuliner yang cocok dengan pencarian atau filter ini.
+          </p>
+
+          <!-- Pagination -->
+          <div
+            class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2"
+          >
+            <p class="text-xs text-gray-500" id="gallery-range">Menampilkan data dari 1 - 9</p>
+            <nav
+              id="gallery-pager"
+              class="flex items-center gap-1.5"
+              aria-label="Pagination galeri"
+            ></nav>
+            <p class="text-xs text-gray-500" id="gallery-pageinfo">Menampilkan page 1 - 1</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- REKOMENDASI SECTION -->
+      <div class="mb-8">
+        <div class="space-y-6">
+          <!-- Rekomendasi Kuliner Serupa -->
+          <section class="bg-gray-50 border border-gray-100 rounded-2xl p-5">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <h3 class="font-bold text-2xl md:text-3xl lg:text-4xl text-gray-900">
+                  Rekomendasi Kuliner Serupa
+                </h3>
+                <p class="text-xs sm:text-sm text-gray-500 max-w-lg mt-0.5">
+                  Rekomendasi kuliner serupa di Pasuruan Raya.
+                </p>
+              </div>
+              <a
+                href="kuliner.html"
+                class="text-[11px] font-semibold text-blue-600 hover:underline whitespace-nowrap"
+                >Jelajah Sekarang →</a
+              >
+            </div>
+            <div
+              id="reco-serupa-grid"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 items-stretch auto-rows-fr"
+            >
+              <!-- Cards dirender via JS -->
+            </div>
+          </section>
+
+          <!-- Rekomendasi Kuliner Lainnya -->
+          <section class="bg-gray-50 border border-gray-100 rounded-2xl p-5">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <h3 class="font-bold text-2xl md:text-3xl lg:text-4xl text-gray-900">
+                  Rekomendasi Kuliner Lainnya
+                </h3>
+                <p class="text-xs sm:text-sm text-gray-500 max-w-lg mt-0.5">
+                  Rekomendasi kuliner lain di Pasuruan Raya.
+                </p>
+              </div>
+              <a
+                href="kuliner.html"
+                class="text-[11px] font-semibold text-blue-600 hover:underline whitespace-nowrap"
+                >Jelajah Sekarang →</a
+              >
+            </div>
+            <div
+              id="reco-lainnya-grid"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 items-stretch auto-rows-fr"
+            >
+              <!-- Cards dirender via JS -->
+            </div>
+          </section>
+
+          <!-- Jelajah Wisata Sekitar -->
+          <section class="bg-gray-50 border border-gray-100 rounded-2xl p-5">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <h3 class="font-bold text-2xl md:text-3xl lg:text-4xl text-gray-900">
+                  Jelajah Wisata Sekitar
+                </h3>
+                <p class="text-xs sm:text-sm text-gray-500 max-w-lg mt-0.5">
+                  Jelajahi destinasi wisata di sekitar kuliner pilihan.
+                </p>
+              </div>
+              <a
+                href="wisata.html"
+                class="text-[11px] font-semibold text-blue-600 hover:underline whitespace-nowrap"
+                >Jelajah Sekarang →</a
+              >
+            </div>
+            <div
+              id="reco-destinasi-grid"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 items-stretch auto-rows-fr"
+            >
+              <!-- Cards dirender via JS -->
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- BANNER IKLAN HORISONTAL BOTTOM -->
+      <section
+        class="bg-gray-100 border border-gray-200 rounded-2xl py-10 px-4 text-center mb-8"
+      >
+        <span class="text-2xl font-bold text-gray-700">Space Iklan</span>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <div data-layout-footer></div>
+
+    <script src="../../public/js/data-kuliner.js"></script>
+    <script src="../../public/js/data-wisata.js"></script>
+    <script src="../../public/js/pages/galeri-kuliner.js"></script>
+
+    <script src="./partials/pasinfo-header.js" defer></script>
+    <script src="./partials/pasinfo-footer.js" defer></script>
+    <script src="./partials/pasinfo-layout.js" defer></script>
+    <script src="../../public/js/page-transition.js" defer></script>
+    <script src="../../public/js/pages/internal-nav.js" defer></script>
+    <script src="../../public/js/main.js" defer></script>
+  </body>
+</html>

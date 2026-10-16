@@ -2571,3 +2571,408 @@ const PASINFO_WISATA = {
 if (typeof window !== "undefined") {
   window.PASINFO_WISATA = PASINFO_WISATA;
 }
+
+/* ============================================================
+ * SCHEMA ALIGNMENT BLOCK - TASK-WIS-DETAIL-SYNC-001 (2026-10-13)
+ * ------------------------------------------------------------
+ * Instruksi Owner 2026-10-13:
+ *   1) sinkronkan halaman listing wisata <-> halaman detail wisata <-> data ini
+ *   2) hero/banner halaman detail memakai gambar yang SUDAH ADA
+ *      (Owner akan mengganti dengan foto asli)
+ *   3) selaraskan bentuk data dengan docs/schema.md agar backend/database
+ *      tinggal mengikuti (termasuk tabel fasilitas, wilayah, kategori,
+ *      harga tiket, dan weather/cuaca yang akan disambung API)
+ *   4) field yang belum ada datanya boleh DUMMY, tetapi bentuknya harus
+ *      sesuai schema
+ *
+ * Blok ini TIDAK mengubah nilai asli milik Owner (name, regionId, categoryId,
+ * place.latitude/longitude, short_description, description, rating,
+ * reviews_label, address, opening_hours, prices, fasilitas, googleMapsUrl).
+ * Blok ini hanya MENAMBAH field bentuk-schema + helper bersama supaya
+ * listing + detail memakai satu sumber yang sama.
+ *
+ * DUMMY (disetujui Owner):
+ * - media  : memakai 6 gambar yang SUDAH ADA di public/assets/images/wisata
+ *            (deterministik per id, sama dengan pemetaan listing sebelumnya).
+ *            TIDAK ada URL video karangan; entri video baru muncul bila
+ *            datanya tersedia (schema media: type image|video, url wajib).
+ * - destination_prices : turunan dari `prices` (Tiket Masuk) + 2 baris dummy.
+ * - weather : satu nilai contoh untuk semua destinasi (API cuaca menyusul).
+ * - verification.status dinormalkan ke enum schema
+ *   (pending|verified|rejected|expired). Tingkat keyakinan lama
+ *   (sedang/tinggi) dipindah ke d.keyakinan - sama seperti konvensi
+ *   data-kuliner.js dan data-budaya.js.
+ * ============================================================ */
+(function () {
+  "use strict";
+
+  var DATA = typeof PASINFO_WISATA !== "undefined" ? PASINFO_WISATA : null;
+  if (!DATA) return;
+
+  var DESTINATIONS = DATA.destinations || [];
+  var REGIONS = DATA.regions || [];
+  var CATEGORIES = DATA.categories || [];
+
+  /* Aset yang SUDAH ADA (6 file di public/assets/images/wisata).
+     Urutan harus sama dengan wisata-listing.js supaya pemetaan foto
+     per destinasi tidak berubah saat sync ini. */
+  var PHOTO_FALLBACK = [
+    "../../public/assets/images/wisata/optimized/bromo2.webp",
+    "../../public/assets/images/wisata/optimized/bromo3.webp",
+    "../../public/assets/images/wisata/optimized/bromo_banner.webp",
+    "../../public/assets/images/wisata/optimized/purwodadi-botanic-garden.webp",
+    "../../public/assets/images/wisata/optimized/taman_safari_indonesia_2.webp",
+    "../../public/assets/images/wisata/optimized/air-terjun-kakek-bodo.webp",
+  ];
+  var PLACEHOLDER_LAIN = "../../public/assets/images/poster-dummy.svg";
+
+  var VALID_STATUS = { pending: 1, verified: 1, rejected: 1, expired: 1 };
+
+  /* ---------- util kecil ---------- */
+
+  function isNum(n) {
+    return typeof n === "number" && isFinite(n);
+  }
+
+  function fmtRupiah(n) {
+    return isNum(n) ? "Rp " + n.toLocaleString("id-ID") : null;
+  }
+
+  function photoIndex(id) {
+    var s = String(id === undefined || id === null || id === "" ? "x" : id);
+    var h = 0;
+    for (var i = 0; i < s.length; i++) {
+      h = (h + s.charCodeAt(i)) % PHOTO_FALLBACK.length;
+    }
+    return h;
+  }
+
+  function slugify(s) {
+    return String(s === undefined || s === null ? "" : s)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  /* ---------- 1. place (schema: id, name, address, latitude, longitude, map_url) ---------- */
+
+  function normalizePlace(d) {
+    var p = d.place || (d.place = {});
+    if (!p.name) p.name = d.name || null;
+    if (typeof p.address === "undefined") p.address = d.address || null;
+    if (typeof p.map_url === "undefined") p.map_url = d.googleMapsUrl || null;
+    return p;
+  }
+
+  /* ---------- 2. verification (schema enum) + keyakinan ---------- */
+
+  function normalizeVerification(d) {
+    var v = d.verification;
+    if (!v || typeof v !== "object") v = d.verification = {};
+    if (v.status && !VALID_STATUS[v.status]) {
+      /* Nilai lama = tingkat keyakinan koordinat, bukan status verifikasi.
+         Dipindah ke keyakinan (konvensi kuliner/budaya), bukan dibuang. */
+      if (!d.keyakinan) d.keyakinan = v.status;
+      v.status = "pending";
+    }
+    if (!v.status) v.status = "pending";
+    if (typeof v.verified_at === "undefined") v.verified_at = null;
+    return v;
+  }
+
+  /* ---------- 3. media (schema-shape, dari aset yang ada) ---------- */
+
+  function buildMedia(d) {
+    var base = photoIndex(d.id || d.slug);
+    var out = [];
+    for (var i = 0; i < PHOTO_FALLBACK.length; i++) {
+      var url = PHOTO_FALLBACK[(base + i) % PHOTO_FALLBACK.length];
+      /* Owner 2026-10-15: sediakan varian thumbnail (WebP 520px) untuk
+         tampilan kecil (kartu listing); url penuh tetap dipakai untuk hero
+         detail & galeri. Aset `.thumb.webp` tersedia di folder optimized/. */
+      var thumb = url.replace(/\.webp$/i, ".thumb.webp");
+      out.push({
+        id: (d.slug || d.id) + "-media-" + (i + 1),
+        type: "image",
+        url: url,
+        thumbnail_url: thumb,
+        alt_text: "Foto " + d.name + " " + (i + 1) + " (aset contoh lokal)",
+        alt: "Foto " + d.name + " (aset contoh lokal)",
+        caption: null,
+        sort_order: i,
+        is_featured: i === 0,
+      });
+    }
+    return out;
+  }
+
+  /* ---------- 3. harga tiket (schema: destination_prices) ---------- */
+
+  function parseRupiah(v) {
+    var n = parseInt(String(v === undefined || v === null ? "" : v).replace(/[^0-9]/g, ""), 10);
+    return isFinite(n) && n > 0 ? n : null;
+  }
+
+  function buildDestinationPrices(d) {
+    var rows = [];
+    var nums = (d.prices || []).map(parseRupiah).filter(isNum);
+    if (!nums.length) return rows;
+    var base = Math.min.apply(null, nums);
+    var slug = d.slug || d.id;
+    rows.push({
+      id: slug + "-tiket-masuk",
+      name: "Tiket Masuk",
+      price: base,
+      min_price: base,
+      max_price: base + 20000,
+      description: null,
+      external_url: null,
+    });
+    rows.push({
+      id: slug + "-tiket-parkir",
+      name: "Tiket Parkir",
+      price: 5000,
+      min_price: 5000,
+      max_price: 5000,
+      description: null,
+      external_url: null,
+    });
+    rows.push({
+      id: slug + "-tiket-wahana",
+      name: "Tiket Wahana",
+      price: base + 20000,
+      min_price: base + 20000,
+      max_price: base + 20000,
+      description: null,
+      external_url: null,
+    });
+    return rows;
+  }
+
+  /* ---------- 4. fasilitas (schema: facilities) ---------- */
+
+  function buildFacilities(d) {
+    if (d.facilities && d.facilities.length) return d.facilities;
+    var slug = d.slug || d.id;
+    return (d.fasilitas || []).map(function (name, i) {
+      return {
+        id: slug + "-fasilitas-" + (i + 1),
+        name: name,
+        slug: slugify(name),
+        icon: null,
+        note: null,
+        sort_order: i,
+      };
+    });
+  }
+
+  /* ---------- 5. weather (schema: destination_weather) ---------- */
+
+  var DUMMY_WEATHER = {
+    provider: null,
+    source: null,
+    condition_code: "partly_cloudy",
+    condition_label: "Cerah Berawan",
+    temperature_c: 30,
+    feels_like_c: 32,
+    humidity_percent: 70,
+    wind_speed_kmh: 10,
+    precipitation_mm: 0,
+    icon: "sun-cloud",
+    observed_at: null,
+    expires_at: null,
+  };
+
+  function buildWeather(d) {
+    var w = {};
+    for (var k in DUMMY_WEATHER) {
+      if (Object.prototype.hasOwnProperty.call(DUMMY_WEATHER, k)) w[k] = DUMMY_WEATHER[k];
+    }
+    w.id = (d.slug || d.id) + "-cuaca";
+    w.destination_id = d.id;
+    return w;
+  }
+
+  /* ---------- 6. description (kontrak paragraf -> schema LONGTEXT) ---------- */
+
+  function paragraphsOf(d) {
+    var v = d ? d.description : null;
+    if (Array.isArray(v)) {
+      return v.filter(function (p) {
+        return p !== null && p !== undefined && String(p).trim() !== "";
+      });
+    }
+    if (typeof v === "string" && v.trim() !== "") {
+      return v.split(/\n\s*\n/).filter(function (p) {
+        return p.trim() !== "";
+      });
+    }
+    return [];
+  }
+
+  /* ---------- 7. jam operasional (string mock -> rows API) ---------- */
+
+  var DAY_LABELS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
+
+  function hoursLabel(d) {
+    var h = d ? d.opening_hours : null;
+    if (typeof h === "string" && h.trim() !== "") return h;
+    if (Array.isArray(h) && h.length) {
+      var allDay = h.every(function (r) {
+        return r && (r.is_24_hours || r.is_closed);
+      });
+      if (allDay && h.every(function (r) { return r && r.is_24_hours; })) return "24 jam";
+      var open = h.filter(function (r) {
+        return r && !r.is_closed && r.opens_at && r.closes_at;
+      });
+      if (!open.length) return "Tutup";
+      var first = open[0];
+      return String(first.opens_at).slice(0, 5) + " - " + String(first.closes_at).slice(0, 5);
+    }
+    return null;
+  }
+
+  /* ---------- 8. lookup ---------- */
+
+  function regionName(id) {
+    for (var i = 0; i < REGIONS.length; i++) {
+      if (REGIONS[i] && REGIONS[i].id === id) return REGIONS[i].name || id;
+    }
+    return null;
+  }
+
+  function categoryName(id) {
+    for (var i = 0; i < CATEGORIES.length; i++) {
+      if (CATEGORIES[i] && CATEGORIES[i].id === id) return CATEGORIES[i].name || id;
+    }
+    return null;
+  }
+
+  /* ---------- terapkan ke semua destinasi ---------- */
+
+  for (var i = 0; i < DESTINATIONS.length; i++) {
+    var d = DESTINATIONS[i];
+    normalizePlace(d);
+    normalizeVerification(d);
+    d.media = buildMedia(d);
+    d.destination_prices = buildDestinationPrices(d);
+    d.facilities = buildFacilities(d);
+    var paras = paragraphsOf(d);
+    d.description_paragraphs = paras;
+    d.description_text = paras.join("\n\n");
+    d.weather = buildWeather(d);
+  }
+
+  /* ---------- helper bersama (dipakai listing + detail) ---------- */
+
+  var API = {
+    PHOTO_FALLBACK: PHOTO_FALLBACK,
+    PLACEHOLDER_LAIN: PLACEHOLDER_LAIN,
+    DAY_LABELS: DAY_LABELS,
+
+    /** Gambar utama destinasi (media[0].url bila ada, else aset lokal deterministik). */
+    photoFor: function (d) {
+      if (!d) return PLACEHOLDER_LAIN;
+      if (d.media && d.media[0] && d.media[0].url) return d.media[0].url;
+      return PHOTO_FALLBACK[photoIndex(d.id || d.slug)];
+    },
+
+    /** Gambar untuk item lintas domain (kuliner/budaya/acara belum punya aset). */
+    imageOf: function (item) {
+      if (!item) return PLACEHOLDER_LAIN;
+      if (item.media && item.media[0] && item.media[0].url) return item.media[0].url;
+      return PLACEHOLDER_LAIN;
+    },
+
+    /** Daftar media bertipe schema. */
+    photosOf: function (d) {
+      return d && d.media && d.media.length ? d.media : [];
+    },
+
+    /** Paragraf "Tentang" (array) dan versi teks (kontrak schema LONGTEXT). */
+    paragraphsOf: paragraphsOf,
+    descriptionText: function (d) {
+      return paragraphsOf(d).join("\n\n");
+    },
+
+    /** Harga: rentang { min, max } dari baris tiket masuk (bukan tiket tambahan). */
+    priceRange: function (d) {
+      var rows = d && d.destination_prices;
+      if (!rows || !rows.length) return null;
+      var primary = rows.filter(function (r) {
+        return r && r.name === "Tiket Masuk";
+      });
+      if (!primary.length) primary = rows;
+      var min = null;
+      var max = null;
+      for (var i = 0; i < primary.length; i++) {
+        var lo = isNum(primary[i].min_price) ? primary[i].min_price : primary[i].price;
+        var hi = isNum(primary[i].max_price) ? primary[i].max_price : primary[i].price;
+        if (isNum(lo) && (min === null || lo < min)) min = lo;
+        if (isNum(hi) && (max === null || hi > max)) max = hi;
+      }
+      if (min === null && max === null) return null;
+      return { min: min, max: max };
+    },
+
+    priceLabel: function (d) {
+      var r = API.priceRange(d);
+      if (r) {
+        var loText = fmtRupiah(r.min);
+        var hiText = fmtRupiah(r.max);
+        if (loText && hiText && r.min !== r.max) return loText + " - " + hiText;
+        return loText || hiText || null;
+      }
+      if (d && d.prices && d.prices.length) return d.prices.join(" - ");
+      return null;
+    },
+
+    ticketRows: function (d) {
+      return d && d.destination_prices ? d.destination_prices : [];
+    },
+
+    hoursLabel: hoursLabel,
+
+    /** Status buka/tutup (memakai OpeningHoursUtil bila tersedia). */
+    hoursDisplay: function (d) {
+      var label = hoursLabel(d);
+      if (!label) {
+        return { display: "Belum tersedia", status: "Informasi tidak tersedia", indicator: "-", isOpen: null };
+      }
+      if (window.OpeningHoursUtil && typeof window.OpeningHoursUtil.getDisplay === "function") {
+        return window.OpeningHoursUtil.getDisplay(label);
+      }
+      return { display: label, status: "", indicator: "", isOpen: null };
+    },
+
+    /** Cuaca (dummy sampai API cuaca disambung). */
+    weatherOf: function (d) {
+      return d ? d.weather || null : null;
+    },
+
+    facilitiesOf: function (d) {
+      return d && d.facilities && d.facilities.length ? d.facilities : [];
+    },
+
+    regionName: regionName,
+    categoryName: categoryName,
+
+    /** Tanggal hari ini (nyata, format Indonesia) - menggantikan tanggal dummy. */
+    todayLabel: function () {
+      try {
+        return new Date().toLocaleDateString("id-ID", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+      } catch (e) {
+        return "";
+      }
+    },
+  };
+
+  if (typeof window !== "undefined") {
+    window.PasinfoWisata = API;
+  }
+})();

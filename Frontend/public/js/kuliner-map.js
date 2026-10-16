@@ -126,6 +126,7 @@
   var boundaryLayer = window.L.layerGroup().addTo(map);
   var kecamatanLayer = window.L.layerGroup().addTo(map);
   var kecamatanRefs = [];
+  var regionBoundsCache = {}; // Cache bounds per wilayah untuk flyTo (mirror wisata).
 
   var GEO_KECAMATAN_URL = "../../public/data/pasuruan-kecamatan.lite.geojson";
   var GEO_KOTA_URL = "../../public/data/kota-pasuruan-batas.lite.geojson";
@@ -299,6 +300,13 @@
         });
         kecamatanLayer.addLayer(layer);
         kecamatanRefs.push({ layer: layer, regionId: regionId });
+
+        // Cache bounds tiap wilayah (mirror wisata) untuk zoom flyTo.
+        if (!regionBoundsCache[regionId]) {
+          regionBoundsCache[regionId] = layer.getBounds();
+        } else {
+          regionBoundsCache[regionId].extend(layer.getBounds());
+        }
         rendered++;
       });
     }
@@ -332,8 +340,62 @@
     return kabupatenBoundsCache || PASURUAN_BOUNDS;
   }
 
+  /* ── Transisi viewport halus (mirror wisata) ─────────────────────
+     Pilih wilayah / reset / pilih kuliner memakai flyTo() supaya
+     zoom-out selalu beranimasi mulus (fitBounds bawaan "snap"). */
+  var FLY_DURATION = 0.9; // detik
+  var FLY_EASE = 0.25;
+  var REGION_MAX_ZOOM = 16;
+
+  function fullViewZoom() {
+    return map.getBoundsZoom(fullBounds());
+  }
+
   function defaultView(instant) {
-    map.fitBounds(fullBounds(), { animate: instant ? false : !reducedMotion });
+    var b = fullBounds();
+    if (instant || reducedMotion) {
+      map.fitBounds(b, { animate: false });
+      return;
+    }
+    map.flyTo(b.getCenter(), fullViewZoom(), {
+      animate: true,
+      duration: FLY_DURATION,
+      easeLinearity: FLY_EASE,
+    });
+  }
+
+  /* Bingkai satu wilayah: zoom ideal dari bounds-nya, minimal 1 level
+     lebih dekat dari tampilan penuh (mirror wisata). */
+  function regionView(id) {
+    var b = regionBoundsCache[id];
+    if (b && b.isValid()) {
+      var fit = map.getBoundsZoom(b, false, window.L.point(24, 24));
+      var z = Math.min(Math.max(fit, fullViewZoom() + 1), REGION_MAX_ZOOM);
+      return { center: b.getCenter(), zoom: z };
+    }
+    var r = findById(DATA.regions, id);
+    if (
+      r &&
+      r.center &&
+      Number.isFinite(r.center.latitude) &&
+      Number.isFinite(r.center.longitude)
+    ) {
+      return {
+        center: window.L.latLng(r.center.latitude, r.center.longitude),
+        zoom: Math.min(Math.max(r.zoom || 0, fullViewZoom() + 1), REGION_MAX_ZOOM),
+      };
+    }
+    return null;
+  }
+
+  function flyToRegion(id) {
+    var v = regionView(id);
+    if (!v) return;
+    map.flyTo(v.center, v.zoom, {
+      animate: !reducedMotion,
+      duration: reducedMotion ? 0 : FLY_DURATION,
+      easeLinearity: FLY_EASE,
+    });
   }
 
   /* ── chips, count, detail ──────────────────────────── */
@@ -399,7 +461,7 @@
   }
 
   function renderCount() {
-    var el = document.getElementById("map-count-kuliner");
+    var el = document.getElementById("map-count");
     if (!el) return;
     var n = getFilteredCulinaries().length;
     var total = DATA.culinaries.filter(isValidCulinary).length;
@@ -425,14 +487,48 @@
   var ICON_STAR_SM =
     '<svg class="h-3.5 w-3.5 shrink-0 text-yellow-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" /></svg>';
 
+  /* Ikon aset Owner (public/assets/icons) untuk rating & kategori (mirror wisata). */
+  var ICON_RATING_IMG =
+    '<img src="../../public/assets/icons/icon_rating.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" />';
+  var ICON_KATEGORI_IMG =
+    '<img src="../../public/assets/icons/icon_kategori.svg" alt="" aria-hidden="true" class="h-4 w-4 object-contain" />';
+
   function statusPill(status) {
-    if (status === "buka") {
-      return '<span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700"><span class="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true"></span>Buka</span>';
+    var code, label;
+    if (status && typeof status === "object") {
+      code = String(status.status || "unknown");
+      label = status.label || "";
+    } else if (typeof status === "string") {
+      code = status === "buka" ? "open" : status === "tutup" ? "closed" : status;
+      label = "";
+    } else {
+      code = "unknown";
+      label = "";
     }
-    if (status === "tutup") {
-      return '<span class="inline-flex items-center gap-1 rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-bold text-gray-600"><span class="h-1.5 w-1.5 rounded-full bg-gray-500" aria-hidden="true"></span>Tutup</span>';
+    if (code === "open") {
+      return '<span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700"><span class="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true"></span>' + (label || "Buka") + "</span>";
+    }
+    if (code === "closing_soon") {
+      return '<span class="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-[10px] font-bold text-yellow-700"><span class="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true"></span>' + (label || "Segera Tutup") + "</span>";
+    }
+    if (code === "closed") {
+      return '<span class="inline-flex items-center gap-1 rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-bold text-gray-600"><span class="h-1.5 w-1.5 rounded-full bg-gray-500" aria-hidden="true"></span>' + (label || "Tutup") + "</span>";
     }
     return "";
+  }
+
+  /* Foto panel: pakai media.url bila ada; bila tidak, gambar contoh lokal bergilir. */
+  var KULINER_PANEL_PHOTOS = [
+    "../../public/assets/images/kuliner/optimized/Lontong Kupang Kraton.thumb.webp",
+    "../../public/assets/images/kuliner/optimized/Nasi Punel.thumb.webp",
+    "../../public/assets/images/kuliner/optimized/soto-pasuruan.thumb.webp"
+  ];
+  function panelPhoto(d) {
+    if (d && d.media && d.media[0] && d.media[0].url) return d.media[0].url;
+    var key = d && d.id != null ? String(d.id) : "";
+    var sum = 0;
+    for (var i = 0; i < key.length; i++) sum += key.charCodeAt(i);
+    return KULINER_PANEL_PHOTOS[sum % KULINER_PANEL_PHOTOS.length];
   }
 
   function renderDetail() {
@@ -440,40 +536,49 @@
     if (!panel) return;
     var d = state.selectedCulinary ? getCulinary(state.selectedCulinary) : null;
 
-    /* Default: 1 card dari item terpilih/default (mockup kuliner.png).
-       Bila belum ada seleksi, tampilkan item valid pertama dari daftar
-       terfilter (tetap 1 card, tidak dobel/tumpang tindih). */
+    /* Belum ada pilihan → tampilkan pesan terpusat (mirror wisata),
+       bukan fallback ke item pertama. */
     if (!d || !isValidCulinary(d)) {
-      var fallback = getFilteredCulinaries()[0] || null;
-      if (!fallback) {
-        var all = DATA.culinaries.filter(isValidCulinary);
-        fallback = all.length ? all[0] : null;
-      }
-      d = fallback;
-    }
-
-    if (!d) {
       panel.innerHTML =
-        '<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">' +
-        '<span class="font-bold text-gray-800 text-sm block mb-3">Kuliner</span>' +
-        '<p class="text-sm text-gray-500">Kuliner unggulan belum tersedia.</p>' +
+        '<div class="bg-white rounded-xl shadow-sm border-2 p-4 flex flex-col flex-1">' +
+        '<span class="font-bold text-gray-800 text-2xl block mb-3">Kuliner</span>' +
+        '<p class="text-sm text-gray-500 text-center flex items-center justify-center flex-1">Pilih penanda pada peta atau kartu kuliner untuk melihat detail.</p>' +
         "</div>";
       return;
     }
 
     var price = d.price_range || null;
     var rows = "";
+
+    /* Info tambahan (mirror wisata): kategori, rating, harga, jam
+       operasional, jam buka/tutup, lokasi. */
+    var cat = categoryName(d.categoryId);
+    if (cat) rows += metaRow(ICON_KATEGORI_IMG, cat);
     if (typeof d.rating !== "undefined" && d.rating !== null && d.rating !== "") {
       var ratingTxt = d.rating + (d.reviews_label ? " (" + d.reviews_label + ")" : "");
-      rows += metaRow(ICON_STAR_SM, ratingTxt);
+      rows += metaRow(ICON_RATING_IMG, ratingTxt);
     }
-    rows += metaRow(ICON_PIN_SM, d.address || "-");
-    if (d.opening_hours) rows += metaRow(ICON_CLOCK_SM, d.opening_hours);
     if (price) rows += metaRow(ICON_TAG_SM, price);
+    if (d.opening_hours) rows += metaRow(ICON_CLOCK_SM, d.opening_hours);
     var statusHtml = statusPill(d.operational_status);
     if (statusHtml) rows += '<div class="flex items-center space-x-1.5"><span>' + statusHtml + "</span></div>";
+    rows += metaRow(ICON_PIN_SM, d.address || "-");
 
-    var photo = d.media && d.media[0] && d.media[0].url;
+    var cta = "";
+    if (d.googleMapsUrl) {
+      cta =
+        '<a href="' +
+        d.googleMapsUrl +
+        '" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex items-center justify-center w-full px-4 py-2 rounded-md text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors">Buka Google Maps' +
+        '<span class="sr-only"> (tautan eksternal)</span></a>';
+    }
+
+    var detailLink =
+      '<a href="detail_kuliner.html?slug=' +
+      d.slug +
+      '" class="mt-2 inline-flex items-center justify-center w-full px-4 py-2 rounded-md text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors">Lihat Halaman Detail &rarr;</a>';
+
+    var photo = panelPhoto(d);
     var photoBox = photo
       ? '<img src="' +
         photo +
@@ -488,9 +593,9 @@
         "</span></div>";
 
     panel.innerHTML =
-      '<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col justify-between h-full">' +
+      '<div class="bg-white rounded-xl shadow-sm border-2 p-4 flex flex-col flex-1">' +
       "<div>" +
-      '<span class="font-bold text-gray-800 text-sm block mb-3">Kuliner</span>' +
+      '<span class="font-bold text-gray-800 text-2xl block mb-3">Kuliner</span>' +
       photoBox +
       '<p class="text-[11px] font-semibold text-blue-700 uppercase">' +
       regionName(d.regionId) +
@@ -507,6 +612,8 @@
       '<div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-gray-100 text-[11px] text-gray-600">' +
       rows +
       "</div>" +
+      cta +
+      detailLink +
       "</div>";
   }
 
@@ -543,6 +650,14 @@
     state.selectedCulinary = null;
     updateAll();
     notifyDaftar();
+
+    // Zoom otomatis mulus ke wilayah terpilih (mirror wisata); toggle
+    // off / "Semua Wilayah" → zoom-out mulus ke tampilan penuh.
+    if (id) {
+      flyToRegion(id);
+    } else {
+      defaultView(false);
+    }
   }
 
   function selectCategory(id) {
@@ -564,6 +679,7 @@
       state.selectedRegion = null;
       updateAll();
       notifyDaftar();
+      defaultView(false); // zoom-out mulus (mirror wisata).
       return;
     }
     var d = getCulinary(id);
@@ -582,6 +698,16 @@
     }
     updateAll();
     notifyDaftar();
+
+    // Zoom mulus ke lokasi kuliner terpilih (level 15, mirror wisata).
+    if (d.place && Number.isFinite(d.place.latitude) && Number.isFinite(d.place.longitude)) {
+      setTimeout(function () {
+        map.flyTo([d.place.latitude, d.place.longitude], 15, {
+          animate: !reducedMotion,
+          duration: 0.8,
+        });
+      }, 100);
+    }
   }
 
   function resetFilters() {

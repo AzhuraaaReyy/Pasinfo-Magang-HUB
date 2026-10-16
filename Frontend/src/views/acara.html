@@ -2,19 +2,261 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
+    <!-- Tirai transisi halaman: CSS dipusatkan di src/input.css,
+         logika di public/js/page-enter.js (HTML bersih - Owner). -->
+    <script src="../../public/js/page-enter.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pasuruan Info - Eksplorasi Event Acara Pasuruan</title>
     <link rel="icon" href="data:," />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+    <!-- First-load: font CSS non-blocking (fallback sistem dulu, swap otomatis
+         saat siap; tanpa ini render tertahan menunggu css2 — terukur). -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+    />
     <link
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
+    <!-- Preload foto slide-1 hero acara agar transisi ke halaman ini tidak
+         menampilkan "blank hitam" (dimulai lebih awal oleh browser). -->
+    <link
+      rel="preload"
+      as="image"
+      href="../../public/assets/images/acara/optimized/bromo-marathon.webp"
+      fetchpriority="high"
     />
     <link rel="stylesheet" href="../../public/css/styles.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="../../public/vendor/leaflet/leaflet.css" />
+    <!-- Scoped hero (Owner 2026-10-15: paritas konsep hero wisata/kuliner/budaya).
+         Mirror wisata (input.css §E/§F/§G/§H/§I) dengan aksen HIJAU acara
+         (#16a34a = hijau palet region proyek). Raw CSS di scoped <style>
+         (tanpa build:css, tanpa sentuh file shared). -->
+    <style>
+      /* Aksen hijau hero acara: badge kartu + ring fokus (mirip pola
+         .bud-accent-ring; Tailwind belum membangkitkan text-green-300 /
+         ring-green-400 sehingga didefinisikan di sini, bukan via rebuild). */
+      body[data-page-active="acara"] .evt-badge-text {
+        color: #86efac;
+      }
+      body[data-page-active="acara"] .evt-focus-ring:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px #16a34a;
+      }
+
+      /* (E) Override gradient hero acara (per-breakpoint) — mirror wisata. */
+      body[data-page-active="acara"]
+        #hero-section
+        > div[class*="bg-gradient-to-t"] {
+        background-image: linear-gradient(
+          to bottom,
+          rgba(0, 0, 0, 0) 0%,
+          rgba(0, 0, 0, 0) 38%,
+          rgba(0, 0, 0, 0.2) 50%,
+          rgba(0, 0, 0, 0.32) 62%,
+          rgba(0, 0, 0, 0.48) 74%,
+          rgba(0, 0, 0, 0.62) 86%,
+          rgba(0, 0, 0, 0.75) 100%
+        ) !important;
+      }
+      @media (min-width: 768px) {
+        body[data-page-active="acara"]
+          #hero-section
+          > div[class*="bg-gradient-to-t"] {
+          background-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0.22) 0%,
+            rgba(0, 0, 0, 0.26) 12%,
+            rgba(0, 0, 0, 0.34) 28%,
+            rgba(0, 0, 0, 0.44) 46%,
+            rgba(0, 0, 0, 0.56) 64%,
+            rgba(0, 0, 0, 0.66) 82%,
+            rgba(0, 0, 0, 0.75) 100%
+          ) !important;
+        }
+      }
+      @media (min-width: 1024px) {
+        body[data-page-active="acara"]
+          #hero-section
+          > div[class*="bg-gradient-to-t"] {
+          background-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0) 26%,
+            rgba(0, 0, 0, 0.16) 38%,
+            rgba(0, 0, 0, 0.28) 50%,
+            rgba(0, 0, 0, 0.4) 62%,
+            rgba(0, 0, 0, 0.56) 76%,
+            rgba(0, 0, 0, 0.68) 88%,
+            rgba(0, 0, 0, 0.75) 100%
+          ) !important;
+        }
+      }
+
+      /* (F) Desktop: judul/deskripsi rata-kiri tapi di tengah vertikal — mirror wisata. */
+      @media (min-width: 1024px) {
+        body[data-page-active="acara"] #hero-section > div[class*="z-20"] {
+          align-self: stretch;
+        }
+        body[data-page-active="acara"] #hero-section #content-container {
+          align-self: center;
+        }
+      }
+
+      /* (G) Tablet 768–1023: teks hero di tengah vertikal + ukuran — mirror wisata. */
+      @media (min-width: 768px) and (max-width: 1023px) {
+        body[data-page-active="acara"] #hero-section {
+          align-items: stretch;
+        }
+        body[data-page-active="acara"] #hero-section > div[class*="z-20"] {
+          align-self: stretch;
+        }
+        body[data-page-active="acara"] #hero-section #content-container {
+          margin-top: auto;
+          margin-bottom: auto;
+          max-width: 42rem;
+        }
+        body[data-page-active="acara"] #hero-section #badge-text {
+          font-size: 1rem;
+          padding: 0.4rem 0.95rem;
+        }
+        body[data-page-active="acara"] #hero-section #hero-location {
+          font-size: 0.85rem;
+        }
+        body[data-page-active="acara"] #hero-section #hero-desc {
+          font-size: 1.125rem;
+          line-height: 1.65;
+          max-width: 34rem;
+        }
+      }
+
+      /* (H) Teks "Pasuruan Raya" di samping badge hero — aksen HIJAU acara
+         #16a34a + stroke putih (mirror wisata §H; wisata merah, kuliner biru). */
+      body[data-page-active="acara"] #hero-section #hero-location {
+        color: #16a34a !important;
+        text-shadow:
+          -1px -1px 0 #ffffff,
+          1px -1px 0 #ffffff,
+          -1px 1px 0 #ffffff,
+          1px 1px 0 #ffffff,
+          -2px 0 0 #ffffff,
+          2px 0 0 #ffffff,
+          0 -2px 0 #ffffff,
+          0 2px 0 #ffffff !important;
+      }
+
+      /* (I) Header transparan di atas hero acara — search putih + ikon/teks
+         gelap + logo gelap (mirror wisata §I) agar tampil sama saat header
+         belum solid (masih di area hero). */
+      body[data-page-active="acara"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-search {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+        border-color: #e5e7eb !important;
+      }
+      body[data-page-active="acara"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-search::placeholder {
+        color: #6b7280 !important;
+      }
+      body[data-page-active="acara"][data-header-overlay]
+        header:not(.header-solid)
+        [data-search-form]
+        svg {
+        color: #1f2937 !important;
+        stroke: #1f2937 !important;
+      }
+      body[data-page-active="acara"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-logo-dark {
+        display: block !important;
+      }
+      body[data-page-active="acara"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-logo-light {
+        display: none !important;
+      }
+
+      /* (J) Peta: hilangkan kotak fokus hitam bawaan browser pada poligon
+         wilayah yang dipilih (mirror kuliner). Marker tetap punya
+         indikator fokus biru (aksesibilitas, aturan global input.css). */
+      #acara-map path.leaflet-interactive:focus {
+        outline: none;
+      }
+
+      /* (K) Filter daftar acara: mobile satu baris scroll horizontal,
+         kembali wrap di >=640px (mirror .kul-filter-scroll kuliner).
+         Tombol filter dirender JS; wrap-nya milik section daftar. */
+      .evt-filter-scroll {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        white-space: nowrap;
+        scroll-behavior: smooth;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .evt-filter-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      @media (min-width: 640px) {
+        .evt-filter-scroll {
+          flex-wrap: wrap;
+          overflow-x: visible;
+          white-space: normal;
+        }
+      }
+
+      /* (M) Latar section rekomendasi coverflow (mirror budaya): WebP acara
+         teroptimasi sebagai fallback; JS (acara-reco.js) meng-override
+         dinamis per kartu tengah lewat .reco-section-bg. */
+      .reco-section-bg {
+        background-image:
+          linear-gradient(
+            to bottom,
+            rgba(15, 23, 42, 0.38) 0%,
+            rgba(15, 23, 42, 0) 34%,
+            rgba(15, 23, 42, 0) 56%,
+            rgba(15, 23, 42, 0.92) 100%
+          ),
+          url("../../public/assets/images/acara/optimized/bromo-marathon.webp");
+      }
+
+      /* (N) Cegah scroll horizontal dari kartu coverflow sisi luar yang
+         menjulur keluar tepi (mirror budaya/kuliner). overflow-x: clip
+         (bukan hidden) agar tidak membuat scroll container. */
+      body[data-page-active="acara"] main {
+        overflow-x: clip;
+      }
+
+      /* (O) Tombol aksi hijau (Owner: aksi = hijau; class hover Tailwind
+         hijau belum dibangkitkan di styles.css, jadi didefinisikan di sini
+         tanpa rebuild. Nilai hex = token Tailwind green-700/green-50.) */
+      body[data-page-active="acara"] .evt-btn-green:hover {
+        background-color: #15803d !important;
+      }
+      body[data-page-active="acara"] .evt-btn-green-soft:hover {
+        background-color: #f0fdf4 !important;
+      }
+      body[data-page-active="acara"] .evt-link-green:hover {
+        color: #15803d !important;
+      }
+    </style>
   </head>
-  <body class="bg-gray-50 text-gray-800 font-sans" data-page-active="acara" data-asset-prefix="../../public" data-wisata-href="wisata.html" data-header-overlay="dark" data-hero-label="Galeri Acara Pasuruan" data-hero-bg-label="Latar hero acara" data-hero-badge-class="bg-blue-600" data-hero-badge="Acara" data-hero-location="Pasuruan Raya" data-hero-title-class="text-3xl sm:text-4xl md:text-5xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-extrabold text-white tracking-tight leading-[1.12] drop-shadow-md" data-hero-title="Eksplorasi Acara&lt;br /&gt; Pasuruan" data-hero-desc="Temukan agenda acara Pasuruan. Dari festival hingga pameran — semua informasi event terpusat di sini." data-hero-cards-label="Thumbnail antrean acara" data-home-href="../../index.html">
+  <body class="bg-gray-50 text-gray-800 font-sans" data-page-active="acara" data-asset-prefix="../../public" data-wisata-href="wisata.html" data-header-overlay="dark" data-hero-label="Galeri Acara Pasuruan" data-hero-bg-label="Latar hero acara" data-hero-badge-class="bg-green-600" data-hero-badge="Acara" data-hero-location="Pasuruan Raya" data-hero-title-class="text-3xl sm:text-4xl md:text-6xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-extrabold text-white tracking-tight leading-[1.12] drop-shadow-md" data-hero-title="Eksplorasi Acara&lt;br /&gt; Pasuruan" data-hero-desc="Temukan agenda acara Pasuruan. Dari festival hingga pameran — semua informasi event terpusat di sini." data-hero-cards-label="Thumbnail antrean acara" data-home-href="../../index.html">
     <!-- HEADER / NAVBAR -->
     <div data-layout-header></div>
 
@@ -23,51 +265,52 @@
             <div data-listing-hero></div>
       <script src="../../public/js/pages/listing-hero.js"></script>
 
-      <!-- MAP & FEATURED ACARA SECTION -->
-      <section id="map-section" class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 md:py-10">
-        <div class="mb-4 sm:mb-5 md:mb-6">
-          <h2 class="text-xl sm:text-2xl md:text-2xl font-bold text-gray-900">
+      <!-- MAP & FEATURED ACARA SECTION (konsep samakan wisata/kuliner/budaya;
+           teks tetap milik Acara, hanya skala/struktur disamakan) -->
+      <section id="map-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="mb-6">
+          <h2 class="text-4xl font-bold text-gray-900">
             Peta Event Pasuruan
           </h2>
-          <p class="text-xs sm:text-sm text-gray-500 mt-1">
-            Lorem ipsum is simply dummy text of the printing and typesetting
-            industry. Lorem Ipsum has been the industry's standard dummy text
-            ever since the 1500s.
+          <p class="text-sm text-gray-500 mt-1">
+            Jelajahi persebaran acara di seluruh Pasuruan melalui peta
+            interaktif. Pilih penanda atau klik wilayah untuk memfilter daftar,
+            melihat detail jadwal, lokasi, dan informasi tiket setiap acara.
           </p>
         </div>
 
-
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Map Area -->
-          <div class="lg:col-span-2 flex flex-col">
-            <span class="font-bold text-gray-700 text-sm">Peta Acara</span>
-            <p class="text-[11px] text-gray-500 mt-1 mb-3">
+          <div class="lg:col-span-2 flex flex-col bg-white border-2 p-5 rounded-xl h-full">
+            <span class="font-bold text-gray-700 text-2xl">Peta Acara</span>
+            <p class="text-sm text-gray-500 mt-1 mb-3">
               Pin menandai sebaran acara. Klik wilayah pada peta untuk memfilter daftar, klik lagi untuk menampilkan semua.
             </p>
             <div
               id="acara-map"
-              class="relative z-0 w-full h-80 lg:h-[440px] rounded-xl overflow-hidden bg-white ring-1 ring-gray-200"
+              class="relative z-0 w-full rounded-xl overflow-hidden bg-white ring-1 ring-gray-200"
+              style="min-height: 440px; height: 100%; flex-grow: 1;"
               role="application"
               aria-label="Peta interaktif sebaran acara Pasuruan dengan region pilihan"
             ></div>
           </div>
 
-          <!-- Detail Panel: SATU card sesuai mockup acara.png (diisi via acara-map.js renderDetail) -->
-          <div class="flex flex-col" aria-live="polite">
-            <div id="evt-detail"></div>
-          </div>
+          <!-- Panel detail acara (dirender via JS dari data) — fallback awal:
+               pesan terpusat saat belum ada pilihan (paritas kuliner/wisata) -->
+          <div id="evt-detail" class="flex flex-col h-full" aria-live="polite"></div>
         </div>
       </section>
 
       <!-- EVENT HARI INI + KALENDER (sesuai mockup acara.png; teks tampilan dummy, sumber data di JS) -->
       <section class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 md:py-10" aria-label="Event hari ini dan kalender acara">
   <div class="mb-4 sm:mb-5">
-    <h2 class="text-xl sm:text-2xl md:text-2xl font-bold text-gray-900">
+    <h2 class="text-4xl sm:text-4xl md:text-4xl font-bold text-gray-900">
       Event Pasuruan Hari Ini
     </h2>
     <p class="text-xs sm:text-sm text-gray-500 mt-1 max-w-2xl">
-      Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since 1966,
+      Sorotan acara yang sedang berlangsung dan akan segera dimulai hari ini.
+      Geser untuk menjelajahi tiap sorotan, lihat jadwal serta lokasinya,
+      dan pasang pengingat agar tidak terlewat,
     </p>
   </div>
 
@@ -165,7 +408,7 @@
                 <button
                   type="button"
                   title="Ingatkan saya tentang event ini"
-                  class="flex-1 px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors text-center inline-flex items-center justify-center gap-1.5 shadow-sm"
+                  class="evt-btn-green flex-1 px-3 py-2 rounded-lg bg-green-600 text-white text-xs font-bold transition-colors text-center inline-flex items-center justify-center gap-1.5 shadow-sm"
                 >
                   <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
                   Ingatkan Event
@@ -173,7 +416,7 @@
                 <button
                   type="button"
                   title="Bagikan event ini"
-                  class="flex-1 px-3 py-2 rounded-lg bg-white text-blue-600 text-xs font-bold ring-1 ring-gray-200 hover:bg-blue-50 transition-colors text-center inline-flex items-center justify-center gap-1.5 shadow-sm"
+                  class="evt-btn-green-soft flex-1 px-3 py-2 rounded-lg bg-white text-green-700 text-xs font-bold ring-1 ring-gray-200 transition-colors text-center inline-flex items-center justify-center gap-1.5 shadow-sm"
                 >
                   <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" /></svg>
                   Bagikan Event
@@ -185,7 +428,7 @@
 
         <!-- Dots full-width tengah bawah kartu -->
         <div id="evt-today-dots" class="flex w-full justify-center items-center gap-1.5 pt-4" role="tablist" aria-label="Pilih sorotan acara">
-            <button type="button" role="tab" aria-selected="true" aria-label="Tampilkan sorotan ke-1" class="w-6 h-2 rounded-full bg-blue-600"></button>
+            <button type="button" role="tab" aria-selected="true" aria-label="Tampilkan sorotan ke-1" class="w-6 h-2 rounded-full bg-green-600"></button>
             <button type="button" role="tab" aria-selected="false" aria-label="Tampilkan sorotan ke-2" class="w-2 h-2 rounded-full bg-gray-300"></button>
             <button type="button" role="tab" aria-selected="false" aria-label="Tampilkan sorotan ke-3" class="w-2 h-2 rounded-full bg-gray-300"></button>
         </div>
@@ -294,35 +537,33 @@
   </div>
 </section>
 
-      <!-- DAFTAR ACARA SECTION -->
-      <section class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 md:py-10">
-        <div class="mb-4 sm:mb-5 md:mb-6">
-          <h2 class="text-xl sm:text-2xl md:text-2xl font-bold text-gray-900">
+      <!-- DAFTAR ACARA SECTION (konsep samakan kuliner; teks tetap milik Acara) -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 scroll-mt-24">
+        <div class="mb-4">
+          <h2 class="text-4xl font-bold text-gray-900">
             Daftar Acara Event Pasuruan
           </h2>
-          <p class="text-xs sm:text-sm text-gray-500 mt-1">
-            Lorem ipsum is simply dummy text of the printing and typesetting
-            industry. Lorem Ipsum has been the industry's standard dummy text
-            ever since the 1500s.
+          <p class="text-sm text-gray-500 mt-1">
+            Telusuri seluruh agenda acara Pasuruan berdasarkan kategori
+            kesenian, tradisi, sejarah, dan museum. Saring daftar, buka halaman
+            detail, dan temukan acara yang sesuai minat Anda.
           </p>
         </div>
 
         <!-- Categories / Filter Tabs -->
         <div
           id="evt-filters"
-          class="flex space-x-1.5 sm:space-x-2 overflow-x-auto no-scrollbar pb-3 sm:pb-4 mb-4 sm:mb-5"
+          class="evt-filter-scroll gap-2 pb-2 sm:pb-4 mb-2"
           role="group"
           aria-label="Filter kategori acara"
         >
           <!-- Tombol filter dirender via JS dari data kategori -->
         </div>
 
-        <p id="evt-count" class="mb-4 text-xs sm:text-xs text-gray-500" aria-live="polite"></p>
-
         <!-- Acara Grid (1→2→3→4 kolom responsive) -->
         <div
           id="evt-grid"
-          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6"
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-6"
           data-evt-grid
         >
           <!-- Kartu acara dirender via JS (data dummy) -->
@@ -332,7 +573,7 @@
         </p>
         <nav
           id="evt-pager"
-          class="mt-6 flex items-center justify-center gap-1.5"
+          class="mt-8 flex items-center justify-center gap-1.5"
           aria-label="Pagination acara"
         ></nav>
 
@@ -346,61 +587,60 @@
         </div>
       </section>
 
-      <!-- RECOMMENDATION CAROUSEL SECTION -->
-      <section
-        class="relative py-16 text-white bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900"
-      >
+      <!-- RECOMMENDATION COVERFLOW SECTION (konsep samakan wisata/kuliner/budaya;
+           teks judul dipertahankan, kartu + animasi mengikuti coverflow) -->
+      <section class="reco-section-bg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <!-- Section Title -->
-          <div class="text-center max-w-xl mx-auto mb-10">
-            <h2 class="text-2xl font-bold">Rekomendasi Acara Populer Pasuruan</h2>
+          <div class="reco-heading text-center max-w-xl mx-auto mb-10">
+            <h2 class="text-4xl font-bold text-white">Rekomendasi Acara Populer Pasuruan</h2>
             <p class="text-xs text-gray-300 mt-2">
-              Lorem ipsum is simply dummy text of the printing and typesetting
-              industry. Lorem Ipsum has been the industry's standard dummy text.
+              Pilihan acara unggulan paling diminati di Pasuruan Raya. Geser
+              kordion untuk melihat tiap rekomendasi, lalu ketuk kartu tengah
+              untuk membuka halaman detailnya.
             </p>
           </div>
 
-          <!-- Slider Container -->
-          <div class="relative flex items-center justify-center">
-            <!-- Left Arrow -->
+          <div class="coverflow-container">
+            <div id="reco-row" class="coverflow-track no-scrollbar">
+              <div class="coverflow-card ref-card-outer-side"></div>
+              <div class="coverflow-card ref-card-inner-side"></div>
+              <div
+                class="coverflow-card ref-card-center"
+                role="link"
+                tabindex="0"
+                aria-label="Lihat detail rekomendasi acara"
+              ></div>
+              <div class="coverflow-card ref-card-inner-side"></div>
+              <div class="coverflow-card ref-card-outer-side"></div>
+            </div>
+
             <button
               type="button"
               data-reco-prev
               aria-label="Rekomendasi sebelumnya"
-              class="absolute -left-2 z-10 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white backdrop-blur-sm"
+              class="reco-nav-btn reco-nav-btn-prev"
             >
               <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
             </button>
-
-            <!-- Cards Slider Row -->
-            <div
-              id="reco-row"
-              class="flex items-center space-x-4 overflow-x-auto no-scrollbar scroll-smooth py-4 px-2"
-            >
-              <!-- Kartu rekomendasi dirender via JS (data unggulan dummy) -->
-            </div>
-
-            <!-- Right Arrow -->
             <button
               type="button"
               data-reco-next
               aria-label="Rekomendasi berikutnya"
-              class="absolute -right-2 z-10 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white backdrop-blur-sm"
+              class="reco-nav-btn reco-nav-btn-next"
             >
               <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
             </button>
           </div>
 
-          <!-- Carousel Dots Indicator -->
           <div
             id="reco-dots"
             class="flex justify-center items-center space-x-1.5 mt-6"
           >
-            <span class="w-2 h-2 rounded-full bg-white/40"></span>
-            <span class="w-2 h-2 rounded-full bg-white/40"></span>
-            <span class="w-6 h-2 rounded-full bg-white"></span>
-            <span class="w-2 h-2 rounded-full bg-white/40"></span>
-            <span class="w-2 h-2 rounded-full bg-white/40"></span>
+            <span class="w-6 h-2 rounded-full bg-green-500 shadow-sm transition-all duration-300"></span>
+            <span class="w-2 h-2 rounded-full bg-white/40 cursor-pointer transition-all duration-300"></span>
+            <span class="w-2 h-2 rounded-full bg-white/40 cursor-pointer transition-all duration-300"></span>
+            <span class="w-2 h-2 rounded-full bg-white/40 cursor-pointer transition-all duration-300"></span>
+            <span class="w-2 h-2 rounded-full bg-white/40 cursor-pointer transition-all duration-300"></span>
           </div>
         </div>
       </section>
@@ -408,19 +648,27 @@
 
     <!-- FOOTER -->
     <div data-layout-footer></div>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="../../public/vendor/leaflet/leaflet.js"></script>
     <script src="../../public/js/data-acara.js"></script>
     <script src="../../public/js/acara-map.js"></script>
     <!-- Hero carousel: vanilla JS, tanpa library animasi -->
-    <script src="../../public/js/pages/acara-hero.js"></script>
+    <script src="../../public/js/pages/acara-hero.js?v=20261016"></script>
 
     <script src="../../public/js/pages/acara-listing.js"></script>
 
-    <script src="../../public/js/pages/reco-carousel.js"></script>
+    <!-- Coverflow rekomendasi: engine paritas budaya (tanpa library animasi) -->
+    <script src="../../public/js/pages/acara-reco.js"></script>
+
+    <!-- GSAP Animations (Owner override design.md §49-50): GSAP CDN + ScrollTrigger -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="../../public/js/pages/acara-gsap-animations.js" defer></script>
 
         <script src="./partials/pasinfo-header.js" defer></script>
     <script src="./partials/pasinfo-footer.js" defer></script>
     <script src="./partials/pasinfo-layout.js" defer></script>
 <script src="../../public/js/main.js" defer></script>
+    <script src="../../public/js/page-transition.js" defer></script>
+    <script src="../../public/js/pages/internal-nav.js" defer></script>
   </body>
 </html>

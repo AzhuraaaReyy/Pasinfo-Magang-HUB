@@ -662,6 +662,7 @@ public function menus()
 | `id`             | BIGINT        | PK            |
 | `culinary_id`    | BIGINT        | FK            |
 | `name`           | VARCHAR       | required      |
+| `category`       | VARCHAR       | nullable      |
 | `description`    | TEXT          | nullable      |
 | `price`          | DECIMAL(12,2) | nullable      |
 | `image_media_id` | BIGINT        | nullable      |
@@ -669,6 +670,12 @@ public function menus()
 | `sort_order`     | INT           | default 0     |
 | `created_at`     | TIMESTAMP     |               |
 | `updated_at`     | TIMESTAMP     |               |
+
+### Category Rule
+
+`category` mengelompokkan menu untuk kebutuhan filter UI. Nilai yang
+disepakati pada fase frontend (mock data): `Makanan`, `Minuman`, `Cemilan`.
+Selaras dengan tombol filter pada `menu_kuliner.html`.
 
 ### Relationship
 
@@ -1928,6 +1935,19 @@ Occurrence:
 
 Dengan demikian kalender event dan kalender budaya tidak memiliki dua sumber data yang berbeda.
 
+> **Catatan status badge (frontend, mock — sync 2026-10-16):** Frontend menandai
+> item kalender budaya dengan field tampilan `status`:
+>
+> ```text
+> akan-datang  → turunan: tanggal occurrence di masa depan (≈ occurrence_status "scheduled")
+> berlangsung  → turunan: "sekarang" berada di dalam rentang occurrence
+> selesai      → turunan: tanggal occurrence di masa lalu (≈ occurrence_status "completed")
+> ```
+>
+> Nilai ini **MOCK (tampilan)** — BUKAN kolom enum baru. Pada backend, badge
+> dihitung dari `event_occurrences.start`/`end` (lihat §45 "Event Occurrence":
+> `scheduled` / `cancelled` / `completed`), bukan disimpan sebagai kolom terpisah.
+
 ---
 
 # 45. Data Status Convention
@@ -3124,6 +3144,133 @@ API Response
 
 tidak membutuhkan perubahan besar pada component frontend.
 
+## 61.1 Homepage — Data Contract Status (sync 2026-10-14)
+
+Ronde revisi presentasi homepage REV#15–#17 (Owner APPROVED 2026-10-14) adalah
+perubahan **presentasi murni** → **TIDAK ADA dampak pada schema/data contract**:
+tidak ada tabel, kolom, relasi, endpoint, atau bentuk mock data yang berubah.
+
+Pemetaan as-built homepage → schema (blueprint; belum diimplementasikan):
+
+```text
+"Berita Pilihan"  (4 kartu) → articles (+ article_categories, satu primary category)
+"Berita Terbaru"  (8 item)  → articles, urut published_at (lihat §55 "Latest")
+Slot iklan ×2               → advertisements.placement: homepage_hero (setelah hero)
+                              dan homepage_news (setelah Jelajah)
+```
+
+Status konten homepage saat ini: **belum berasal dari backend**. Sebagian teks
+dan kartu ditulis statis di markup (`Frontend/index.html`) dan sebagian
+disinkronkan dari `public/js/mock-data.js` oleh `public/js/homepage-sync.js`.
+
+Item terbuka (bukan keputusan schema): jumlah pada markup (8 item "Berita
+Terbaru" / 4 kartu "Berita Pilihan" / 3 grup kategori) belum sama dengan
+`mock-data.js` (10 / 10 / 4). Dicatat; menunggu instruksi Owner.
+
+## 61.2 Aset & Detail Pages — Data Contract Status (sync 2026-10-15)
+
+Ronde optimasi aset WebP + polish detail Wisata/Kuliner (2026-10-15 —
+TASK-WIS-PERF-001, TASK-WIS-DETAIL-HERO-001, TASK-WIS-DETAIL-RECO-HREF-001,
+polish Kuliner) → **TIDAK ADA dampak pada schema/data contract**: tidak ada tabel,
+kolom, relasi, atau endpoint baru. Bentuk mock data (121 items) tidak berubah.
+
+```text
+- `media.thumbnail_url` (kolom nullable) SUDAH ada di schema (§ media, L959).
+  Kini benar-benar dipakai: data-wisata.js buildMedia() mengisi
+  `media[0].thumbnail_url = url.replace(/\.webp$/, ".thumb.webp")`.
+  Varian `.webp` / `.thumb.webp` hanyalah NAMA FILE aset — bukan kolom baru.
+- Format/ukuran file (WebP + thumbnail) = keputusan aset, bukan struktur data.
+- Detail Kuliner: konsumsi field yang sudah ada (menus, facilities,
+  gallery_description, operational_status, place) — tanpa field baru.
+```
+
+## 61.3 Menu & Ulasan Kuliner — Data Contract Status (sync 2026-10-15)
+
+Tambah data mock Menu & Harga (15 item/tempat) dan Ulasan (5/tempat) untuk
+`menu_kuliner.html` & `ulasan.html`, disinkronkan per `?slug`. **Satu penambahan
+kolom schema:** `culinary_menus.category` (§13) untuk filter Makanan/Minuman/
+Cemilan. Selebihnya memakai tabel yang sudah ada.
+
+Mock → tabel (kontrak transisi):
+
+```text
+window.PASINFO_KULINER_MENUS[slug][n]
+  → culinary_menus : culinary_id (via slug), name, category, price,
+                     description, image_media_id (via image), is_featured,
+                     sort_order
+
+window.PASINFO_KULINER_ULASAN[slug][n]
+  → reviews : reviewable_type = "Culinary", reviewable_id (via slug),
+              rating (1-5), body, created_at (via date)
+```
+
+```text
+Catatan:
+- Ulasan di data mock bersifat tampilan (nama/avatar inisial). Pada backend,
+  `reviews.user_id` mengacu ke `users`; ulasan form saat ini in-memory dan
+  TIDAK dipersistensi (review backend = Tier 2 / out of scope).
+- `culinary_menus.category` = kolom baru (VARCHAR, nullable) — lihat §13.
+- Ulasan & menu yang tampil tetap MOCK (bukan data terverifikasi).
+```
+
+---
+
+## 61.4 Budaya & Sub-pages — Data Contract Status (sync 2026-10-16)
+
+Ronde adaptasi Budaya ke pola Kuliner (design.md §66.11) memakai data yang SUDAH
+ada; hanya menambah satu **field tampilan** pada mock kalender dan menurunkan
+Cerita/Galeri dari budaya REAL. TANPA tabel/kolom/relasi/endpoint baru.
+
+Mock → tabel (kontrak transisi):
+
+```text
+window.PASINFO_BUDAYA.calendar[n]
+  → events + event_occurrences : title, desc, date (via date_label/month_label/
+                                 day_label), location, organizer, ticket_info,
+                                 url; event_type = "cultural"
+    + field TAMPILAN `status` (akan-datang | berlangsung | selesai)
+      → TIDAK ada kolom enum; dihitung dari event_occurrences (§44, §45)
+
+window.PASINFO_BUDAYA.stories[n]   (Cerita di Balik Budaya)
+  → turunan konten REAL: culture_id (via cultureId/slug)
+    title   = "Cerita di Balik <culture.name>"
+    excerpt = culture.short_description
+    body    = culture.description
+    media   → culture.media (§12: gallery = media, tanpa tabel gallery baru)
+```
+
+```text
+Catatan:
+- BUDAYA_CALENDAR.status = field MOCK tampilan (BUKAN kolom schema). Backend:
+  compute dari event_occurrences.start/end (§44). Lihat §45 "Event Occurrence".
+- BUDAYA_STORIES tidak menyimpan narasi baru (nol fabrikasi); seluruh teks
+  diturunkan dari `cultures` (nama/short_description/description) + aset media.
+- Foto memakai aset lokal (public/assets/images/budaya/optimized/*.webp);
+  bukan data terverifikasi — tetap MOCK.
+```
+
+```text
+Ronde B (design.md §66.12, sync 2026-10-16):
+- TANPA tabel/kolom/relasi/endpoint baru.
+- galeri_budaya.html membaca window.PASINFO_BUDAYA.cultures (turunan cultures,
+  §12: gallery = media) — filter kategori = kolom `category` yang sudah ada.
+- dua halaman galeri BARU (galeri_wisata.html + galeri_kuliner.html) membaca
+  window.PASINFO_WISATA.destinations / window.PASINFO_KULINER.culinaries yang
+  SUDAH ada → kontrak transisi sama dengan listing Wisata/Kuliner.
+- Aksen warna (ungu/merah/biru) = presentasi (CSS scoped per halaman), bukan
+  data/kolom.
+```
+
+```text
+Ronde C (design.md §66.13, sync 2026-10-16):
+- TANPA tabel/kolom/relasi/endpoint baru.
+- Kartu rekomendasi galeri memakai field yang SUDAH ada: name, categoryId,
+  rating, short_description, address (semua domain). Badge kategori = categoryId
+  yang sudah ada; warna badge = presentasi (domain item).
+- Foto hero/kartu galeri = aset lokal deterministik (media[0].url bila terisi),
+  sama dengan helper listing/detail — bukan data terverifikasi (MOCK).
+```
+
 ---
 
 # 62. Migration Definition of Done
@@ -3627,6 +3774,11 @@ dikerjakan. Saat ini belum diimplementasikan.
 Setiap perubahan terhadap struktur data harus terlebih dahulu dicek terhadap
 `prd.md` dan diperbarui di `schema.md` sebelum migration/model diimplementasikan.
 
+> **Sync 2026-10-14:** ronde revisi presentasi homepage REV#15–#17 (Owner
+> APPROVED, `design.md` §66.6) **tidak mengubah struktur data apa pun** — tidak
+> ada tabel/kolom/relasi/endpoint yang ditambah atau diubah. Status dokumen
+> tetap **NOT READY — FRONTEND PHASE**. Status data contract homepage: §61.1.
+
 ## Penggunaan pada fase ini — apa yang BOLEH dan TIDAK BOLEH
 
 `KNOWN` — diizinkan pada fase frontend:
@@ -3683,6 +3835,22 @@ hanya setelah:
     = CSS/presentasi saja → TIDAK ada dampak schema: tanpa tabel/kolom/relasi/endpoint
     baru, tanpa perubahan bentuk mock data (121 items tetap). Status dokumen tetap
     `NOT READY` sesuai AGENTS.md §6/§31.
+    → AUDIT 2026-10-15 (TASK-WIS-PERF-001 + detail Wisata/Kuliner): optimasi aset
+    WebP + thumbnail (4 domain + kartu homepage), anti-flash transisi, preload hero
+    detail, dan polish detail/listing Kuliner = presentasi/aset/performa saja →
+    TIDAK ada dampak schema: tanpa tabel/kolom/relasi/endpoint baru; pemakaian
+    `media.thumbnail_url` sudah ada (lihat §61.2). Status dokumen tetap `NOT READY`.
+    → AUDIT 2026-10-15 (data Menu & Ulasan Kuliner): tambah data mock
+    `PASINFO_KULINER_MENUS` (15 item/tempat) + `PASINFO_KULINER_ULASAN`
+    (5/tempat) dan WIRING halaman. Satu penambahan schema: kolom
+    `culinary_menus.category` (§13) untuk filter UI. Selain itu hanya konsumsi
+    tabel yang sudah ada (`culinary_menus`, `reviews`); bentuk 121 items tidak
+    berubah. Status dokumen tetap `NOT READY`.
+    → AUDIT 2026-10-16 (adaptasi Budaya ronde 7-item): hero foto asli, peta flyTo +
+    default peringatan, badge status kalender (3 warna), Cerita turunan data REAL,
+    Rekomendasi coverflow (paritas Kuliner). Presentasi + struktur mock saja →
+    TIDAK ada tabel/kolom/relasi/endpoint baru; `BUDAYA_CALENDAR.status` = field
+    tampilan mock (lihat §44/§61.4). Status dokumen tetap `NOT READY`.
 [ ] User mengesahkan dimulainya fase backend
 [ ] prd.md disetujui final
 ```

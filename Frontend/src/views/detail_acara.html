@@ -2,16 +2,107 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
+    <!-- Tirai transisi halaman: CSS dipusatkan di src/input.css,
+         logika di public/js/page-enter.js (HTML bersih - Owner). -->
+    <script src="../../public/js/page-enter.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Detail Acara - Pasuruan Info</title>
     <link rel="icon" href="data:," />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+    <!-- First-load: font CSS non-blocking (fallback sistem dulu, swap otomatis
+         saat siap; tanpa ini render tertahan menunggu css2 — terukur). -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+    />
     <link
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
     <link rel="stylesheet" href="../../public/css/styles.css" />
+    <link rel="stylesheet" href="../../public/vendor/leaflet/leaflet.css" />
+    <!-- Aksi hijau halaman detail (Owner): primary + link hijau; varian hover
+         didefinisikan di sini karena class hover Tailwind hijau belum ada di
+         styles.css (tanpa rebuild, tanpa sentuh file shared). -->
+    <style>
+      body[data-page-active="acara"] .evt-btn-green:hover {
+        background-color: #15803d !important;
+      }
+      body[data-page-active="acara"] .evt-btn-green-soft:hover {
+        background-color: #f0fdf4 !important;
+      }
+      body[data-page-active="acara"] .evt-link-green:hover {
+        color: #15803d !important;
+      }
+    </style>
+    <!-- Data acara dimuat di head (file lokal kecil, tanpa dependensi DOM)
+         agar foto hero bisa di-preload sebelum body ter-parse. -->
+    <script src="../../public/js/data-acara.js"></script>
+    <script>
+      // Preload foto hero detail (first-load): slug → foto sudah diketahui
+      // dari data, sehingga gambar ASLI mulai diunduh sedini mungkin dan
+      // halaman tidak menampilkan placeholder dulu baru bertukar.
+      // Mapping fallback 3 foto mirror detail-acara.js; bila tak cocok,
+      // preload dilewati (tidak merusak apa pun).
+      (function () {
+        try {
+          var slug = new URLSearchParams(window.location.search).get("slug");
+          var DATA = window.PASINFO_ACARA;
+          if (!slug || !DATA || !DATA.events) return;
+          var found = null;
+          for (var i = 0; i < DATA.events.length; i++) {
+            if (DATA.events[i].slug === slug) {
+              found = DATA.events[i];
+              break;
+            }
+          }
+          if (!found) {
+            for (var j = 0; j < DATA.events.length; j++) {
+              if (DATA.events[j].featured) {
+                found = DATA.events[j];
+                break;
+              }
+            }
+          }
+          if (!found) return;
+          var url =
+            found.media && found.media[0] && found.media[0].url
+              ? found.media[0].url
+              : (function () {
+                  var photos = [
+                    "../../public/assets/images/acara/optimized/bromo-marathon.webp",
+                    "../../public/assets/images/acara/optimized/Hari-Jadi-Kota-Pasuruan.webp",
+                    "../../public/assets/images/acara/optimized/Pekan-Raya-Pasuruan-(PRP).webp",
+                  ];
+                  var key = String(found.id || slug);
+                  var sum = 0;
+                  for (var k = 0; k < key.length; k++) sum += key.charCodeAt(k);
+                  return photos[sum % photos.length];
+                })();
+          var l = document.createElement("link");
+          l.rel = "preload";
+          l.as = "image";
+          l.href = url;
+          document.head.appendChild(l);
+        } catch (e) {
+          /* abaikan: halaman tetap jalan, foto dimuat normal */
+        }
+      })();
+    </script>
+    <!-- GSAP Animation Library (Owner override design.md §49-50) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" defer></script>
     <script src="../../public/js/opening-hours-util.js" defer></script>
     <script src="../../public/js/add-sources-data.js" defer></script>
   </head>
@@ -23,13 +114,13 @@
     <div class="bg-gray-100 border-b border-gray-200 py-3">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav class="flex items-center text-xs md:text-sm space-x-2" aria-label="Breadcrumb">
-          <a href="../../index.html" class="text-blue-600 hover:text-blue-700 transition-colors" aria-label="Beranda">
+          <a href="../../index.html" class="text-green-700 transition-colors" aria-label="Beranda">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" /></svg>
           </a>
-          <span class="text-gray-400" aria-hidden="true">›</span>
-          <a href="acara.html" class="text-blue-600 hover:text-blue-700 font-semibold transition-colors">Event</a>
-          <span class="text-gray-400" aria-hidden="true">›</span>
-          <span id="crumb-name" class="text-blue-600 font-semibold truncate">Detail Acara</span>
+          <span class="text-green-700 font-bold" aria-hidden="true">›</span>
+          <a href="acara.html" class="text-green-700 font-semibold transition-colors">Event</a>
+          <span class="text-green-700 font-bold" aria-hidden="true">›</span>
+          <span id="crumb-name" class="text-green-700 font-semibold truncate">Detail Acara</span>
         </nav>
       </div>
     </div>
@@ -49,6 +140,8 @@
               id="evt-hero-img"
               src="../../public/assets/images/poster-dummy.svg"
               alt="Poster acara (placeholder)"
+              fetchpriority="high"
+              decoding="async"
               class="absolute inset-0 h-full w-full object-cover"
             />
           </div>
@@ -59,18 +152,18 @@
             </h1>
             <div class="mt-4 space-y-2.5 text-xs sm:text-sm text-gray-800 font-medium">
               <p class="flex items-start gap-2">
-                <svg class="h-4 w-4 shrink-0 mt-0.5 text-gray-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <img src="../../public/assets/icons/icon_kalender.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 mt-0.5 object-contain" />
                 <span class="flex flex-col gap-1">
                   <span><span id="evt-schedule-date">Minggu, 10 September 2027</span><br /><span id="evt-schedule-time" class="text-gray-600">08:00 - 12:00</span></span>
                   <span id="evt-schedule-status" class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 w-fit"></span>
                 </span>
               </p>
               <p class="flex items-center gap-2">
-                <svg class="h-4 w-4 shrink-0 text-gray-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
+                <img src="../../public/assets/icons/icon_lokasi-hitam.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" />
                 <span id="evt-location">Alun-alun Kota Pasuruan</span>
               </p>
               <p class="flex items-center gap-2">
-                <svg class="h-4 w-4 shrink-0 text-gray-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4" /></svg>
+                <img src="../../public/assets/icons/icon_penyelenggara.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" />
                 <span id="evt-organizer">Dinas Kebudayaan Kab. Pasuruan</span>
               </p>
             </div>
@@ -80,7 +173,7 @@
                 id="btn-ticket"
                 type="button"
                 title="Informasi tiket saja — pendaftaran melalui penyelenggara"
-                class="px-4 py-2 rounded-lg bg-blue-600 text-white text-xs sm:text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm"
+                class="evt-btn-green px-4 py-2 rounded-lg bg-green-600 text-white text-xs sm:text-sm font-bold transition-colors shadow-sm"
               >
                 Daftar / Beli Tiket
               </button>
@@ -88,7 +181,7 @@
                 id="btn-remind"
                 type="button"
                 title="Pengingat acara (tampilan saja)"
-                class="px-4 py-2 rounded-lg bg-white text-gray-700 text-xs sm:text-sm font-bold ring-1 ring-gray-300 hover:bg-gray-50 transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                class="evt-btn-green-soft px-4 py-2 rounded-lg bg-white text-green-700 text-xs sm:text-sm font-bold ring-1 ring-gray-300 transition-colors inline-flex items-center gap-1.5 shadow-sm"
               >
                 <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
                 Ingatkan Event
@@ -118,7 +211,7 @@
           <dl id="info-rows" class="mt-6 space-y-3 text-sm sm:text-base">
             <div class="grid grid-cols-[28px_110px_1fr] sm:grid-cols-[32px_140px_1fr] items-center gap-2">
               <dt class="text-gray-500 flex items-center" aria-hidden="true">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg>
+                <img src="../../public/assets/icons/icon_kategori.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" /></svg>
                 <span class="sr-only">Kategori</span>
               </dt>
               <dd class="text-gray-500">Kategori</dd>
@@ -126,7 +219,7 @@
             </div>
             <div class="grid grid-cols-[28px_110px_1fr] sm:grid-cols-[32px_140px_1fr] items-center gap-2">
               <dt class="text-gray-500 flex items-center" aria-hidden="true">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" /><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" /></svg>
+                <img src="../../public/assets/icons/icon_harga-tiket.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" /></svg>
                 <span class="sr-only">Harga Tiket</span>
               </dt>
               <dd class="text-gray-500">Harga Tiket</dd>
@@ -142,7 +235,7 @@
             </div>
             <div class="grid grid-cols-[28px_110px_1fr] sm:grid-cols-[32px_140px_1fr] items-center gap-2">
               <dt class="text-gray-500 flex items-center" aria-hidden="true">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
+                <img src="../../public/assets/icons/icon_kontak.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" />
                 <span class="sr-only">Kontak</span>
               </dt>
               <dd class="text-gray-500">Kontak</dd>
@@ -150,95 +243,93 @@
             </div>
             <div class="grid grid-cols-[28px_110px_1fr] sm:grid-cols-[32px_140px_1fr] items-center gap-2">
               <dt class="text-gray-500 flex items-center" aria-hidden="true">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                <img src="../../public/assets/icons/icon_penyelenggara.svg" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 object-contain" />
                 <span class="sr-only">Penyelenggara</span>
               </dt>
               <dd class="text-gray-500">Penyelenggara</dd>
               <dd id="info-penyelenggara" class="font-bold text-gray-900">Dinas Kebudayaan Kab. Pasuruan</dd>
             </div>
           </dl>
+
+          <!-- Sumber & Verifikasi (bagian dari Tentang Acara, pola detail kuliner) -->
+          <div id="tentang-sumber" class="mt-8 pt-6 border-t border-gray-200">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+              <div class="bg-white rounded-xl p-5">
+                <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <img src="../../public/assets/icons/icon_sumber.svg" alt="" aria-hidden="true" class="h-5 w-5 shrink-0 object-contain" />
+                  Sumber Informasi
+                </h3>
+                <div id="source-info" class="space-y-3">
+                  <p class="text-xs text-gray-500">Memuat sumber informasi...</p>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl p-5">
+                <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <svg class="h-5 w-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Status Verifikasi
+                </h3>
+                <div id="verification-info" class="space-y-3">
+                  <p class="text-xs text-gray-500">Memuat status verifikasi...</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-         <!-- KOLOM KANAN: Lokasi & Rute (peta STATIS placeholder) -->
-         <aside class="bg-[#f3f4f6] rounded-2xl p-4 sm:p-6 md:p-8 h-full" aria-label="Lokasi dan rute acara">
-          <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Lokasi &amp; Rute</h2>
-          <p class="mt-1 text-xs sm:text-sm text-gray-500 leading-relaxed">
-            Peta lokasi acara sebagai gambaran umum.
-          </p>
-          <div
-            id="lokasi-map"
-            class="mt-3 relative w-full h-48 sm:h-56 rounded-xl overflow-hidden bg-gray-200 ring-1 ring-gray-200"
-            role="img"
-            aria-label="Peta lokasi acara (placeholder)"
-          >
-            <div class="absolute inset-0 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300" aria-hidden="true"></div>
-            <div class="absolute inset-0 flex items-center justify-center gap-6" aria-hidden="true">
-              <svg class="h-6 w-6 text-red-600" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>
-              <svg class="h-6 w-6 text-red-600 -mt-6" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>
-              <svg class="h-6 w-6 text-red-600 mt-4" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>
-            </div>
-            <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-white/80 text-[10px] font-semibold text-gray-500">Peta lokasi</span>
-          </div>
-          <div class="mt-4 grid grid-cols-2 gap-3 text-xs sm:text-sm">
-            <p class="flex items-start gap-1.5 text-gray-600">
-              <svg class="h-3.5 w-3.5 shrink-0 mt-0.5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
-              <span><strong class="block text-gray-800">Lokasi</strong><span id="lokasi-alamat">Alun-alun Kota Pasuruan</span></span>
-            </p>
-            <p class="flex items-start gap-1.5 text-gray-600">
-              <svg class="h-3.5 w-3.5 shrink-0 mt-0.5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.159.69.159 1.006 0z" /></svg>
-              <span><strong class="block text-gray-800">Lokasi Anda</strong><span id="lokasi-anda">Pasuruan, Jawa Timur</span></span>
-            </p>
-            <p class="flex items-start gap-1.5 text-gray-600">
-              <svg class="h-3.5 w-3.5 shrink-0 mt-0.5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>
-              <span><strong class="block text-gray-800">Jarak</strong><span id="lokasi-jarak">—</span></span>
-            </p>
-            <p class="flex items-start gap-1.5 text-gray-600">
-              <svg class="h-3.5 w-3.5 shrink-0 mt-0.5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <span><strong class="block text-gray-800">Estimasi</strong><span id="lokasi-estimasi">—</span></span>
-            </p>
-          </div>
-            <a
-             id="rute-link"
-             href="#"
-             title="Tautan rute belum tersedia"
-             aria-disabled="true"
-             class="mt-5 w-full inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-blue-600 text-white font-bold text-xs sm:text-sm shadow-sm hover:bg-blue-700 transition-colors"
+          <!-- KOLOM KANAN: Lokasi & Rute (peta Leaflet + panel rute, pola detail_kuliner) -->
+          <aside class="bg-gray-100 rounded-2xl p-5 sm:p-7 h-full" aria-labelledby="lokasi-title">
+           <h2 id="lokasi-title" class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">Lokasi &amp; Rute</h2>
+           <p id="lokasi-desc" class="text-xs sm:text-sm text-gray-600 leading-relaxed mb-4">Informasi lokasi dan rute menuju acara ini.</p>
+           <div
+             id="lokasi-map"
+             class="relative w-full h-48 sm:h-56 lg:h-64 rounded-xl overflow-hidden bg-gray-300 mb-4"
+             role="img"
+             aria-label="Peta lokasi acara"
            >
-             Dapatkan Arah &amp; Rute
-           </a>
-        </aside>
+             <div id="lokasi-map-fallback" class="absolute inset-0">
+               <div class="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-400"></div>
+               <span class="absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px] font-semibold text-gray-500 bg-white/80 px-3 py-1 rounded-full">Peta lokasi acara</span>
+             </div>
+           </div>
+           <dl class="text-xs sm:text-sm space-y-2.5 mb-5">
+             <div class="flex items-start gap-2">
+               <dt class="flex items-center gap-1.5 text-gray-500 font-medium shrink-0">
+                 <img src="../../public/assets/icons/icon_lokasi-hitam.svg" alt="" aria-hidden="true" class="h-3.5 w-3.5 shrink-0 object-contain" />
+                 Lokasi
+               </dt>
+               <dd id="route-lokasi" class="text-gray-700 text-right ml-auto">-</dd>
+             </div>
+             <div class="flex items-start gap-2">
+               <dt class="flex items-center gap-1.5 text-gray-500 font-medium shrink-0">
+                 <img src="../../public/assets/icons/icon_lokasi-saya.svg" alt="" aria-hidden="true" class="h-3.5 w-3.5 shrink-0 object-contain" />
+                 Lokasi Anda
+               </dt>
+               <dd id="route-dari" class="text-gray-700 text-right ml-auto">-</dd>
+             </div>
+             <div class="flex items-start gap-2">
+               <dt class="flex items-center gap-1.5 text-gray-500 font-medium shrink-0">
+                 <img src="../../public/assets/icons/icon_jarak.svg" alt="" aria-hidden="true" class="h-3.5 w-3.5 shrink-0 object-contain" />
+                 Jarak
+               </dt>
+               <dd id="route-jarak" class="text-gray-700 text-right ml-auto">-</dd>
+             </div>
+             <div class="flex items-start gap-2">
+               <dt class="flex items-center gap-1.5 text-gray-500 font-medium shrink-0">
+                 <img src="../../public/assets/icons/icon_estimasi.svg" alt="" aria-hidden="true" class="h-3.5 w-3.5 shrink-0 object-contain" />
+                 Estimasi
+               </dt>
+               <dd id="route-estimasi" class="text-gray-700 text-right ml-auto">-</dd>
+             </div>
+           </dl>
+           <button
+             id="ruteBtn"
+             type="button"
+             title="Buka rute di Google Maps"
+             class="evt-btn-green w-full inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-green-600 text-white text-xs sm:text-sm font-bold shadow transition-colors"
+           >Dapatkan Arah &amp; Rute</button>
+         </aside>
       </div>
     </main>
-
-    <!-- SUMBER & VERIFIKASI (pola detail_wisata, Tier 1.7) -->
-     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8" aria-label="Sumber dan verifikasi">
-      <div class="bg-[#f3f4f6] rounded-2xl p-4 sm:p-6 md:p-8">
-        <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Sumber &amp; Verifikasi</h2>
-        <p class="mt-1 text-xs sm:text-sm text-gray-500 leading-relaxed">
-          Asal informasi dan status verifikasi acara ini.
-        </p>
-        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-          <div class="bg-white rounded-xl p-5">
-            <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <svg class="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              Sumber Informasi
-            </h3>
-            <div id="source-info" class="space-y-3">
-              <p class="text-xs text-gray-500">Memuat sumber informasi...</p>
-            </div>
-          </div>
-          <div class="bg-white rounded-xl p-5">
-            <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <svg class="h-5 w-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              Status Verifikasi
-            </h3>
-            <div id="verification-info" class="space-y-3">
-              <p class="text-xs text-gray-500">Memuat status verifikasi...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <!-- EVENT LAIN DARI PENYELENGGARA + pill Lihat Semua -->
      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8" aria-label="Event lain dari penyelenggara">
@@ -250,7 +341,7 @@
               Acara lain dengan kategori serupa di Pasuruan.
             </p>
           </div>
-          <a href="acara.html" class="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-white text-blue-600 text-[11px] sm:text-xs font-bold ring-1 ring-gray-200 hover:bg-blue-50 transition-colors">
+          <a href="acara.html" class="evt-btn-green-soft shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-white text-green-700 text-[11px] sm:text-xs font-bold ring-1 ring-gray-200 transition-colors">
             Lihat Semua <span aria-hidden="true">→</span>
           </a>
         </div>
@@ -270,7 +361,7 @@
               Acara kategori lain yang mungkin menarik bagi Anda.
             </p>
           </div>
-          <a href="acara.html" class="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-white text-blue-600 text-[11px] sm:text-xs font-bold ring-1 ring-gray-200 hover:bg-blue-50 transition-colors">
+          <a href="acara.html" class="evt-btn-green-soft shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-white text-green-700 text-[11px] sm:text-xs font-bold ring-1 ring-gray-200 transition-colors">
             Lihat Semua <span aria-hidden="true">→</span>
           </a>
         </div>
@@ -306,10 +397,15 @@
     <script src="./partials/pasinfo-header.js" defer></script>
     <script src="./partials/pasinfo-footer.js" defer></script>
     <script src="./partials/pasinfo-layout.js" defer></script>
-    <script src="../../public/js/data-acara.js"></script>
+    <script src="../../public/vendor/leaflet/leaflet.js" defer></script>
     <script src="../../public/js/data-wisata.js"></script>
     <script src="../../public/js/pages/nearby.js"></script>
     <script src="../../public/js/main.js" defer></script>
     <script src="../../public/js/pages/detail-acara.js"></script>
+
+    <!-- GSAP Animation Script (Owner override design.md §49-50) -->
+    <script src="../../public/js/pages/detail-acara-animation.js" defer></script>
+    <script src="../../public/js/page-transition.js" defer></script>
+    <script src="../../public/js/pages/internal-nav.js" defer></script>
   </body>
 </html>

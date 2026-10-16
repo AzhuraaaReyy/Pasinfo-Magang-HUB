@@ -39,7 +39,8 @@
       title: "Eksplorasi Wisata<br /> Pasuruan Raya",
       description: "Temukan keindahan alam, budaya, dan kuliner khas Pasuruan. Dari pegunungan Bromo hingga pantai berpasir putih — semua informasi wisata terpercaya ada di sini.",
       bg: "from-orange-900 via-stone-800 to-slate-900",
-      img: "bromo_banner.png",
+      img: "optimized/bromo_banner.webp",
+      thumb: "optimized/bromo_banner.thumb.webp",
       label: "Panorama pegunungan Bromo",
     },
     {
@@ -48,7 +49,8 @@
       title: "Taman Safari<br /> Indonesia 2",
       description: "Rasakan pengalaman safari alam terbuka mendatangi habitat berbagai satwa langka dari seluruh belahan dunia.",
       bg: "from-green-900 via-stone-800 to-slate-900",
-      img: "taman_safari_indonesia_2.jpg",
+      img: "optimized/taman_safari_indonesia_2.webp",
+      thumb: "optimized/taman_safari_indonesia_2.thumb.webp",
       label: "Kawasan konservasi satwa",
     },
     {
@@ -57,7 +59,8 @@
       title: "Sejuknya Air Terjun<br /> Kakek Bodo",
       description: "Hutan wisata alam dengan gemuruh air terjun alami setinggi 47 meter di kawasan pegunungan yang sangat sejuk.",
       bg: "from-cyan-900 via-sky-800 to-slate-900",
-      img: "air-terjun-kakek-bodo.png",
+      img: "optimized/air-terjun-kakek-bodo.webp",
+      thumb: "optimized/air-terjun-kakek-bodo.thumb.webp",
       label: "Air terjun pegunungan",
     },
     {
@@ -66,7 +69,8 @@
       title: "Pesona Bromo &<br /> Taman Nasional",
       description: "Nikmati kemegahan lautan pasir Bromo dan pemandangan matahari terbit yang memukau langsung dari ketinggian Pasuruan.",
       bg: "from-stone-800 via-orange-900 to-slate-900",
-      img: "bromo2.jpg",
+      img: "optimized/bromo2.webp",
+      thumb: "optimized/bromo2.thumb.webp",
       label: "Lautan pasir Bromo",
     },
     {
@@ -75,7 +79,8 @@
       title: "Pesona Keindahan & Lautan Pasir Gunung Bromo",
       description: "Saksikan kemegahan kawah aktif dan bentangan lautan pasir berbisikan angin yang memukau di kawasan pegunungan Tengger, Pasuruan Raya.",
       bg: "from-stone-800 via-orange-900 to-slate-900",
-      img: "bromo3.jpg",
+      img: "optimized/bromo3.webp",
+      thumb: "optimized/bromo3.thumb.webp",
       label: "Kawah dan lautan pasir Bromo",
     },
   ];
@@ -84,7 +89,8 @@
   var isAnimating = false;
   var autoSlideTimer = null;
   var activeBgLayer = 1;
-  var AUTOPLAY_INTERVAL = 6000;
+  // Owner 2026-10-14: durasi ganti kartu hero = 5 detik (sebelumnya 6 detik).
+  var AUTOPLAY_INTERVAL = 5000;
   var prefersReducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   var heroSection = document.getElementById("hero-section");
@@ -134,13 +140,15 @@
   // tanpa innerHTML ulang, tanpa pop, tanpa fade. Ilusi data banyak dari loop.
   function renderStripOnce() {
     cardsContainer.innerHTML = "";
-    // gap-4 (bukan space-x) agar slot seragam; max-w 3 slot (+padding px-1)
-    // + overflow hidden agar slot ke-4 terklip = antrean tak terlihat.
-    // 3*128+2*16+8=424 / 3*144+2*16+8=472 / 3*160+2*16+8=520.
+    // gap-4 (bukan space-x) agar slot seragam; max-w N slot (+padding px-1)
+    // + overflow hidden agar slot ke-(N+1) terklip = antrean tak terlihat.
+    // 3*128+2*16+8=424 / 3*144+2*16+8=472.
+    // Owner 2026-10-14: TABLET (md 768-1023) tampilkan 4 kartu:
+    // 4*160+3*16+8=696; lg kembali 3 kartu (3*160+2*16+8=520).
     cardsContainer.classList.remove("space-x-4");
     cardsContainer.classList.remove("overflow-x-auto");
     cardsContainer.classList.remove("max-w-full");
-    ["gap-4", "overflow-hidden", "max-w-[424px]", "sm:max-w-[472px]", "md:max-w-[520px]"].forEach(function (c) {
+    ["gap-4", "overflow-hidden", "max-w-[424px]", "sm:max-w-[472px]", "md:max-w-[696px]", "lg:max-w-[520px]"].forEach(function (c) {
       if ((" " + cardsContainer.className + " ").indexOf(" " + c + " ") === -1) {
         cardsContainer.className += " " + c;
       }
@@ -152,7 +160,7 @@
       card.setAttribute("aria-label", "Tampilkan " + data.badge + ": " + plainTitle(data.title));
 
       var bgHtml = data.img
-        ? '<img src="' + imgUrl(data.img) + '" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 pointer-events-none" aria-hidden="true" loading="lazy" />'
+        ? '<img src="' + imgUrl(data.thumb || data.img) + '" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 pointer-events-none" aria-hidden="true" loading="lazy" />'
         : '<div class="absolute inset-0 bg-gradient-to-b ' + data.bg + ' pointer-events-none" aria-hidden="true"></div>';
 
       card.innerHTML = bgHtml +
@@ -246,6 +254,7 @@
       activeBgLayer = nextBgLayerNum;
       rotateCommit(rotK);
       currentIndex = targetIndex;
+      preloadImageAt((currentIndex + 1) % slidesData.length);
       moveRing(targetIndex);
       applySlideText(targetIndex);
       isAnimating = false;
@@ -402,6 +411,7 @@
         origin.style.transition = "";
         moveRing(targetIndex);
         currentIndex = targetIndex;
+        preloadImageAt((currentIndex + 1) % slidesData.length);
         isAnimating = false;
         startAutoplay();
       }
@@ -477,18 +487,25 @@
     autoSlideTimer = null;
   }
 
+  function preloadImageAt(index) {
+    var s = slidesData[index];
+    if (!s || !s.img) return;
+    var im = new Image();
+    im.src = imgUrl(s.img);
+    // Decode di muka agar frame pertama expand tak stall.
+    if (im.decode) {
+      try {
+        im.decode().catch(function () {});
+      } catch (e) {}
+    }
+  }
+
   function preloadImages() {
-    slidesData.forEach(function (s) {
-      if (!s.img) return;
-      var im = new Image();
-      im.src = imgUrl(s.img);
-      // Decode di muka agar frame pertama expand tak stall.
-      if (im.decode) {
-        try {
-          im.decode().catch(function () {});
-        } catch (e) {}
-      }
-    });
+    // Owner 2026-10-15 (perbaikan lag): cukup slide aktif + 1 berikutnya.
+    // Sebelumnya SELURUH slide (~13,7 MB) diunduh sekaligus saat load.
+    // Slide berikutnya yang lain dipreload bertahap saat slide berganti.
+    preloadImageAt(currentIndex);
+    preloadImageAt((currentIndex + 1) % slidesData.length);
   }
 
   function init() {

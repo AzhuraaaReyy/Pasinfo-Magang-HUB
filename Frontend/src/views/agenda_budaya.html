@@ -2,6 +2,8 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
+    <!-- Tirai transisi halaman: CSS di src/input.css, logika page-enter.js. -->
+    <script src="../../public/js/page-enter.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pasuruan Info - Agenda Budaya</title>
     <link rel="icon" href="data:," />
@@ -12,6 +14,39 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../../public/css/styles.css" />
+    <!-- (O) Aksen Budaya = UNGU (violet). Utility Tailwind solid (violet/purple)
+         tidak ada di public/css/styles.css terkompilasi dan build:css tidak
+         dijalankan -> class aksen didefinisikan di sini. Identik dengan
+         budaya.html / detail_budaya.html / galeri_budaya.html.
+         Owner 2026-10-16: aksen ungu berlaku untuk seluruh domain Budaya.
+         Marker hari mini-kalender TETAP biru (bagian widget kalender). -->
+    <style>
+      :root {
+        --bud-accent: #6d28d9;
+        --bud-accent-dark: #5b21b6;
+        --bud-accent-soft: #ede9fe;
+      }
+      .bud-accent {
+        background-color: var(--bud-accent);
+        color: #fff;
+      }
+      .bud-accent:hover {
+        background-color: var(--bud-accent-dark);
+      }
+      .bud-accent-soft {
+        background-color: var(--bud-accent-soft);
+        color: var(--bud-accent);
+      }
+      .bud-accent-text {
+        color: var(--bud-accent);
+      }
+      .bud-accent-text:hover {
+        color: var(--bud-accent-dark);
+      }
+      .bud-accent-ring {
+        box-shadow: 0 0 0 2px var(--bud-accent);
+      }
+    </style>
   </head>
   <body
     class="bg-white text-gray-800 font-sans antialiased"
@@ -27,7 +62,7 @@
         class="flex text-sm text-gray-500 mb-6 gap-2 items-center"
         aria-label="Breadcrumb"
       >
-        <a href="../../index.html" class="hover:text-blue-600" aria-label="Beranda">
+        <a href="../../index.html" class="bud-accent-text" aria-label="Beranda">
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path
               d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l1.293 1.293a1 1 0 001.414-1.414l-7-7z"
@@ -35,7 +70,7 @@
           </svg>
         </a>
         <span>&rsaquo;</span>
-        <a href="budaya.html" class="text-blue-600 hover:underline">Budaya</a>
+        <a href="budaya.html" class="bud-accent-text hover:underline">Budaya</a>
         <span>&rsaquo;</span>
         <span class="text-gray-400">Agenda</span>
       </nav>
@@ -157,7 +192,7 @@
             <div class="relative">
               <button
                 type="button"
-                class="inline-flex items-center gap-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-full shadow-sm"
+                class="inline-flex items-center gap-2 text-xs font-bold text-white bud-accent px-4 py-2 rounded-full shadow-sm"
               >
                 <span>Terbaru</span>
                 <svg
@@ -204,102 +239,83 @@
         </div>
       </div>
 
-      <!-- RECOMMENDATIONS & SIDEBAR AD CONTAINER -->
-      <div class="mt-16 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <!-- RECOMMENDATIONS CONTENT (Span 9) -->
-        <div class="lg:col-span-9 space-y-12">
+      <!-- RECOMMENDATIONS (full width, no vertical ad) -->
+      <div class="mt-16 mb-8">
+        <div class="space-y-6">
           <!-- 1. Rekomendasi Budaya Serupa -->
-          <div>
-            <div class="flex items-center justify-between mb-2">
+          <section class="bg-gray-50 border border-gray-100 rounded-2xl p-5">
+            <div class="flex flex-col items-start justify-between sm:flex-row mb-2">
               <div>
-                <h3 class="text-lg font-bold text-gray-900">
+                <h3 class="font-bold text-2xl md:text-3xl lg:text-4xl text-gray-900">
                   Rekomendasi Budaya Serupa
                 </h3>
-                <p class="text-xs text-gray-500">
-                  Lorem ipsum is simply dummy text of the printing and
-                  typesetting industry.
+                <p class="text-xs sm:text-sm text-gray-500 max-w-lg mt-0.5">
+                  Rekomendasi budaya serupa di Pasuruan Raya.
                 </p>
               </div>
               <a
                 href="budaya.html"
-                class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+                class="text-[11px] font-semibold bud-accent-text hover:underline whitespace-nowrap mt-2 sm:mt-0"
+                >Jelajah Sekarang →</a
               >
-                Jelajah Sekarang &rsaquo;
-              </a>
             </div>
             <div
               id="reco-serupa-grid"
-              class="grid grid-cols-2 sm:grid-cols-4 gap-3 items-stretch"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 items-stretch auto-rows-fr"
             >
               <!-- Rendered via JS -->
             </div>
-          </div>
+          </section>
 
           <!-- 2. Rekomendasi Budaya Lainnya -->
-          <div>
-            <div class="flex items-center justify-between mb-2">
+          <section class="bg-gray-50 border border-gray-100 rounded-2xl p-5">
+            <div class="flex flex-col items-start justify-between sm:flex-row mb-2">
               <div>
-                <h3 class="text-lg font-bold text-gray-900">
+                <h3 class="font-bold text-2xl md:text-3xl lg:text-4xl text-gray-900">
                   Rekomendasi Budaya Lainnya
                 </h3>
-                <p class="text-xs text-gray-500">
-                  Lorem ipsum is simply dummy text of the printing and
-                  typesetting industry.
+                <p class="text-xs sm:text-sm text-gray-500 max-w-lg mt-0.5">
+                  Rekomendasi budaya lain di Pasuruan Raya.
                 </p>
               </div>
               <a
                 href="budaya.html"
-                class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+                class="text-[11px] font-semibold bud-accent-text hover:underline whitespace-nowrap mt-2 sm:mt-0"
+                >Jelajah Sekarang →</a
               >
-                Jelajah Sekarang &rsaquo;
-              </a>
             </div>
             <div
               id="reco-lainnya-grid"
-              class="grid grid-cols-2 sm:grid-cols-4 gap-3 items-stretch"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 items-stretch auto-rows-fr"
             >
               <!-- Rendered via JS -->
             </div>
-          </div>
+          </section>
 
           <!-- 3. Jelajah Destinasi Sekitar Budaya -->
-          <div>
-            <div class="flex items-center justify-between mb-2">
+          <section class="bg-gray-50 border border-gray-100 rounded-2xl p-5">
+            <div class="flex flex-col items-start justify-between sm:flex-row mb-2">
               <div>
-                <h3 class="text-lg font-bold text-gray-900">
+                <h3 class="font-bold text-2xl md:text-3xl lg:text-4xl text-gray-900">
                   Jelajah Destinasi Sekitar Budaya
                 </h3>
-                <p class="text-xs text-gray-500">
-                  Lorem ipsum is simply dummy text of the printing and
-                  typesetting industry.
+                <p class="text-xs sm:text-sm text-gray-500 max-w-lg mt-0.5">
+                  Jelajahi destinasi wisata di sekitar budaya pilihan.
                 </p>
               </div>
               <a
                 href="wisata.html"
-                class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+                class="text-[11px] font-semibold bud-accent-text hover:underline whitespace-nowrap mt-2 sm:mt-0"
+                >Jelajah Sekarang →</a
               >
-                Jelajah Sekarang &rsaquo;
-              </a>
             </div>
             <div
               id="reco-destinasi-grid"
-              class="grid grid-cols-2 sm:grid-cols-4 gap-3 items-stretch"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 items-stretch auto-rows-fr"
             >
               <!-- Rendered via JS -->
             </div>
-          </div>
-        </div>
-
-        <!-- RIGHT AD SPACE (Span 3) -->
-        <div class="lg:col-span-3">
-          <div
-            class="bg-gray-100 border border-gray-200 rounded-2xl h-full min-h-[300px] flex items-center justify-center p-4"
-          >
-            <span
-              class="text-sm font-bold text-gray-400 [writing-mode:vertical-lr] sm:[writing-mode:horizontal-tb] lg:[writing-mode:vertical-lr] uppercase tracking-widest"
-              >Space Iklan</span
-            >
-          </div>
+          </section>
         </div>
       </div>
 
@@ -328,5 +344,7 @@
     <script src="./partials/pasinfo-footer.js" defer></script>
     <script src="./partials/pasinfo-layout.js" defer></script>
     <script src="../../public/js/main.js" defer></script>
+    <script src="../../public/js/page-transition.js" defer></script>
+    <script src="../../public/js/pages/internal-nav.js" defer></script>
   </body>
 </html>

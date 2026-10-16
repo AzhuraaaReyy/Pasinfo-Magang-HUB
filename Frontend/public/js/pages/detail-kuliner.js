@@ -28,6 +28,71 @@
             t._timer = setTimeout(function () { t.classList.add("hidden"); }, 2200);
           } catch (e) {}
         }
+        function setHTML(id, html) {
+          var el = $(id);
+          if (el) el.innerHTML = html;
+        }
+        /* Foto hero: elemen <img> sudah ada di HTML (Owner 2026-10-16: paritas
+           detail_acara.html). Tanpa placeholder teks & tanpa transisi fade —
+           langsung menyetel .src sehingga tidak ada "berkedip" mock/skeleton
+           dan gambar mulai diunduh lebih awal (fetchpriority=high). */
+        function setHeroPhoto(el, url, name) {
+          if (!el || !url) return;
+          var img = el.querySelector("img");
+          if (!img) return;
+          img.src = url;
+          img.alt = "Foto " + name;
+          el.setAttribute("aria-label", "Foto " + name);
+        }
+        var userLocation = null;
+        var userLocationName = "-";
+        function getUserLocation(callback) {
+          if (!navigator.geolocation) { callback(null); return; }
+          navigator.geolocation.getCurrentPosition(
+            function (pos) { callback({ lat: pos.coords.latitude, lng: pos.coords.longitude }); },
+            function () { callback(null); },
+            { timeout: 5000, maximumAge: 0 }
+          );
+        }
+        function haversineDistance(lat1, lng1, lat2, lng2) {
+          var R = 6371;
+          var dLat = (lat2 - lat1) * Math.PI / 180;
+          var dLng = (lng2 - lng1) * Math.PI / 180;
+          var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLng / 2) * Math.sin(dLng / 2);
+          var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          return R * c;
+        }
+        function formatDistance(km) {
+          if (!km && km !== 0) return "-";
+          return "±" + km.toFixed(1) + " km";
+        }
+        function translateLatLngToRegion(lat, lng) {
+          var regions = DATA.regions || [];
+          var closestRegion = null;
+          var minDist = Infinity;
+          for (var i = 0; i < regions.length; i++) {
+            var r = regions[i];
+            if (r.center && r.center.latitude && r.center.longitude) {
+              var dist = haversineDistance(lat, lng, r.center.latitude, r.center.longitude);
+              if (dist < minDist) { minDist = dist; closestRegion = r; }
+            }
+          }
+          return closestRegion ? closestRegion.name : "Pasuruan";
+        }
+        function formatEstimasi(km, transportType) {
+          if (!km && km !== 0) return "-";
+          var speedKmH = transportType === "motor" ? 40 : 30;
+          var totalMenit = Math.ceil(km / speedKmH * 60);
+          var jam = Math.floor(totalMenit / 60);
+          var menit = totalMenit % 60;
+          var iconPath = transportType === "motor"
+            ? "../../public/assets/icons/icon_motor.svg"
+            : "../../public/assets/icons/icon_mobil.svg";
+          var label = transportType === "motor" ? "motor" : "mobil";
+          return '<img src="' + iconPath + '" alt="" class="w-4 h-4 inline mr-1" />' + label + ': ' + (jam > 0 ? jam + ' jam ' : '') + menit + ' menit';
+        }
 
           var DATA = (typeof window !== "undefined" && window.PASINFO_KULINER) || null;
           if (!DATA || !Array.isArray(DATA.culinaries) || !DATA.culinaries.length) return;
@@ -35,6 +100,63 @@
           // Enrich data dengan sources & verification
           if (window.AddSourcesData && window.AddSourcesData.enrichKuliner) {
             window.AddSourcesData.enrichKuliner(DATA);
+          }
+
+          // FOTO SEMENTARA (Owner 2026-10-14): gambar contoh domain, dipakai
+          // bergilir bila media.url null. Ganti foto asli menyusul.
+          // Owner 2026-10-15: hero/galeri → versi WebP penuh (1600px).
+          var KULINER_FALLBACK_PHOTOS = [
+            "../../public/assets/images/kuliner/optimized/Lontong Kupang Kraton.webp",
+            "../../public/assets/images/kuliner/optimized/Nasi Punel.webp",
+            "../../public/assets/images/kuliner/optimized/soto-pasuruan.webp"
+          ];
+          function kulinerPhotoFor(d) {
+            if (d && d.media && d.media[0] && d.media[0].url) return d.media[0].url;
+            return KULINER_FALLBACK_PHOTOS[photoHash(d) % KULINER_FALLBACK_PHOTOS.length];
+          }
+          // Owner 2026-10-16: kartu kecil (menu & rekomendasi) → versi thumbnail.
+          var KULINER_THUMB_PHOTOS = [
+            "../../public/assets/images/kuliner/optimized/Lontong Kupang Kraton.thumb.webp",
+            "../../public/assets/images/kuliner/optimized/Nasi Punel.thumb.webp",
+            "../../public/assets/images/kuliner/optimized/soto-pasuruan.thumb.webp"
+          ];
+          function photoHash(d) {
+            var key = d && d.id != null ? String(d.id) : "";
+            var sum = 0;
+            for (var i = 0; i < key.length; i++) sum += key.charCodeAt(i);
+            return sum;
+          }
+          function kulinerThumbFor(d) {
+            if (d && d.media && d.media[0] && d.media[0].url) return d.media[0].url;
+            return KULINER_THUMB_PHOTOS[photoHash(d) % KULINER_THUMB_PHOTOS.length];
+          }
+          // Kartu kecil (sekitar/wisata) → utamakan thumbnail_url (WebP kecil),
+          // mirror wisata-listing.js; else url / aset lokal deterministik.
+          function wisataPhotoFor(d) {
+            if (d && d.media && d.media[0]) {
+              if (d.media[0].thumbnail_url) return d.media[0].thumbnail_url;
+              if (d.media[0].url) return d.media[0].url;
+            }
+            try {
+              var api = window.PasinfoWisata || (window.PASINFO_WISATA && window.PASINFO_WISATA.api);
+              if (api && typeof api.photoFor === "function") return api.photoFor(d);
+            } catch (e) {}
+            return null;
+          }
+          function sekitarPhotoFor(d) {
+            if (d && d._href && d._href.indexOf("detail_wisata") !== -1) return wisataPhotoFor(d);
+            return kulinerThumbFor(d);
+          }
+          // operational_status di data-kuliner.js kini objek {status,label};
+          // helper ini tetap menerima string lama agar aman.
+          function opStatus(os) {
+            if (os && typeof os === "object") {
+              return { code: String(os.status || "unknown"), label: os.label || "Status belum tersedia" };
+            }
+            var s = typeof os === "string" ? os.toLowerCase() : "";
+            if (s === "buka") return { code: "open", label: "Buka" };
+            if (s === "tutup") return { code: "closed", label: "Tutup" };
+            return { code: "unknown", label: "Status belum tersedia" };
           }
 
           function catName(id) {
@@ -67,13 +189,52 @@
         var category = catName(item.categoryId) || "Tradisional";
         var rating = item.rating || "4.7";
 
+        getUserLocation(function (loc) {
+          if (loc) {
+            userLocation = loc;
+            userLocationName = translateLatLngToRegion(loc.lat, loc.lng);
+            if (item.place && typeof item.place.latitude === "number" && typeof item.place.longitude === "number") {
+              var distKm = haversineDistance(loc.lat, loc.lng, item.place.latitude, item.place.longitude);
+              setText("route-dari", userLocationName);
+              setText("route-jarak", formatDistance(distKm));
+              setHTML("route-estimasi", formatEstimasi(distKm, "mobil") + " | " + formatEstimasi(distKm, "motor"));
+            }
+          } else {
+            setText("route-dari", "Izinkan lokasi untuk melihat rute");
+          }
+        });
+
         document.title = item.name + " - Pasuruan Info";
         setText("crumb-name", item.name);
         setText("hero-cat", "Kuliner " + category);
         setText("detail-title", item.name);
           setText("detail-location", item.address || "Pasuruan, Jawa Timur");
-          setText("hero-rating-text", rating + " (1.245 Ulasan)");
-          setText("hero-media-label", "Foto: " + item.name + " (placeholder)");
+          var ratingText = String(rating);
+          if (item.reviews_label) ratingText += " (" + item.reviews_label + ")";
+          setText("hero-rating-text", ratingText);
+          setText("detail-desc", item.short_description || "Deskripsi kuliner segera hadir.");
+          // Tentang Kuliner: description multi-paragraf (data-kuliner.js) → 3 <p>.
+          var tentangEl = $("tentang-desc");
+          if (tentangEl) {
+            var tentangParas = String(item.description || "")
+              .split(/\n{2,}/)
+              .map(function (s) { return s.trim(); })
+              .filter(Boolean);
+            tentangEl.innerHTML = tentangParas.length
+              ? tentangParas.map(function (p) { return "<p>" + p + "</p>"; }).join("")
+              : "<p>Deskripsi kuliner segera hadir.</p>";
+          }
+          // Deskripsi galeri dari data-kuliner.js (gallery_description, multi-paragraf).
+          var galeriDescEl = $("galeri-desc");
+          if (galeriDescEl) {
+            var gdParas = String(item.gallery_description || "")
+              .split(/\n{2,}/)
+              .map(function (s) { return s.trim(); })
+              .filter(Boolean);
+            galeriDescEl.innerHTML = gdParas.length
+              ? gdParas.map(function (p) { return "<p>" + p + "</p>"; }).join("")
+              : "<p>Galeri foto kuliner ini.</p>";
+          }
           setText("info-kategori", category);
           setText("info-harga", item.price_range || "-");
           
@@ -95,14 +256,26 @@
           } else {
             setText("info-jam", item.opening_hours || "-");
           }
-          
-          setText("lokasi-alamat", item.address || "Pasuruan, Jawa Timur");
+
+          // Fasilitas (array string di data-kuliner.js; "-" bila kosong).
+          var fasilitasEl = $("info-fasilitas");
+          if (fasilitasEl) {
+            var facs = Array.isArray(item.facilities) ? item.facilities : [];
+            fasilitasEl.innerHTML = facs.length
+              ? '<span class="flex flex-wrap gap-2 justify-end">' + facs.map(function (f) {
+                  return '<span class="px-2.5 py-1.5 bg-gray-100 rounded text-sm font-semibold text-gray-700">' + f + "</span>";
+                }).join("") + "</span>"
+              : "-";
+          }
+
+          setText("route-lokasi", item.address || "-");
+          setText("lokasi-desc", item.name + " berlokasi di " + (item.address || "alamat belum tersedia") + ". Gunakan peta di bawah untuk melihat lokasi tepatnya, atau klik 'Dapatkan Arah & Rute' untuk navigasi ke Google Maps.");
         var statusEl = $("info-status");
         if (statusEl) {
-          var st = (item.operational_status || "buka").toLowerCase();
-          statusEl.textContent = st === "buka" ? "Buka" : st === "tutup" ? "Tutup" : (item.operational_status || "-");
+          var os = opStatus(item.operational_status);
+          statusEl.textContent = os.label;
           statusEl.className = "inline-block px-2.5 py-0.5 rounded text-white text-[10px] font-bold " +
-            (st === "buka" ? "bg-green-500" : "bg-gray-400");
+            (os.code === "open" ? "bg-green-500" : os.code === "closing_soon" ? "bg-amber-500" : "bg-gray-400");
         }
         // Display Source & Verification Info (pola detail_wisata, Tier 1.7)
         (function () {
@@ -141,63 +314,70 @@
           }
         })();
 
-        // Foto: pakai media.url bila tersedia & non-null, bila tidak tetap placeholder.
+        // Foto: pakai media.url bila ada; bila tidak pakai gambar contoh domain.
         try {
-          var photoUrl = (item.media && item.media[0] && item.media[0].url) ? item.media[0].url : null;
+          var photoUrl = kulinerPhotoFor(item);
           if (photoUrl) {
             var heroMedia = $("hero-media");
-            if (heroMedia) {
-              heroMedia.innerHTML = '<img src="' + photoUrl + '" alt="Foto ' + item.name + '" class="w-full h-full object-cover" />';
-              heroMedia.setAttribute("aria-label", "Foto " + item.name);
-            }
+            if (heroMedia) setHeroPhoto(heroMedia, photoUrl, item.name);
           }
         } catch (e) {}
 
         // Dummy non-fungsional: toast "segera hadir", tanpa backend.
-        ["btn-simpan", "btn-bagikan", "btn-rute"].forEach(function (id) {
+        ["btn-simpan", "btn-bagikan"].forEach(function (id) {
           var b = $(id);
           if (b) b.addEventListener("click", function () { showToast("Fitur ini segera hadir."); });
         });
-        var thumbMore = document.querySelector('[data-thumb="3"]');
-        if (thumbMore) thumbMore.addEventListener("click", function () { showToast("17 foto lainnya segera hadir."); });
+        // Thumb "Lihat semua foto" kini <a href="galeri_kuliner.html"> (item 5b)
+        // sehingga binding toast-nya dihapus.
 
-        // Tab aktif sederhana: klik tab → pindah state aktif visual.
-        [["tab-utama"], ["tab-menu"], ["tab-ulasan"]].forEach(function (pair) {
-          var t = $(pair[0]);
-          if (!t) return;
-          t.addEventListener("click", function () {
-            ["tab-utama", "tab-menu", "tab-ulasan"].forEach(function (other) {
-              var o = $(other);
-              if (!o) return;
-              var on = o === t;
-              o.classList.toggle("text-blue-700", on);
-              o.classList.toggle("text-gray-700", !on);
-              o.classList.toggle("font-bold", on);
-              o.classList.toggle("font-semibold", !on);
-              o.classList.toggle("border-blue-700", on);
-              o.classList.toggle("border-transparent", !on);
-              if (on) o.setAttribute("aria-current", "page");
-              else o.removeAttribute("aria-current");
-            });
+        // Tab navigasi antar-halaman (Owner 2026-10-16): Informasi Utama /
+        // Menu & Harga / Ulasan = halaman terpisah. Tab aktif (Informasi
+        // Utama) sudah statis di markup; di sini hanya menambahkan slug yang
+        // sama ke tiap tautan agar konteks kuliner tidak hilang.
+        (function initTabs() {
+          if (!item || !item.slug) return;
+          var tabTargets = {
+            "tab-utama": "detail_kuliner.html",
+            "tab-menu": "menu_kuliner.html",
+            "tab-ulasan": "ulasan.html",
+          };
+          Object.keys(tabTargets).forEach(function (id) {
+            var el = $(id);
+            if (el) el.setAttribute("href", tabTargets[id] + "?slug=" + item.slug);
           });
-        });
+        })();
 
         // Galeri: carousel placeholder (prev/next + klik thumb ganti foto besar).
         var galeriIndex = 0;
-        var GALERI_LABELS = ["Foto 1 (placeholder)", "Foto 2 (placeholder)", "Foto 3 (placeholder)", "Semua foto (placeholder)"];
+        // Galeri memakai gambar contoh domain (Owner 2026-10-14).
+        var GALERI_LABELS = ["Foto 1", "Foto 2", "Foto 3"];
+        function galeriPhoto(i) {
+          var n = KULINER_FALLBACK_PHOTOS.length;
+          return KULINER_FALLBACK_PHOTOS[((i % n) + n) % n];
+        }
         function paintGaleri() {
-          var label = $("galeri-main-label");
-          if (label) label.textContent = GALERI_LABELS[galeriIndex] || GALERI_LABELS[0];
+          var main = $("galeri-main");
+          if (main) {
+            main.innerHTML = '<img src="' + galeriPhoto(galeriIndex) + '" alt="Foto galeri ' + item.name + '" class="w-full h-full object-cover" />';
+            main.setAttribute("aria-label", GALERI_LABELS[galeriIndex] + ": " + item.name);
+          }
           var thumbs = document.querySelectorAll("#galeri-thumbs .thumb-btn");
           for (var k = 0; k < thumbs.length; k++) {
             var on = k === galeriIndex;
             thumbs[k].classList.toggle("ring-2", on);
             thumbs[k].classList.toggle("ring-blue-600", on);
+            if (k < KULINER_FALLBACK_PHOTOS.length) {
+              thumbs[k].style.backgroundImage = 'url("' + galeriPhoto(k) + '")';
+              thumbs[k].style.backgroundSize = "cover";
+              thumbs[k].style.backgroundPosition = "center";
+              thumbs[k].textContent = "";
+            }
           }
         }
         function galeriGo(n) {
-          galeriIndex = ((n % 4) + 4) % 4;
-          if (galeriIndex === 3) { showToast("17 foto lainnya segera hadir."); galeriIndex = 2; }
+          var count = KULINER_FALLBACK_PHOTOS.length;
+          galeriIndex = ((n % count) + count) % count;
           paintGaleri();
         }
         var gp = $("galeri-prev"), gn = $("galeri-next");
@@ -214,8 +394,8 @@
         }
         paintGaleri();
 
-        // Menu: pakai `menus` bila valid (nama terisi + harga ada),
-        // bila kosong → 4 menu dummy realistis inline (penanda hanya di kode).
+        // Menu: sumber utama window.PASINFO_KULINER_MENUS[slug] (15 item/tempat,
+        // data-kuliner-menus.js, MOCK). Fallback: item.menus lalu dummy inline.
         // _placeholder: tampilan sementara, bukan data terverifikasi; tanpa kata terlarang di UI.
         var _placeholderMenus = [
           { name: "Rawon Kucing", price: "Rp 15.000", rating: "4.6" },
@@ -225,21 +405,32 @@
         ];
         var validMenus = [];
         try {
-          var raw = Array.isArray(item.menus) ? item.menus : [];
+          var pool = (window.PASINFO_KULINER_MENUS && window.PASINFO_KULINER_MENUS[item.slug]) || null;
+          var raw = Array.isArray(pool) ? pool : (Array.isArray(item.menus) ? item.menus : []);
           for (var m = 0; m < raw.length; m++) {
             var nm = raw[m] && raw[m].name ? String(raw[m].name) : "";
-            var pr = raw[m] && raw[m].price ? String(raw[m].price) : "";
+            var pr = raw[m] && (raw[m].price_label || raw[m].price) ? String(raw[m].price_label || raw[m].price) : "";
             if (!nm || /mock/i.test(nm) || !pr) continue;
-            validMenus.push({ name: nm, price: pr, rating: rating });
+            validMenus.push({
+              name: nm,
+              price: pr,
+              rating: rating,
+              category: raw[m].category || "",
+              image: raw[m].image || "",
+            });
           }
         } catch (e) { validMenus = []; }
         var menuList = validMenus.length ? validMenus : _placeholderMenus;
-        var menuExpanded = false;
-        function menuCard(menu) {
+        function menuCard(menu, idx) {
+          var photo = menu.image || KULINER_THUMB_PHOTOS[(idx || 0) % KULINER_THUMB_PHOTOS.length];
+          var catBadge = menu.category
+            ? '<span class="inline-block mb-1 mr-1 px-1.5 py-0.5 rounded bg-gray-100 text-[9px] sm:text-[10px] font-semibold text-gray-600">' + menu.category + "</span>"
+            : "";
           return (
             '<article class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">' +
-            '<div class="h-24 sm:h-28 bg-gradient-to-br from-amber-800 via-stone-700 to-slate-800" role="img" aria-label="Foto ' + menu.name + ' (placeholder)"></div>' +
+            '<div class="h-24 sm:h-28"><img src="' + photo + '" alt="Foto ' + menu.name + '" loading="lazy" class="w-full h-full object-cover" /></div>' +
             '<div class="p-2.5 sm:p-3">' +
+            catBadge +
             '<div class="flex items-center justify-between gap-2">' +
             '<h3 class="text-[11px] sm:text-xs font-bold text-gray-900 line-clamp-1">' + menu.name + "</h3>" +
             '<span class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-semibold text-gray-700 shrink-0"><span aria-hidden="true" class="text-amber-400">★</span>' + (menu.rating || rating) + "</span>" +
@@ -251,62 +442,58 @@
         function renderMenus() {
           var grid = $("menu-grid");
           if (!grid) return;
-          var showAll = menuExpanded || menuList.length <= 4;
-          var visible = showAll ? menuList : menuList.slice(0, 4);
-          grid.innerHTML = visible.map(menuCard).join("");
-          var t = $("menu-toggle");
-          if (t) {
-            if (menuList.length <= 4) {
-              t.textContent = menuExpanded ? "Tutup Menu ↑" : "Lihat Semua Menu →";
-            } else {
-              t.textContent = showAll ? "Tutup Menu ↑" : "Lihat Semua Menu →";
-            }
-            t.setAttribute("aria-expanded", showAll ? "true" : "false");
-          }
+          grid.innerHTML = menuList.slice(0, 4).map(function (m, i) { return menuCard(m, i); }).join("");
         }
         renderMenus();
+        // "Lihat Semua Menu" = tautan ke halaman Menu & Harga (tab), bukan expand
+        // inline (Owner 2026-10-15). Menampilkan subset (4 kartu ringkas) di sini.
         var menuToggle = $("menu-toggle");
-        if (menuToggle) menuToggle.addEventListener("click", function () {
-          menuExpanded = !menuExpanded;
-          renderMenus();
-        });
+        if (menuToggle) menuToggle.setAttribute("href", "menu_kuliner.html?slug=" + item.slug);
 
-        // Kartu rekomendasi / sekitar: pola kuliner (foto placeholder, nama, rating, jarak).
+        // Kartu rekomendasi / sekitar: foto kecil, nama, rating ASLI, baris info.
         // Sekitar (reco-sekitar): destinasi wisata TERDEKAT by jarak real (nearby.js),
         // link ke detail_wisata (Owner 2026-10-09). Reko (reco-kuliner): tetap kuliner.
-        var _distances = ["10km - 12 menit", "20km - 24 menit", "25km - 28 menit", "30km - 32 menit"];
-        function fmtDist(d, idx) {
+        // Owner 2026-10-15: ★4.6 hardcode + jarak placeholder ("10km - 12 menit")
+        // diganti rating & alamat/jarak asli, agar section identik dengan
+        // menu_kuliner.html dan tanpa data fiktif.
+        function fmtDist(d) {
           if (d && d._distKm != null && window.PasinfoNearby) {
             return window.PasinfoNearby.fmtKm(d._distKm);
           }
-          return _distances[idx % _distances.length];
+          return "";
         }
-        function recoCard(d, idx) {
-          var dist = fmtDist(d, idx);
+        function recoSubline(d) {
+          return fmtDist(d) || d.address || "";
+        }
+        function recoCard(d, idx, photoFn) {
+          var subline = recoSubline(d);
           var href = d._href || ("detail_kuliner.html?slug=" + d.slug);
+          var photo = photoFn ? photoFn(d) : null;
+          var media = photo
+            ? '<div class="h-24 sm:h-28"><img src="' + photo + '" alt="Foto ' + d.name + '" loading="lazy" class="w-full h-full object-cover" /></div>'
+            : '<div class="h-24 sm:h-28 bg-gradient-to-br from-amber-800 via-stone-700 to-slate-800" role="img" aria-label="Foto ' + d.name + ' (placeholder)"></div>';
           return (
             '<a href="' + href + '" class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow group block">' +
-            '<div class="h-24 sm:h-28 bg-gradient-to-br from-amber-800 via-stone-700 to-slate-800" role="img" aria-label="Foto ' + d.name + ' (placeholder)"></div>' +
+            media +
             '<div class="p-2.5 sm:p-3">' +
             '<div class="flex items-center justify-between gap-2">' +
             '<h3 class="text-[11px] sm:text-xs font-bold text-gray-900 line-clamp-1 group-hover:text-blue-700">' + d.name + "</h3>" +
-            '<span class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-semibold text-gray-700 shrink-0"><span aria-hidden="true" class="text-amber-400">★</span>4.6</span>' +
+            '<span class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-semibold text-gray-700 shrink-0"><span aria-hidden="true" class="text-amber-400">★</span>' + (d.rating != null ? d.rating : "-") + "</span>" +
             "</div>" +
-            '<p class="text-[10px] sm:text-[11px] text-gray-500 mt-0.5">' + dist + "</p>" +
+            (subline ? '<p class="text-[10px] sm:text-[11px] text-gray-500 mt-0.5">' + subline + "</p>" : "") +
             "</div></a>"
           );
         }
-        function renderReco(id, list) {
+        function renderReco(id, list, photoFn) {
           var el = $(id);
           if (!el) return;
-          el.innerHTML = list.slice(0, 4).map(recoCard).join("");
+          el.innerHTML = list.slice(0, 4).map(function (d, i) { return recoCard(d, i, photoFn); }).join("");
         }
         var others = DATA.culinaries.filter(function (d) { return d.id !== item.id; });
         var sameCat = others.filter(function (d) { return d.categoryId === item.categoryId; });
         var recoList = sameCat.length >= 4 ? sameCat : others;
-        renderReco("reco-kuliner", recoList);
-        // Sekitar = destinasi wisata terdekat (jarak real dari center region item,
-        // karena koordinat kuliner null per mock contract). Link ke detail_wisata.
+        renderReco("reco-kuliner", recoList, kulinerThumbFor);
+        // Sekitar = destinasi wisata terdekat (jarak real). Link ke detail_wisata.
         var sekitarList = [];
         try {
           var WD = (window.PASINFO_WISATA && window.PASINFO_WISATA.destinations) || [];
@@ -324,14 +511,187 @@
           var sameRegion = others.filter(function (d) { return d.regionId && item.regionId && d.regionId === item.regionId; });
           sekitarList = sameRegion.length >= 4 ? sameRegion : others;
         }
-        renderReco("reco-sekitar", sekitarList);
+        renderReco("reco-sekitar", sekitarList, sekitarPhotoFor);
         try {
           var regName = "";
           var regs = DATA.regions || [];
           for (var r = 0; r < regs.length; r++) {
             if (regs[r].id === item.regionId) { regName = regs[r].name; break; }
           }
-          if (regName) setText("sekitar-title", "Jelajah Destinasi Sekitar " + regName);
+          if (regName)         setText("sekitar-title", "Jelajah Destinasi Sekitar" + (regName ? " " + regName : ""));
         } catch (e) {}
+
+        function initFullIndonesiaMap() {
+          var box = $("lokasi-map");
+          if (!box) return false;
+          var destLat = item.place && typeof item.place.latitude === "number" ? item.place.latitude : null;
+          var destLng = item.place && typeof item.place.longitude === "number" ? item.place.longitude : null;
+          if (destLat === null || destLng === null) {
+            console.warn("[detail-kuliner] Koordinat kuliner tidak valid");
+            return false;
+          }
+          try {
+            if (window.L) return initLeafletMap(box, destLat, destLng);
+            return initCanvasMap(box, destLat, destLng);
+          } catch (e) {
+            console.error("[detail-kuliner] Error saat init peta:", e);
+            return false;
+          }
+        }
+        function initLeafletMap(box, destLat, destLng) {
+          try {
+            var map = window.L.map(box, {
+              scrollWheelZoom: false,
+              zoomControl: true,
+              attributionControl: false,
+              dragging: true,
+              touchZoom: true,
+              doubleClickZoom: true,
+              keyboard: false,
+              preferCanvas: true,
+            }).setView([destLat, destLng], 14);
+            window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '© OpenStreetMap contributors',
+              maxZoom: 19,
+              updateWhenIdle: true,
+              updateWhenZooming: false,
+              keepBuffer: 1,
+            }).addTo(map);
+            window.L.circleMarker([destLat, destLng], {
+              radius: 10, color: "#ffffff", weight: 3, fillColor: "#dc2626", fillOpacity: 1,
+            }).bindPopup(item.name).addTo(map);
+            if (userLocation) {
+              window.L.circleMarker([userLocation.lat, userLocation.lng], {
+                radius: 8, color: "#ffffff", weight: 2, fillColor: "#2563eb", fillOpacity: 1,
+              }).bindPopup("Lokasi Anda: " + userLocationName).addTo(map);
+              window.L.polyline([[userLocation.lat, userLocation.lng], [destLat, destLng]],
+                { color: '#f59e0b', weight: 2, opacity: 0.7, dashArray: '5, 5' }).addTo(map);
+            }
+            var fallback = $("lokasi-map-fallback");
+            if (fallback) fallback.setAttribute("aria-hidden", "true");
+            return true;
+          } catch (e) {
+            console.error("[detail-kuliner] Error saat init Leaflet map:", e);
+            return false;
+          }
+        }
+        function initCanvasMap(box, destLat, destLng) {
+          try {
+            var minLat = -10.5, maxLat = 5.5, minLng = 95, maxLng = 141;
+            var canvasWidth = box.offsetWidth || 400;
+            var canvasHeight = box.offsetHeight || 300;
+            function latLngToPixel(lat, lng) {
+              return {
+                x: ((lng - minLng) / (maxLng - minLng)) * canvasWidth,
+                y: ((maxLat - lat) / (maxLat - minLat)) * canvasHeight,
+              };
+            }
+            var destPixel = latLngToPixel(destLat, destLng);
+            var userPixel = userLocation ? latLngToPixel(userLocation.lat, userLocation.lng) : null;
+            var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", canvasWidth);
+            svg.setAttribute("height", canvasHeight);
+            svg.setAttribute("viewBox", "0 0 " + canvasWidth + " " + canvasHeight);
+            svg.setAttribute("class", "absolute inset-0");
+            svg.style.pointerEvents = "none";
+            var bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            bg.setAttribute("width", canvasWidth);
+            bg.setAttribute("height", canvasHeight);
+            bg.setAttribute("fill", "#e5e7eb");
+            svg.appendChild(bg);
+            if (userPixel) {
+              var line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+              line.setAttribute("x1", userPixel.x); line.setAttribute("y1", userPixel.y);
+              line.setAttribute("x2", destPixel.x); line.setAttribute("y2", destPixel.y);
+              line.setAttribute("stroke", "#f59e0b"); line.setAttribute("stroke-width", "2");
+              line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.8");
+              svg.appendChild(line);
+            }
+            var destMarker = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            destMarker.setAttribute("cx", destPixel.x); destMarker.setAttribute("cy", destPixel.y);
+            destMarker.setAttribute("r", "10"); destMarker.setAttribute("fill", "#dc2626");
+            destMarker.setAttribute("stroke", "#ffffff"); destMarker.setAttribute("stroke-width", "3");
+            svg.appendChild(destMarker);
+            var destLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            destLabel.setAttribute("x", destPixel.x); destLabel.setAttribute("y", destPixel.y - 15);
+            destLabel.setAttribute("text-anchor", "middle"); destLabel.setAttribute("fill", "#dc2626");
+            destLabel.setAttribute("font-size", "12"); destLabel.setAttribute("font-weight", "bold");
+            destLabel.textContent = "Kuliner";
+            svg.appendChild(destLabel);
+            if (userPixel) {
+              var userMarker = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+              userMarker.setAttribute("cx", userPixel.x); userMarker.setAttribute("cy", userPixel.y);
+              userMarker.setAttribute("r", "8"); userMarker.setAttribute("fill", "#2563eb");
+              userMarker.setAttribute("stroke", "#ffffff"); userMarker.setAttribute("stroke-width", "2");
+              svg.appendChild(userMarker);
+              var userLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+              userLabel.setAttribute("x", userPixel.x); userLabel.setAttribute("y", userPixel.y - 15);
+              userLabel.setAttribute("text-anchor", "middle"); userLabel.setAttribute("fill", "#2563eb");
+              userLabel.setAttribute("font-size", "12"); userLabel.setAttribute("font-weight", "bold");
+              userLabel.textContent = "Anda";
+              svg.appendChild(userLabel);
+            }
+            box.innerHTML = "";
+            box.appendChild(svg);
+            var legend = document.createElement("div");
+            legend.className = "absolute bottom-2 left-2 bg-white/90 rounded px-2 py-1 text-xs";
+            legend.innerHTML = '<span style="display:inline-block; width:8px; height:8px; background:#dc2626; border-radius:50%; margin-right:4px;"></span>Kuliner ' +
+                               '<span style="display:inline-block; width:8px; height:8px; background:#2563eb; border-radius:50%; margin-left:8px; margin-right:4px;"></span>Anda';
+            box.appendChild(legend);
+            var fallback = $("lokasi-map-fallback");
+            if (fallback) fallback.setAttribute("aria-hidden", "true");
+            return true;
+          } catch (e) {
+            console.error("[detail-kuliner] Error saat init Canvas SVG map:", e);
+            return false;
+          }
+        }
+        function waitForLeafletAndInitMap() {
+          var attempts = 0;
+          var maxAttempts = 50;
+          setTimeout(function () {
+            var checkInterval = setInterval(function () {
+              attempts++;
+              var mapBox = $("lokasi-map");
+              var containerReady = mapBox && mapBox.offsetHeight > 0 && mapBox.offsetWidth > 0;
+              var leafletReady = window.L && window.L.map;
+              if (leafletReady && containerReady) {
+                clearInterval(checkInterval);
+                setTimeout(function () { initFullIndonesiaMap(); }, 60);
+              } else if (attempts >= maxAttempts) {
+                clearInterval(checkInterval);
+                initFullIndonesiaMap();
+              }
+            }, 100);
+          }, 300);
+        }
+        function scheduleMapInit() {
+          var box = $("lokasi-map");
+          if (!box) return;
+          if (!("IntersectionObserver" in window)) { waitForLeafletAndInitMap(); return; }
+          var started = false;
+          var io = new IntersectionObserver(function (entries) {
+            var visible = entries.some(function (en) { return en.isIntersecting; });
+            if (!visible || started) return;
+            started = true;
+            io.disconnect();
+            waitForLeafletAndInitMap();
+          }, { rootMargin: "250px 0px", threshold: 0 });
+          io.observe(box);
+        }
+        scheduleMapInit();
+
+        var ruteBtn = $("ruteBtn");
+        if (ruteBtn) {
+          ruteBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            if (item.googleMapsUrl) { window.open(item.googleMapsUrl, "_blank"); return; }
+            if (item.place && typeof item.place.latitude === "number" && typeof item.place.longitude === "number") {
+              window.open("https://www.google.com/maps/dir/?api=1&destination=" + item.place.latitude + "," + item.place.longitude, "_blank");
+            } else {
+              alert("Koordinat kuliner tidak tersedia untuk membuka Google Maps.");
+            }
+          });
+        }
       })();
     

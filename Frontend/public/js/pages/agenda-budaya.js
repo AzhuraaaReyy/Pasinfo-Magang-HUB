@@ -52,6 +52,18 @@
     return parts.length > 1 ? parts[1].trim() : "";
   }
 
+  // Status agenda → badge (item 5, Owner 2026-10-16):
+  // Akan Datang=hijau, Berlangsung=biru, Selesai=abu.
+  var STATUS_META = {
+    "akan-datang": { label: "Akan Datang", cls: "bg-green-600 text-white" },
+    "berlangsung": { label: "Berlangsung", cls: "bg-blue-600 text-white" },
+    "selesai": { label: "Selesai", cls: "bg-gray-500 text-white" },
+  };
+  function statusBadge(status) {
+    var meta = STATUS_META[status] || STATUS_META["akan-datang"];
+    return '<span class="inline-block ' + meta.cls + ' text-[11px] font-bold px-3 py-1 rounded-md shadow-sm">' + meta.label + "</span>";
+  }
+
   // Label mockup -> value kategori halaman.
   var FILTERS = [
     { label: "Semua", value: "Semua" },
@@ -108,15 +120,15 @@
           return (
             '<div class="bg-white rounded-2xl border border-gray-200 p-4 flex flex-col sm:flex-row items-center gap-4 hover:shadow-md transition-shadow relative">' +
             '<div class="flex-shrink-0 text-center px-2">' +
-            '<span class="block text-2xl font-black text-blue-600 leading-none">' + esc(a.day_label) + "</span>" +
-            '<span class="block text-sm font-extrabold text-blue-600 leading-tight">' + esc(a.month_label) + "</span>" +
-            '<span class="block text-sm font-extrabold text-blue-600 leading-tight">' + esc(agendaYear(a) || "") + "</span>" +
+          '<span class="block text-2xl font-black bud-accent-text leading-none">' + esc(a.day_label) + "</span>" +
+          '<span class="block text-sm font-extrabold bud-accent-text leading-tight">' + esc(a.month_label) + "</span>" +
+          '<span class="block text-sm font-extrabold bud-accent-text leading-tight">' + esc(agendaYear(a) || "") + "</span>" +
             "</div>" +
             '<div class="w-full sm:w-28 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">' +
             '<img src="' + POSTER + '" alt="' + esc(a.title) + '" loading="lazy" class="w-full h-full object-cover" />' +
             "</div>" +
             '<div class="flex-1 min-w-0 w-full">' +
-            '<span class="inline-block bg-blue-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-md mb-1">' + esc(agendaCategory(a.title) === "tradisi" ? "Tradisi" : agendaCategory(a.title) === "situs-sejarah" ? "Sejarah" : "Kesenian") + "</span>" +
+            '<span class="inline-block bud-accent text-[10px] font-bold px-2.5 py-0.5 rounded-md mb-1">' + esc(agendaCategory(a.title) === "tradisi" ? "Tradisi" : agendaCategory(a.title) === "situs-sejarah" ? "Sejarah" : "Kesenian") + "</span>" +
             '<h3 class="text-base font-bold text-gray-900 line-clamp-1">' + esc(a.title) + "</h3>" +
             '<div class="flex items-center gap-3 text-[11px] text-gray-500 my-1">' +
             '<span class="flex items-center gap-1">' + PIN_SVG + " " + esc(a.location || "") + "</span>" +
@@ -125,7 +137,7 @@
             '<p class="text-xs text-gray-500 line-clamp-2">' + esc(a.desc) + "</p>" +
             "</div>" +
             '<div class="sm:self-end w-full sm:w-auto text-right mt-2 sm:mt-0">' +
-            '<span class="inline-block bg-green-600 text-white text-[11px] font-bold px-3 py-1 rounded-md shadow-xs">Akan Datang</span>' +
+            statusBadge(a.status) +
             "</div></div>"
           );
         })
@@ -150,8 +162,8 @@
       '<button type="button" data-agpage="prev" aria-label="Halaman sebelumnya" class="w-6 h-6 rounded bg-gray-100 text-gray-500 flex items-center justify-center text-xs">&lsaquo;</button>';
     for (var i = 1; i <= n; i++) {
       html +=
-        '<button type="button" data-agpage="' + i + '" aria-label="Halaman ' + i + '" class="w-6 h-6 rounded text-xs flex items-center justify-center ' +
-        (i === currentPage ? "bg-blue-600 text-white font-bold" : "bg-gray-100 text-gray-600 hover:bg-gray-200") +
+        '<button type="button" data-agpage="' + i + '" aria-label="Halaman ' + i + '"' + (i === currentPage ? ' aria-current="page"' : "") + ' class="w-6 h-6 rounded text-xs flex items-center justify-center ' +
+          (i === currentPage ? "bud-accent text-white font-bold" : "bg-gray-100 text-gray-600 hover:bg-gray-200") +
         '">' + i + "</button>";
     }
     html +=
@@ -209,46 +221,98 @@
     grid.innerHTML = html;
   }
 
-  // Rekomendasi dari DATA REAL (lihat header file).
-  function blueCard(href, tag, title, sub, rating) {
+  // Foto contoh domain bergilir (media.url masih null) — sama seperti galeri/detail.
+  var BUDAYA_PHOTOS = [
+    "../../public/assets/images/budaya/optimized/Tari Terbang Bandung & Tari Pasuruan Kondang.webp",
+    "../../public/assets/images/budaya/optimized/Tradisi-Skilot.webp",
+    "../../public/assets/images/budaya/optimized/Yadnya Karo Sodoran (Tosari).webp",
+  ];
+  function budayaPhotoFor(d) {
+    if (d && d.media && d.media[0] && d.media[0].url) return d.media[0].url;
+    var key = d && d.id != null ? String(d.id) : "";
+    var sum = 0;
+    for (var i = 0; i < key.length; i++) sum += key.charCodeAt(i);
+    return BUDAYA_PHOTOS[sum % BUDAYA_PHOTOS.length];
+  }
+  var WISATA_PHOTOS = [
+    "../../public/assets/images/wisata/optimized/bromo2.webp",
+    "../../public/assets/images/wisata/optimized/bromo3.webp",
+    "../../public/assets/images/wisata/optimized/bromo_banner.webp",
+    "../../public/assets/images/wisata/optimized/purwodadi-botanic-garden.webp",
+    "../../public/assets/images/wisata/optimized/taman_safari_indonesia_2.webp",
+    "../../public/assets/images/wisata/optimized/air-terjun-kakek-bodo.webp",
+  ];
+  function wisataPhotoFor(d) {
+    if (d && d.media && d.media[0] && d.media[0].url) return d.media[0].url;
+    var key = d && d.id != null ? String(d.id) : "";
+    var sum = 0;
+    for (var i = 0; i < key.length; i++) sum += key.charCodeAt(i);
+    return WISATA_PHOTOS[sum % WISATA_PHOTOS.length];
+  }
+  var BUDAYA_CATEGORIES = (window.PASINFO_BUDAYA && window.PASINFO_BUDAYA.categories) || [];
+  function budayaCategoryName(id) {
+    for (var i = 0; i < BUDAYA_CATEGORIES.length; i++) {
+      if (BUDAYA_CATEGORIES[i].id === id) return BUDAYA_CATEGORIES[i].name;
+    }
+    return id || "";
+  }
+  var WISATA_CATEGORIES = (window.PASINFO_WISATA && window.PASINFO_WISATA.categories) || [];
+  function wisataCategoryName(id) {
+    for (var i = 0; i < WISATA_CATEGORIES.length; i++) {
+      if (WISATA_CATEGORIES[i].id === id) return WISATA_CATEGORIES[i].name;
+    }
+    return id || "";
+  }
+  // Kartu rekomendasi = konsep galeri_budaya (Owner 2026-10-16): foto + badge
+  // kategori (warna mengikuti domain item) + rating + judul + deskripsi + alamat.
+  function recoCard(item, domain, photo, href, catName) {
+    var badgeBg = domain === "Kuliner" ? "#2563eb" : domain === "Budaya" ? "#6d28d9" : "#dc2626";
+    var rating = item.rating != null && item.rating !== "" ? item.rating : "-";
+    var desc = item.short_description || "";
+    var loc = item.address || "";
     return (
-      '<a href="' + href + '" class="bg-blue-600 rounded-xl overflow-hidden text-white flex flex-col justify-between h-40 relative group cursor-pointer shadow-sm">' +
-      '<div class="relative p-2.5 flex justify-between items-start">' +
-      '<span class="bg-black/60 text-[9px] px-1.5 py-0.5 rounded backdrop-blur-xs">' + esc(tag) + "</span>" +
-      (rating ? '<span class="bg-black/60 text-[9px] px-1.5 py-0.5 rounded backdrop-blur-xs text-yellow-400 font-bold">' + esc(rating) + "</span>" : "") +
+      '<a href="' + esc(href) + '" class="group block no-underline h-full">' +
+      '<article class="relative rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full flex flex-col bg-white">' +
+      '<div class="absolute top-3 left-3 right-3 flex items-center justify-between z-10">' +
+      '<span class="inline-block px-3 py-1 text-white text-xs font-bold rounded-md" style="background-color:' + badgeBg + '">' + esc(catName) + "</span>" +
+      (domain === "Budaya"
+        ? ""
+        : '<span class="inline-block px-2.5 py-1 bg-white text-gray-900 text-xs font-semibold rounded-md flex items-center gap-1">' +
+          '<img src="../../public/assets/icons/icon_rating.svg" alt="" class="w-4 h-4" />' + esc(rating) +
+          "</span>") +
       "</div>" +
-      '<div class="relative p-2.5 bg-gradient-to-t from-black/80 via-black/40 to-transparent">' +
-      '<h4 class="text-xs font-bold line-clamp-1 group-hover:underline">' + esc(title) + "</h4>" +
-      '<p class="text-[10px] text-gray-300 line-clamp-1">' + esc(sub) + "</p>" +
-      "</div></div>"
+      '<div class="relative h-44 sm:h-48 lg:h-52 overflow-hidden bg-gray-200">' +
+      '<img src="' + esc(photo) + '" alt="' + esc(item.name) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" loading="lazy" />' +
+      "</div>" +
+      '<div class="flex flex-col flex-1 p-4 bg-white">' +
+      '<h3 class="font-bold text-gray-900 text-base line-clamp-2 mb-2">' + esc(item.name) + "</h3>" +
+      (desc ? '<p class="text-xs text-gray-600 line-clamp-2 mb-3">' + esc(desc) + "</p>" : "") +
+      '<div class="text-xs text-gray-600 mt-auto">' +
+      (loc ? '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_lokasi-hitam.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + esc(loc) + "</p>" : "") +
+      "</div>" +
+      "</div>" +
+      "</article>" +
+      "</a>"
     );
+  }
+  function cultureCards(list) {
+    return list.map(function (d) {
+      return recoCard(d, "Budaya", budayaPhotoFor(d), "detail_budaya.html?slug=" + esc(d.slug), budayaCategoryName(d.categoryId));
+    }).join("");
+  }
+  function wisataCards(list) {
+    return list.map(function (d) {
+      return recoCard(d, "Wisata", wisataPhotoFor(d), "detail_wisata.html?slug=" + esc(d.slug), wisataCategoryName(d.categoryId));
+    }).join("");
   }
 
   function renderRecommendations() {
     var serupa = $("reco-serupa-grid");
     var lainnya = $("reco-lainnya-grid");
     var dest = $("reco-destinasi-grid");
-    if (serupa) {
-      serupa.innerHTML = CULTURES.slice(0, 4)
-        .map(function (c) {
-          return blueCard("detail_budaya.html?slug=" + c.slug, "Budaya", c.name, c.address || "");
-        })
-        .join("");
-    }
-    if (lainnya) {
-      lainnya.innerHTML = CULTURES.slice(4, 8)
-        .map(function (c) {
-          return blueCard("detail_budaya.html?slug=" + c.slug, "Budaya", c.name, c.address || "");
-        })
-        .join("");
-    }
-    if (dest) {
-      dest.innerHTML = DESTS.slice(0, 4)
-        .map(function (d) {
-          return blueCard("detail_wisata.html?slug=" + d.slug, "Wisata", d.name, d.address || "", d.rating != null ? "★ " + d.rating : "");
-        })
-        .join("");
-    }
+    if (serupa) serupa.innerHTML = cultureCards(CULTURES.slice(0, 4));
+    if (lainnya) lainnya.innerHTML = cultureCards(CULTURES.slice(4, 8));
+    if (dest) dest.innerHTML = wisataCards(DESTS.slice(0, 4));
   }
 
   // Delegasi klik.
