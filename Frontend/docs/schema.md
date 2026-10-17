@@ -3,7 +3,7 @@
 **Project:** Pasuruan Info — News & Travel Tech Platform
 **Schema Version:** 2.2
 **Status:** DESIGN COMPLETE · IMPLEMENTATION NOT READY
-**Current Phase:** FRONTEND (mock data only)
+**Current Phase:** FRONTEND COMPLETE (mock data only; Owner declared "selesai" 2026-10-16) — backend/data masih NOT STARTED
 **Backend:** Laravel 12 — Planned, NOT STARTED
 **ORM:** Eloquent — Planned
 **Database:** MySQL — Planned
@@ -3165,7 +3165,9 @@ disinkronkan dari `public/js/mock-data.js` oleh `public/js/homepage-sync.js`.
 
 Item terbuka (bukan keputusan schema): jumlah pada markup (8 item "Berita
 Terbaru" / 4 kartu "Berita Pilihan" / 3 grup kategori) belum sama dengan
-`mock-data.js` (10 / 10 / 4). Dicatat; menunggu instruksi Owner.
+`mock-data.js` (10 / 10 / 4). **DITUTUP 2026-10-16** — diterima sebagai kondisi
+final saat Owner mendeklarasikan frontend selesai (tanpa perubahan kode; jumlah
+konten kelak dikontrol backend, bukan markup).
 
 ## 61.2 Aset & Detail Pages — Data Contract Status (sync 2026-10-15)
 
@@ -3270,6 +3272,27 @@ Ronde C (design.md §66.13, sync 2026-10-16):
 - Foto hero/kartu galeri = aset lokal deterministik (media[0].url bila terisi),
   sama dengan helper listing/detail — bukan data terverifikasi (MOCK).
 ```
+
+## 61.5 Frontend Completion — Data Contract Status (sync FINAL 2026-10-16)
+
+Owner mendeklarasikan **FRONTEND SELESAI** (2026-10-16). Ronde-ronde sejak sync
+terakhir (Ronde B/C + lanjutan Budaya & galeri, §61.4) seluruhnya **presentasi/UX**:
+
+```text
+- TANPA tabel/kolom/relasi/endpoint baru.
+- Bentuk data mock TIDAK berubah: 121 items (Wisata 55 + Kuliner 25 +
+  Budaya 25 + Acara 16) — dihitung ulang 2026-10-16 via window.PASINFO_*.
+- Field tampilan tambahan yang sudah tercatat: culinary_menus.category (§61.3),
+  BUDAYA_CALENDAR.status (§61.4) — keduanya tetap field MOCK (bukan kolom baru).
+- Budaya tanpa rating: mock `PASINFO_BUDAYA.cultures` tidak memakai rating →
+  kartu Budaya tidak merender badge rating (Kuliner/Wisata tetap). Keputusan
+  Owner 2026-10-16; bukan kolom/tabel baru.
+- Seluruh halaman (18: index + 17 views) memakai bentuk mock yang sudah
+  schema-compliant → transisi Mock → API Response (§61) tanpa restrukturisasi.
+```
+
+Status dokumen **TIDAK berubah: NOT READY — FRONTEND PHASE** (backend tetap
+belum diotorisasi; lihat §69).
 
 ---
 
@@ -3778,6 +3801,13 @@ Setiap perubahan terhadap struktur data harus terlebih dahulu dicek terhadap
 > APPROVED, `design.md` §66.6) **tidak mengubah struktur data apa pun** — tidak
 > ada tabel/kolom/relasi/endpoint yang ditambah atau diubah. Status dokumen
 > tetap **NOT READY — FRONTEND PHASE**. Status data contract homepage: §61.1.
+>
+> **Sync 2026-10-16 — FINAL:** Owner mendeklarasikan **FRONTEND SELESAI**.
+> Seluruh ronde presentasi/UX + aset/performa (Ronde B/C + lanjutan Budaya &
+> galeri, homepage REV#10–#17, detail Wisata/Kuliner) terverifikasi **tanpa
+> dampak schema**: tidak ada tabel/kolom/relasi/endpoint baru; data mock tetap
+> 121 items. Data contract status: §61.1–§61.5. Status dokumen **tetap
+> NOT READY — FRONTEND PHASE** (backend belum diotorisasi).
 
 ## Penggunaan pada fase ini — apa yang BOLEH dan TIDAK BOLEH
 
@@ -3822,6 +3852,8 @@ hanya setelah:
 ```text
 [x] Seluruh halaman frontend stabil (prd.md §53 Phase 1–6)
     → TERPENUHI 2026-10-08: Kuliner/Budaya/Acara Owner APPROVED ("selesai")
+    → FINAL 2026-10-16: Owner mendeklarasikan FRONTEND SELESAI (audit: 18
+      halaman, 121 items, seluruh ronde ditutup, ter-commit de697d3)
 [x] Data mock proven stabil dan tidak perlu perubahan bentuk
     → TERPENUHI 2026-10-09: 121 items terverifikasi schema-compliant
     (Wisata 55 + Kuliner 25 + Budaya 25 JSON real Owner + Acara 16 mock;
@@ -3851,10 +3883,23 @@ hanya setelah:
     Rekomendasi coverflow (paritas Kuliner). Presentasi + struktur mock saja →
     TIDAK ada tabel/kolom/relasi/endpoint baru; `BUDAYA_CALENDAR.status` = field
     tampilan mock (lihat §44/§61.4). Status dokumen tetap `NOT READY`.
+    → AUDIT 2026-10-16 (Ronde B/C + lanjutan Budaya & galeri): 2 halaman galeri baru
+    (galeri_wisata/galeri_kuliner), aksen ungu Budaya, transisi halaman, kartu reco
+    galeri/detail/agenda, badge rating Budaya dilepas, ukuran teks section seragam.
+    Presentasi/UX saja → TIDAK ada dampak schema; memakai field yang sudah ada
+    (lihat §61.4/§61.5). Status dokumen tetap `NOT READY`.
+    → AUDIT 2026-10-16 (FINAL — Owner mendeklarasikan FRONTEND SELESAI): audit
+    menyeluruh terverifikasi dari repo — 18 halaman (index + 17 views, semua
+    tertaut), 121 items (re-hitung 2026-10-16), `Backend/` ada tapi KOSONG, seluruh
+    ronde pasca-approval sudah ter-commit (`de697d3`, 2026-10-16). Tidak ada tabel/
+    kolom/relasi/endpoint baru. Lihat §61.5. Status dokumen tetap `NOT READY`.
 [ ] User mengesahkan dimulainya fase backend
 [ ] prd.md disetujui final
 ```
 
-Saat ini **2 dari 4 syarat terpenuhi (2026-10-09)**. Backend tetap
-**NOT STARTED** (`Backend/` kosong, belum ada migration/model/API) sehingga
-status dokumen ini tetap `NOT READY` — benar sesuai AGENTS.md §6/§31.
+Saat ini **2 dari 4 syarat terpenuhi (final 2026-10-16)**. Syarat 1 & 2
+TERPENUHI final (frontend dinyatakan selesai Owner 2026-10-16; audit: 18 halaman,
+121 items, seluruh ronde ditutup, ter-commit). Syarat 3 (Owner mengesahkan fase
+backend) & 4 (prd.md final untuk backend) BELUM. Backend tetap **NOT STARTED**
+(`Backend/` ada namun kosong, belum ada migration/model/API) sehingga status
+dokumen ini tetap `NOT READY` — benar sesuai AGENTS.md §6/§31.
