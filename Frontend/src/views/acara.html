@@ -254,6 +254,42 @@
       body[data-page-active="acara"] .evt-link-green:hover {
         color: #15803d !important;
       }
+
+      /* Tablet 768-1023px (Owner 2026-10-17, paritas wisata/kuliner/budaya):
+         peta + card detail disandingkan 60/40 agar card detail tidak
+         full-width (terlalu besar/gepeng saat menumpuk). align-items:start →
+         tinggi card mengikuti konten. Mobile tetap menumpuk; desktop (lg+)
+         layout 2/3-1/3. Grid "Event Hari Ini" TIDAK tersentuh. */
+      @media (min-width: 768px) and (max-width: 1023.98px) {
+        #map-detail-grid {
+          grid-template-columns: 3fr 2fr;
+          align-items: start;
+        }
+        #evt-detail > div {
+          padding: 1.25rem;
+        }
+      }
+
+      /* (P) Sorotan "Event Pasuruan Hari Ini": geser horizontal dengan jari
+         di mobile/tablet (desktop tetap memakai tombol panah). pan-y menjaga
+         gestur vertikal tetap men-scroll halaman. */
+      .evt-today-swipe {
+        touch-action: pan-y;
+      }
+
+      /* (Q) Panah sorotan "Event Pasuruan Hari Ini": disembunyikan HANYA di
+         mobile (<640px); tablet & desktop tetap tampil. Ditulis manual karena
+         utilitas sm:flex tidak ter-generate di styles.css (tanpa build:css). */
+      #evt-today-prev,
+      #evt-today-next {
+        display: none;
+      }
+      @media (min-width: 640px) {
+        #evt-today-prev,
+        #evt-today-next {
+          display: flex;
+        }
+      }
     </style>
   </head>
   <body class="bg-gray-50 text-gray-800 font-sans" data-page-active="acara" data-asset-prefix="../../public" data-wisata-href="wisata.html" data-header-overlay="dark" data-hero-label="Galeri Acara Pasuruan" data-hero-bg-label="Latar hero acara" data-hero-badge-class="bg-green-600" data-hero-badge="Acara" data-hero-location="Pasuruan Raya" data-hero-title-class="text-3xl sm:text-4xl md:text-6xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-extrabold text-white tracking-tight leading-[1.12] drop-shadow-md" data-hero-title="Eksplorasi Acara&lt;br /&gt; Pasuruan" data-hero-desc="Temukan agenda acara Pasuruan. Dari festival hingga pameran — semua informasi event terpusat di sini." data-hero-cards-label="Thumbnail antrean acara" data-home-href="../../index.html">
@@ -269,22 +305,25 @@
            teks tetap milik Acara, hanya skala/struktur disamakan) -->
       <section id="map-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div class="mb-6">
-          <h2 class="text-4xl font-bold text-gray-900">
-            Peta Event Pasuruan
+          <h2 class="text-2xl sm:text-4xl font-bold text-gray-900">
+            Jelajah Acara Pasuruan Lebih Dekat
           </h2>
           <p class="text-sm text-gray-500 mt-1">
-            Jelajahi persebaran acara di seluruh Pasuruan melalui peta
-            interaktif. Pilih penanda atau klik wilayah untuk memfilter daftar,
-            melihat detail jadwal, lokasi, dan informasi tiket setiap acara.
+            Jelajahi persebaran acara khas Pasuruan melalui peta interaktif.
+            Pilih penanda pada peta untuk melihat detail acara dan
+            merencanakan jelajah acara Anda.
           </p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Tablet: layout diatur #map-detail-grid (style scoped di head).
+              Desktop: 2/3 peta + 1/3 detail (lg). Mobile: menumpuk (1 kolom). -->
+        <div id="map-detail-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Map Area -->
           <div class="lg:col-span-2 flex flex-col bg-white border-2 p-5 rounded-xl h-full">
             <span class="font-bold text-gray-700 text-2xl">Peta Acara</span>
             <p class="text-sm text-gray-500 mt-1 mb-3">
-              Pin menandai sebaran acara. Klik wilayah pada peta untuk memfilter daftar, klik lagi untuk menampilkan semua.
+              Warna = wilayah berdasarkan batas kecamatan resmi. Klik poligon
+              untuk memilih wilayah, klik lagi untuk kembali.
             </p>
             <div
               id="acara-map"
@@ -304,7 +343,7 @@
       <!-- EVENT HARI INI + KALENDER (sesuai mockup acara.png; teks tampilan dummy, sumber data di JS) -->
       <section class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 md:py-10" aria-label="Event hari ini dan kalender acara">
   <div class="mb-4 sm:mb-5">
-    <h2 class="text-4xl sm:text-4xl md:text-4xl font-bold text-gray-900">
+    <h2 class="text-2xl sm:text-4xl font-bold text-gray-900">
       Event Pasuruan Hari Ini
     </h2>
     <p class="text-xs sm:text-sm text-gray-500 mt-1 max-w-2xl">
@@ -317,7 +356,7 @@
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 items-stretch">
     <!-- Kartu besar kiri: sorotan event + carousel -->
     <div class="lg:col-span-2 min-w-0 h-full">
-      <div id="evt-today-wrap" class="relative bg-[#f3f4f6] rounded-2xl p-4 sm:p-5 md:p-6 h-full flex flex-col justify-between">
+      <div id="evt-today-wrap" class="evt-today-swipe relative bg-[#f3f4f6] rounded-2xl p-4 sm:p-5 md:p-6 h-full flex flex-col justify-between">
         
         <article
           id="evt-today-hero"
@@ -438,7 +477,7 @@
           type="button"
           id="evt-today-prev"
           aria-label="Sorotan sebelumnya"
-          class="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-black/80 flex items-center justify-center text-white hover:bg-black transition-colors shadow-md"
+          class="evt-btn-green absolute left-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-green-600 items-center justify-center text-white transition-colors shadow-md"
         >
           <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
         </button>
@@ -446,7 +485,7 @@
           type="button"
           id="evt-today-next"
           aria-label="Sorotan berikutnya"
-          class="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-black/80 flex items-center justify-center text-white hover:bg-black transition-colors shadow-md"
+          class="evt-btn-green absolute right-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-green-600 items-center justify-center text-white transition-colors shadow-md"
         >
           <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
         </button>
@@ -494,7 +533,7 @@
             <span class="py-1 relative">7<span class="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-blue-500"></span></span>
             <span class="py-1">8</span>
             <span class="py-1 relative">9<span class="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-emerald-500"></span></span>
-            <span class="py-1 rounded-full bg-blue-600 text-white font-bold" title="Hari ini">10</span>
+            <span class="py-1 rounded-full bg-green-600 text-white font-bold" title="Hari ini">10</span>
             <span class="py-1">11</span>
             
             <span class="py-1 relative">12<span class="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-blue-500"></span></span>
@@ -521,6 +560,17 @@
             <span class="py-1">31</span>
             <span class="py-1 text-gray-300">1</span>
           </div>
+
+          <!-- Panel info tanggal aktif kalender (diisi acara-listing.js;
+               aksen hijau = warna domain acara). Kosong & tersembunyi sampai
+               sebuah tanggal ber-acara dipilih. -->
+          <div
+            id="evt-cal-info"
+            class="hidden mt-3 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 text-[11px] text-gray-600"
+            role="region"
+            aria-live="polite"
+            aria-label="Acara pada tanggal terpilih"
+          ></div>
         </div>
 
         <!-- Legend Kategori Event (Format Grid 2 Kolom) -->
@@ -540,8 +590,8 @@
       <!-- DAFTAR ACARA SECTION (konsep samakan kuliner; teks tetap milik Acara) -->
       <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 scroll-mt-24">
         <div class="mb-4">
-          <h2 class="text-4xl font-bold text-gray-900">
-            Daftar Acara Event Pasuruan
+          <h2 class="text-2xl sm:text-4xl font-bold text-gray-900">
+            Daftar Acara Pasuruan
           </h2>
           <p class="text-sm text-gray-500 mt-1">
             Telusuri seluruh agenda acara Pasuruan berdasarkan kategori
@@ -592,8 +642,8 @@
       <section class="reco-section-bg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="reco-heading text-center max-w-xl mx-auto mb-10">
-            <h2 class="text-4xl font-bold text-white">Rekomendasi Acara Populer Pasuruan</h2>
-            <p class="text-xs text-gray-300 mt-2">
+            <h2 class="text-2xl sm:text-4xl font-bold text-white">Rekomendasi Acara Populer Khas Pasuruan</h2>
+            <p class="text-[11px] sm:text-xs text-gray-200 mt-2 leading-relaxed">
               Pilihan acara unggulan paling diminati di Pasuruan Raya. Geser
               kordion untuk melihat tiap rekomendasi, lalu ketuk kartu tengah
               untuk membuka halaman detailnya.

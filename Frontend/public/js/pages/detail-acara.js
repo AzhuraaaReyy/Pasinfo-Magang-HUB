@@ -164,7 +164,7 @@
         // CATATAN BACKEND: kandidat kolom `events.capacity` (INT nullable).
         var capacityTxt = FALLBACK_QUOTA;
         if (current.capacity != null && !isNaN(Number(current.capacity)) && Number(current.capacity) > 0) {
-          capacityTxt = "Maksimal " + Number(current.capacity) + " peserta";
+          capacityTxt = Number(current.capacity) + " peserta";
         }
         setText("info-kuota", capacityTxt);
         setText("info-kontak", contact);
@@ -473,12 +473,27 @@
           return '<img src="../../public/assets/images/poster-dummy.svg" alt="Poster ' + label + ' (placeholder)" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />';
         }
 
+        // Ikon peserta (inline — belum ada aset ikon khusus peserta; mengikuti
+        // pola ikon inline yang sudah dipakai di halaman ini).
+        var EVT_ICON_PESERTA =
+          '<svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>';
+
+        // Batas kuota peserta dari mock `capacity` (null / <= 0 = "Tanpa Batas");
+        // teks disamakan dengan kolom "Kuota Peserta" pada info acara.
+        // CATATAN BACKEND: kandidat kolom `events.capacity` (lihat schema.md).
+        function quotaLabel(d) {
+          if (d && d.capacity != null && !isNaN(Number(d.capacity)) && Number(d.capacity) > 0) {
+            return Number(d.capacity) + " peserta";
+          }
+          return FALLBACK_QUOTA;
+        }
+
         // Kartu event pola mockup: foto + badge gelap, nama, meta berikon, pill "Lihat Detail →".
         // MOCK: pola sumber sama dgn listing acara.html (starts_at -> jadwal,
-        // venue_address -> lokasi); placeholder -> fallback generik. Peserta "—"
-        // (listing acara.html tidak punya kolom peserta, jadi tanpa angka baru).
+        // venue_address -> lokasi); placeholder -> fallback generik.
+        // Kuota peserta memakai mock `capacity` (null -> "Tanpa Batas").
         // Kartu rekomendasi pola wisata: pill kategori + badge jarak putih,
-        // foto, judul, deskripsi, meta lokasi + jadwal. Seluruh kartu link.
+        // foto, judul, deskripsi, meta lokasi + jadwal + kuota. Seluruh kartu link.
         function eventCardHTML(d) {
           var dName = cleanText(d.name) || "Acara Pasuruan";
           var dOcc = d.occurrences && d.occurrences[0] ? d.occurrences[0] : null;
@@ -500,11 +515,12 @@
               photoInner(d, dName) +
             "</div>" +
             '<div class="flex flex-col flex-1 p-4 bg-white">' +
-            '<h3 class="font-bold text-gray-900 text-base line-clamp-2 mb-2">' + dName + "</h3>" +
-            (dDesc ? '<p class="text-xs text-gray-600 line-clamp-2 mb-3">' + dDesc + "</p>" : "") +
+            '<h3 class="font-bold text-gray-900 text-xl line-clamp-2 mb-2">' + dName + "</h3>" +
+            (dDesc ? '<p class="text-sm text-gray-600 line-clamp-2 mb-3">' + dDesc + "</p>" : "") +
             '<div class="text-xs text-gray-600 space-y-1">' +
             '<p class="flex items-center gap-1">' + evtCardIcon("icon_lokasi-hitam.svg") + "<span class='truncate'>" + dVenue + "</span></p>" +
             '<p class="flex items-center gap-1">' + evtCardIcon("icon_kalender.svg") + "<span class='truncate'>" + dSchedule + "</span></p>" +
+            '<p class="flex items-center gap-1">' + EVT_ICON_PESERTA + "<span class='truncate'>" + quotaLabel(d) + "</span></p>" +
             "</div>" +
             "</div>" +
             "</article>" +
@@ -588,8 +604,8 @@
               photoInner(d, dName) +
             "</div>" +
             '<div class="flex flex-col flex-1 p-4 bg-white">' +
-            '<h3 class="font-bold text-gray-900 text-base line-clamp-2 mb-2">' + dName + "</h3>" +
-            (dDesc ? '<p class="text-xs text-gray-600 line-clamp-2 mb-3">' + dDesc + "</p>" : "") +
+            '<h3 class="font-bold text-gray-900 text-xl line-clamp-2 mb-2">' + dName + "</h3>" +
+            (dDesc ? '<p class="text-sm text-gray-600 line-clamp-2 mb-3">' + dDesc + "</p>" : "") +
             '<div class="text-xs text-gray-600 space-y-1">' +
             '<p class="flex items-center gap-1">' + evtCardIcon("icon_lokasi-hitam.svg") + "<span class='truncate'>" + dVenue + "</span></p>" +
             (dDist ? '<p class="flex items-center gap-1">' + evtCardIcon("icon_jarak.svg") + "<span class='truncate'>" + dDist + "</span></p>" : "") +

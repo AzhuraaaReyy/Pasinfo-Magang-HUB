@@ -12,6 +12,12 @@
  *
  * Muat SETELAH pasinfo-header.js + pasinfo-footer.js,
  * SEBELUM public/js/main.js (agar menu/nav descobrir).
+ *
+ * Sejak 2026-10-18 (Owner: widget chatbot global) injector ini juga memuat
+ * partial chatbot (chatbot-reco.js lalu pasinfo-chatbot.js) secara LAZY dari
+ * {data-asset-prefix}/js/ sehingga widget tampil di SEMUA halaman tanpa
+ * menambah <script> di tiap halaman. Jika pemuatan gagal, halaman tetap
+ * normal (widget hanya tidak muncul / melapor dari dalam dirinya).
  */
 (function () {
   "use strict";
@@ -39,6 +45,7 @@
   function mount() {
     if (!window.PasinfoLayout) return;
     var cfg = config();
+    mountFavicon(cfg);
     var headerSlot = document.querySelector("[data-layout-header]");
     if (headerSlot && window.PasinfoLayout.renderHeader) {
       var tmp = document.createElement("div");
@@ -53,6 +60,51 @@
       var footerEl = tmp2.firstElementChild;
       if (footerEl) footerSlot.replaceWith(footerEl);
     }
+    mountChatbot(cfg);
+  }
+
+  /* Favicon global (Owner 2026-10-18): samakan ikon tab di SEMUA halaman.
+     Halaman lama memakai placeholder <link rel="icon" href="data:," /> dan
+     sebagian (detail_news, LayoutNews) belum punya favicon; index.html masih
+     memakai logo lama. Fungsi ini menimpa/bikin satu <link rel="icon"> dari
+     logo brand tanpa mengubah <head> tiap halaman. */
+  function mountFavicon(cfg) {
+    var href = cfg.assetPrefix + "/assets/logo/Logo%20favicon.png";
+    var links = document.querySelectorAll('link[rel~="icon"]');
+    if (links.length) {
+      Array.prototype.forEach.call(links, function (link) {
+        link.setAttribute("href", href);
+        link.setAttribute("type", "image/png");
+      });
+      return;
+    }
+    var link = document.createElement("link");
+    link.setAttribute("rel", "icon");
+    link.setAttribute("type", "image/png");
+    link.setAttribute("href", href);
+    document.head.appendChild(link);
+  }
+
+  /* Muat <script> lokal berurutan (async=false) tanpa fetch agar aman file://. */
+  function loadScript(src, marker, onDone) {
+    var script = document.createElement("script");
+    script.src = src;
+    script.async = false;
+    script.setAttribute(marker, "");
+    if (onDone) {
+      script.onload = onDone;
+      script.onerror = onDone;
+    }
+    document.head.appendChild(script);
+  }
+
+  function mountChatbot(cfg) {
+    if (document.querySelector("[data-pasinfo-chat]")) return;
+    if (document.querySelector("script[data-pasinfo-chatbot-loader]")) return;
+    var base = cfg.assetPrefix + "/js/";
+    loadScript(base + "chatbot-reco.js", "data-pasinfo-chatbot-loader", function () {
+      loadScript(base + "pasinfo-chatbot.js", "data-pasinfo-chatbot");
+    });
   }
 
   if (document.readyState === "loading") {

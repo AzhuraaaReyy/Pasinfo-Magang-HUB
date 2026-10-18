@@ -175,6 +175,8 @@
         setText("detail-title", item.name);
         setText("detail-desc", item.short_description || item.name);
         setText("detail-location", item.address || "Pasuruan");
+        // Owner 2026-10-17: baris rating hero meniru detail_wisata/detail_kuliner.
+        setText("detail-rating", item.rating != null && item.rating !== "" ? String(item.rating) : "-");
 
         // Hero: foto budaya (contoh domain bila media null); .src disetel
         // langsung pada <img> (tanpa fade) — paritas detail_acara.html.
@@ -229,7 +231,7 @@
             var html = '<div class="text-sm">';
             html += '<p class="font-semibold text-gray-900">' + (source.name || "Sumber Tidak Diketahui") + '</p>';
             if (source.url) {
-              html += '<p class="text-xs bud-accent-text mt-1"><a href="' + source.url + '" target="_blank" rel="noopener">Kunjungi sumber →</a></p>';
+              html += '<p class="text-sm bud-accent-text mt-1"><a href="' + source.url + '" target="_blank" rel="noopener">Kunjungi sumber →</a></p>';
             }
             html += '</div>';
             sourceEl.innerHTML = html;
@@ -279,20 +281,23 @@
         setText("sejarah-desc", descParas[0] || item.short_description || "Informasi sejarah belum tersedia.");
         setText("nilai-desc", item.short_description || descParas[1] || "Informasi nilai budaya belum tersedia.");
 
-        // --- Galeri: foto besar + 4 thumbs (3 foto + 1 panah, klik ganti) ---
-        // Gambar contoh domain (Owner 2026-10-14); ganti foto asli menyusul.
+        // --- Galeri: foto besar + thumbs ---
+        // Owner 2026-10-17 (instruksi 1): tanpa anak panah dan tanpa ganti
+        // foto lokal di card. Semua foto (utama + thumb) menjadi <a> menuju
+        // halaman galeri budaya — klik foto = navigasi galeri (keputusan
+        // Owner). Gambar contoh domain; foto asli menyusul.
         var GALLERY_SHOTS = BUDAYA_FALLBACK_PHOTOS.map(function (url, idx) {
           return { label: "Foto " + (idx + 1) + ": " + item.name, url: url };
         });
-        var galIndex = 0;
+        var GALERI_LINK = "galeri_budaya.html";
         var featured = $("galeri-featured");
-        function paintFeatured(i) {
-          galIndex = (i + GALLERY_SHOTS.length) % GALLERY_SHOTS.length;
+        function paintFeatured() {
           if (featured) {
-            featured.className = "w-full h-60 sm:h-80 rounded-xl overflow-hidden mb-4 flex items-center justify-center";
+            featured.className = "w-full h-60 sm:h-80 rounded-xl overflow-hidden mb-4";
             featured.innerHTML =
-              '<img src="' + GALLERY_SHOTS[galIndex].url + '" alt="' + GALLERY_SHOTS[galIndex].label + '" class="w-full h-full object-cover" />';
-            featured.setAttribute("aria-label", GALLERY_SHOTS[galIndex].label);
+              '<a href="' + GALERI_LINK + '" class="block w-full h-full">' +
+              '<img src="' + GALLERY_SHOTS[0].url + '" alt="' + GALLERY_SHOTS[0].label + '" class="w-full h-full object-cover" /></a>';
+            featured.setAttribute("aria-label", GALLERY_SHOTS[0].label);
           }
           paintThumbs();
         }
@@ -302,32 +307,14 @@
           var html = "";
           for (var t = 0; t < GALLERY_SHOTS.length; t++) {
             html +=
-              '<button type="button" data-shot="' + t + '" aria-label="Tampilkan ' + GALLERY_SHOTS[t].label + '"' +
-              ' class="h-16 sm:h-20 rounded-lg overflow-hidden' +
-              (t === galIndex ? " bud-accent-ring" : " opacity-80 hover:opacity-100") + ' transition-all">' +
-              '<img src="' + GALLERY_SHOTS[t].url + '" alt="" class="w-full h-full object-cover" /></button>';
+              '<a href="' + GALERI_LINK + '" aria-label="Lihat ' + GALLERY_SHOTS[t].label + '"' +
+              ' class="h-16 sm:h-20 rounded-lg overflow-hidden flex' +
+              (t === 0 ? " bud-accent-ring" : " opacity-80 hover:opacity-100") + ' transition-all">' +
+              '<img src="' + GALLERY_SHOTS[t].url + '" alt="" class="w-full h-full object-cover" /></a>';
           }
-          html +=
-            '<button type="button" data-shot="next" aria-label="Foto berikutnya"' +
-            ' class="h-16 sm:h-20 rounded-lg overflow-hidden bg-gray-300 hover:bg-gray-400 flex items-center justify-center text-gray-600 transition-colors">' +
-            '<svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12l-7.5 7.5M21 12H3" /></svg></button>';
           wrap.innerHTML = html;
-          var btns = wrap.querySelectorAll("[data-shot]");
-          for (var b = 0; b < btns.length; b++) {
-            btns[b].addEventListener("click", function () {
-              var v = this.getAttribute("data-shot");
-              if (v === "next") paintFeatured(galIndex + 1);
-              else paintFeatured(parseInt(v, 10));
-            });
-          }
         }
-        paintFeatured(0);
-
-        // Panah carousel galeri (paritas detail-kuliner).
-        var galPrev = $("galeri-prev");
-        var galNext = $("galeri-next");
-        if (galPrev) galPrev.addEventListener("click", function () { paintFeatured(galIndex - 1); });
-        if (galNext) galNext.addEventListener("click", function () { paintFeatured(galIndex + 1); });
+        paintFeatured();
 
         // --- 5-7. Kartu rekomendasi (konsep sama dengan galeri_budaya, Owner 2026-10-16):
         // foto + badge kategori (warna mengikuti domain item) + rating + judul +
@@ -381,8 +368,8 @@
             '<img src="' + esc(photo) + '" alt="' + esc(item.name) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" loading="lazy" />' +
             "</div>" +
             '<div class="flex flex-col flex-1 p-4 bg-white">' +
-            '<h3 class="font-bold text-gray-900 text-base line-clamp-2 mb-2">' + esc(item.name) + "</h3>" +
-            (desc ? '<p class="text-xs text-gray-600 line-clamp-2 mb-3">' + esc(desc) + "</p>" : "") +
+            '<h3 class="font-bold text-gray-900 text-xl line-clamp-2 mb-2">' + esc(item.name) + "</h3>" +
+            (desc ? '<p class="text-sm text-gray-600 line-clamp-2 mb-3">' + esc(desc) + "</p>" : "") +
             '<div class="text-xs text-gray-600 mt-auto">' +
             (loc ? '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_lokasi-hitam.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + esc(loc) + "</p>" : "") +
             "</div>" +

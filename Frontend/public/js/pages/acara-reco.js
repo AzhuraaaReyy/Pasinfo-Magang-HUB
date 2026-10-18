@@ -103,10 +103,10 @@
         '<div class="reco-card__body">' +
         // Baris rating display-only (paritas kartu rekomendasi wisata).
         '<div class="text-yellow-400 text-xs mb-1.5 tracking-wider" aria-hidden="true">★★★★★</div>' +
-        '<p class="reco-card__name text-xs font-bold leading-snug mb-1 text-white">' +
+        '<p class="reco-card__name text-xl font-bold leading-snug line-clamp-2 mb-1 text-white">' +
         esc(name) +
         "</p>" +
-        '<p class="reco-card__desc text-[11px] text-gray-100 line-clamp-2 leading-relaxed">' +
+        '<p class="reco-card__desc text-sm text-gray-100 line-clamp-2 leading-relaxed">' +
         esc(cleanText(d.short_description) || "") +
         "</p>" +
         "</div>";

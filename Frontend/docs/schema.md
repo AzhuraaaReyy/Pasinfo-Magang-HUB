@@ -3,7 +3,7 @@
 **Project:** Pasuruan Info — News & Travel Tech Platform
 **Schema Version:** 2.2
 **Status:** DESIGN COMPLETE · IMPLEMENTATION NOT READY
-**Current Phase:** FRONTEND COMPLETE (mock data only; Owner declared "selesai" 2026-10-16) — backend/data masih NOT STARTED
+**Current Phase:** FRONTEND COMPLETE (mock data only; Owner declared "selesai" 2026-10-16; ronde pasca-final 2026-10-17/18 + Chatbot Stage 1 sinkron 2026-10-18 — belum commit) — backend/data masih NOT STARTED
 **Backend:** Laravel 12 — Planned, NOT STARTED
 **ORM:** Eloquent — Planned
 **Database:** MySQL — Planned
@@ -754,6 +754,7 @@ Jika `place_id = null`, content tetap valid.
 | `organizer_phone`   | VARCHAR      | nullable           |
 | `website_url`       | TEXT         | nullable           |
 | `featured`          | BOOLEAN      | default false      |
+| `capacity`          | INTEGER      | nullable           |
 | `published_at`      | TIMESTAMP    | nullable           |
 | `created_at`        | TIMESTAMP    |                    |
 | `updated_at`        | TIMESTAMP    |                    |
@@ -776,6 +777,23 @@ public function tickets()
     return $this->hasMany(EventTicket::class);
 }
 ```
+
+### Kuota Peserta (kontrak data — ditambahkan atas instruksi Owner 2026-10-18)
+
+`events.capacity` = batas kuota peserta event (INTEGER nullable; `NULL` = tanpa
+batas / "Tanpa Batas"). Frontend mock (`data-acara.js`) sudah memakai field ini
+dan menampilkannya pada kolom "Kuota Peserta" di detail acara serta kartu
+"Event Lain dari Penyelenggara" dan "Rekomendasi Event" (`detail-acara.js`).
+
+Pemetaan frontend → backend:
+
+| Field frontend (mock) | Sumber backend |
+| --------------------- | -------------- |
+| `capacity` ("N peserta" / "Tanpa Batas") | `events.capacity` (INT nullable) |
+
+Catatan: "kuota tersedia" / "kuota terisi" BELUM dipetakan — bila nanti
+dibutuhkan, hitung dari jumlah registrasi (mis. tabel registrations) atau
+tambahkan kolom terpisah. Ticket ≠ booking/payment tetap berlaku (§17).
 
 ---
 
@@ -820,6 +838,32 @@ Occurrences:
 ```
 
 Hal ini lebih fleksibel daripada menyimpan satu tanggal langsung pada `events`.
+
+### Widget Kalender Agenda (frontend Budaya — kontrak data, ditambahkan Owner 2026-10-18)
+
+Widget "Kalender Agenda Pasuruan" pada halaman agenda budaya menampilkan
+event ber-tanggal dari `events` + `event_occurrences`. Pemetaan field frontend
+→ backend:
+
+| Field widget frontend | Sumber backend |
+| --------------------- | -------------- |
+| `title`                | `events.name` |
+| `day_label`, `month_label`, jam ("10:00–12:00 WIB") | `event_occurrences.starts_at` dialamat: tanggal → hari/bulan, jam → `DATE_FORMAT` |
+| `date_label`           | gabungan tanggal + jam occurrence (label UI) |
+| `location`             | `events.place_id` → `places` (`name`) |
+| `organizer`            | `events.organizer_name` |
+| `ticket_info`          | `event_tickets` (tipe/keterangan/registrar) |
+| `url`                  | `events.website_url` |
+| `status` (`akan-datang` / `berlangsung` / `selesai`) | dihitung dari `starts_at`/`ends_at` vs waktu server; simpan juga pada `event_occurrences.status` bila ingin override |
+| kalender per bulan     | grup kasar dari `starts_at` (bulan + tahun) |
+
+Filter kategori chip pada daftar agenda: memakai `events.event_type`
+(tradisi / kesenian / situs-sejarah / dll.) — frontend saat ini menyimpulkan
+dari kata kunci judul karena dataset mock tidak membawa `event_type`.
+`events.culture_id` untuk menautkan agenda pada budaya tertentu Belum
+di-dokumentasikan pada tabel `events` di atas (frontend mock memakai
+`cultureId` untuk foto & tautan detail) — relasi tambahan ini menunggu
+keputusan backend (PENDING) dan Belum jadi kontrak resmi tabel.
 
 ---
 
@@ -2899,6 +2943,7 @@ Search result
 Recommendation result
 Latest event result
 Open/closed calculation
+Chatbot riwayat & rekomendasi (Stage 1 rule-based, client-side — §61.6)
 ```
 
 Karena data tersebut dapat dihitung atau berasal dari external service.
@@ -3289,6 +3334,35 @@ terakhir (Ronde B/C + lanjutan Budaya & galeri, §61.4) seluruhnya **presentasi/
   Owner 2026-10-16; bukan kolom/tabel baru.
 - Seluruh halaman (18: index + 17 views) memakai bentuk mock yang sudah
   schema-compliant → transisi Mock → API Response (§61) tanpa restrukturisasi.
+```
+
+Status dokumen **TIDAK berubah: NOT READY — FRONTEND PHASE** (backend tetap
+belum diotorisasi; lihat §69).
+
+---
+
+## 61.6 Chatbot Stage 1 & Ronde 10-17/18 — Data Contract Status (sync 2026-10-18)
+
+Ronde pasca-final 2026-10-17/18 (as-built: design.md §66.14; PRD §68/§71)
+berdampak pada schema sebagai berikut:
+
+```text
+- Sumber data chatbot : public/js/data-wisata.js (lazy load; DOMAIN WISATA
+  SAJA). Mesin = Stage 1 rule-based (BUKAN AI — PRD §22 tetap FUTURE; reco
+  mengikuti PRD §26).
+- TANPA tabel/kolom/relasi/endpoint BARU dari chatbot.
+- TANPA persistensi chatbot: riwayat percakapan in-memory (hilang saat
+  reload); bila kelak diizinkan, skema mengikuti §56/§57 — keputusan Owner.
+- events.capacity (kuota peserta, §15) = 1 kolom MOCK BARU pada dataset
+  acara (INT nullable; NULL = "Tanpa Batas") — kandidat kolom backend
+  sudah tercatat pada kontrak §15; bukan migration.
+- Widget Kalender Agenda (§16) memakai bentuk BUDAYA_CALENDAR yang sudah
+  ada; semua tanggal aktif = perilaku frontend, tanpa field baru.
+- Halaman ke-19: semua_cerita_budaya.html memakai mock BUDAYA_CALENDAR/
+  cerita yang schema-compliant (§61.4); tanpa bentuk data baru.
+- Bentuk data mock LAIN tidak berubah: tetap 121 items (Wisata 55 +
+  Kuliner 25 + Budaya 25 + Acara 16).
+- Seluruh ronde 2026-10-17/18 BELUM commit (working tree per 2026-10-18).
 ```
 
 Status dokumen **TIDAK berubah: NOT READY — FRONTEND PHASE** (backend tetap
@@ -3893,13 +3967,21 @@ hanya setelah:
     tertaut), 121 items (re-hitung 2026-10-16), `Backend/` ada tapi KOSONG, seluruh
     ronde pasca-approval sudah ter-commit (`de697d3`, 2026-10-16). Tidak ada tabel/
     kolom/relasi/endpoint baru. Lihat §61.5. Status dokumen tetap `NOT READY`.
+    → AUDIT 2026-10-18 (ronde pasca-final 2026-10-17/18 + Chatbot Stage 1):
+    frontend kini **19 halaman** (index + 18 views; + `semua_cerita_budaya.html`),
+    widget chatbot FAB rule-based domain Wisata (§61.6), `events.capacity`
+    (kuota — kolom mock baru, kontrak §15), kalender agenda aktif (§16, tanpa
+    field baru). Presentasi/UX + 1 kolom mock acara → TIDAK ada tabel/endpoint
+    baru; 121 items tetap. Seluruh ronde **BELUM commit** (working tree).
+    Lihat §61.6. Status dokumen tetap `NOT READY`.
 [ ] User mengesahkan dimulainya fase backend
 [ ] prd.md disetujui final
 ```
 
-Saat ini **2 dari 4 syarat terpenuhi (final 2026-10-16)**. Syarat 1 & 2
-TERPENUHI final (frontend dinyatakan selesai Owner 2026-10-16; audit: 18 halaman,
-121 items, seluruh ronde ditutup, ter-commit). Syarat 3 (Owner mengesahkan fase
+Saat ini **2 dari 4 syarat terpenuhi (final 2026-10-16; audit terakhir 2026-10-18)**.
+Syarat 1 & 2 TERPENUHI final (frontend dinyatakan selesai Owner 2026-10-16;
+audit 2026-10-18: 19 halaman, 121 items, ronde 10-17/18 + chatbot tercatat §61.5–§61.6,
+**belum commit**). Syarat 3 (Owner mengesahkan fase
 backend) & 4 (prd.md final untuk backend) BELUM. Backend tetap **NOT STARTED**
 (`Backend/` ada namun kosong, belum ada migration/model/API) sehingga status
 dokumen ini tetap `NOT READY` — benar sesuai AGENTS.md §6/§31.

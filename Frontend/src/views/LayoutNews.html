@@ -50,6 +50,328 @@
         border-color: #1d4ed8;
         color: #ffffff;
       }
+
+      /* ══ TIPOGRAFI (Owner 2026-10-17) — disamakan dengan homepage ══
+         Hierarki menurun & seragam di mobile, tablet, dan desktop:
+           · Judul section (Kategori/Rekomendasi/Lainnya) = text-2xl (1.5rem)
+           · Judul konten utama (hero + kartu Berita Kategori) = text-2xl (1.5rem)
+           · Judul kartu section (Rekomendasi & Lainnya) = text-xl (1.25rem)
+           · Judul widget & item aside = 1rem (16px)
+           · Deskripsi = text-sm (0.875rem)
+           · Info tambahan (penulis/tanggal/sumber) = 0.75rem (12px);
+             tidak melebihi judul & deskripsi. */
+
+      /* ── Judul section = text-2xl (1.5rem) ── */
+      section[aria-label="Berita Kategori"] h2,
+      section[aria-label="Berita Rekomendasi"] h2,
+      section[aria-label="Berita Lainnya"] h2 {
+        font-size: 1.5rem !important;
+        line-height: 1.2 !important;
+      }
+
+      /* ── Judul konten utama (hero + kartu Berita Kategori) = text-2xl (1.5rem) ── */
+      [data-hero-large] h1,
+      [data-hero-stack] h2,
+      [data-news-main] [data-news-grid] h3 {
+        font-size: 1.5rem !important;
+        line-height: 1.3 !important;
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        -webkit-line-clamp: 3 !important;
+        overflow: hidden !important;
+      }
+
+      /* ── Judul kartu section (Rekomendasi & Berita Lainnya) = text-xl (1.25rem) ── */
+      [data-news-grid="reco"] h3,
+      [data-news-grid="more"] h3 {
+        font-size: 1.25rem !important;
+        line-height: 1.3 !important;
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        -webkit-line-clamp: 3 !important;
+        overflow: hidden !important;
+      }
+
+      /* ── Judul widget & item aside = 1rem (16px) ── */
+      [data-news-sidebar] h3,
+      [data-news-list] h4,
+      [data-news-video] h4,
+      [data-news-photo] h4 {
+        font-size: 1rem !important;
+        line-height: 1.35 !important;
+      }
+      [data-news-list] h4,
+      [data-news-video] h4,
+      [data-news-photo] h4 {
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        -webkit-line-clamp: 3 !important;
+        overflow: hidden !important;
+      }
+
+      /* ── Deskripsi = text-sm (0.875rem) ── */
+      [data-hero-large] p,
+      [data-hero-stack] p,
+      [data-news-grid] p,
+      section[aria-label="Berita Rekomendasi"] p,
+      section[aria-label="Berita Lainnya"] p,
+      [data-news-list] p,
+      [data-news-video] p,
+      [data-news-photo] p {
+        font-size: 0.875rem !important;
+        line-height: 1.6 !important;
+      }
+      [data-hero-large] p,
+      [data-hero-stack] p,
+      [data-news-grid] p {
+        -webkit-line-clamp: unset !important;
+        overflow: visible !important;
+      }
+      [data-news-list] p,
+      [data-news-video] p,
+      [data-news-photo] p {
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        -webkit-line-clamp: 2 !important;
+        overflow: hidden !important;
+        color: #64748b !important;
+      }
+
+      /* ── Info tambahan (penulis/tanggal/sumber) = 0.75rem (12px) ── */
+      [data-hero-large] [class~="text-[11px]"],
+      [data-hero-stack] [class~="text-[10px]"],
+      [data-news-grid] [class~="text-[10px]"],
+      [data-news-list] [class~="text-[9px]"],
+      [data-news-video] [class~="text-[9px]"],
+      [data-news-photo] [class~="text-[9px]"] {
+        font-size: 0.75rem !important;
+        line-height: 1.5 !important;
+      }
+
+      /* ══ GAMBAR (Owner 2026-11-08) ══
+         Kartu konten utama: rasio seragam 16/9 (sesuai aset -card.jpg)
+         agar crop konsisten. Thumbnail sidebar diperbesar (8rem x 6rem)
+         supaya gambar terlihat jelas dan tingginya seukuran 3 baris judul. */
+      [data-card-media] {
+        aspect-ratio: 16 / 9 !important;
+      }
+      [data-card-media] img,
+      [data-news-list] > .group > div:first-child img,
+      [data-news-video] > .group > div:first-child img,
+      [data-news-photo] > .group > div:first-child img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        object-position: center !important;
+      }
+      [data-news-list] > .group > div:first-child,
+      [data-news-video] > .group > div:first-child,
+      [data-news-photo] > .group > div:first-child {
+        width: 8rem !important;
+        height: 6rem !important;
+        flex: 0 0 auto !important;
+      }
+
+      /* Point 5: kartu dalam satu baris grid sama tinggi (equal height). */
+      [data-news-grid] {
+        align-items: stretch !important;
+      }
+
+      /* ══ LAYOUT TABLET (768–1023.98px) (Owner 2026-10-17) ══
+         Konten utama + sidebar menjadi 2 panel:
+           · panel kiri = konten utama (kartu berita grid 2 kolom),
+           · panel kanan = gabungan widget sidebar (satu kolom, tinggi
+             independen dari konten utama).
+         Urutan panel kanan (tablet):
+           Internasional → Nasional → Iklan → Foto → Video → Iklan.
+         Hero sudah otomatis 2 panel via `md:grid-cols-2` pada grid hero.
+         Perubahan hanya di rentang tablet; mobile & desktop tidak berubah. */
+      @media (min-width: 768px) and (max-width: 1023.98px) {
+        /* Kontainer utama: 2 kolom (kiri konten, kanan sidebar) */
+        main > div {
+          grid-template-columns: minmax(0, 1fr) minmax(0, 340px) !important;
+          gap: 2rem !important;
+          align-content: start !important;
+        }
+
+        /* Konten utama: panel kiri (tinggi independen, tidak direntangkan) */
+        [data-news-main] {
+          grid-column: 1 !important;
+          grid-row: 1 !important;
+          align-self: start !important;
+        }
+
+        /* Wrapper sidebar: SATU panel kanan yang tingginya SAMA dengan
+           konten utama (grid stretch). Semua data tetap tampil; isi panel
+           di-scroll vertikal lewat [data-news-scroll]. */
+        [data-news-sidebar] {
+          grid-column: 2 !important;
+          grid-row: 1 !important;
+          align-self: stretch !important;
+          position: relative !important;
+          overflow: visible !important;
+        }
+        [data-news-scroll] {
+          position: absolute !important;
+          inset: 0 !important;
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
+          -webkit-overflow-scrolling: touch;
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 2rem !important;
+          padding-right: 0.5rem !important;
+        }
+
+        /* Kedua sub-sidebar dilebur agar widget-nya jadi item flex wrapper */
+        [data-news-sidebar-left],
+        [data-news-sidebar-right] {
+          display: contents !important;
+        }
+
+        /* Hapus margin space-y milik aside; jarak diatur flex gap wrapper.
+           flex-shrink:0 wajib agar widget iklan (yang punya overflow:hidden
+           sehingga min-height:auto = 0) tidak kolaps disusutkan flex. */
+        [data-news-sidebar-left] > div,
+        [data-news-sidebar-right] > div {
+          margin-top: 0 !important;
+          flex-shrink: 0 !important;
+        }
+
+        /* Urutan widget panel kanan */
+        [data-news-sidebar-left] > div:nth-child(1) { order: 1 !important; } /* Internasional */
+        [data-news-sidebar-right] > div:nth-child(1) { order: 2 !important; } /* Nasional */
+        [data-news-sidebar-left] > div:nth-child(3) { order: 3 !important; } /* Iklan (Sponsored) */
+        [data-news-sidebar-right] > div:nth-child(2) { order: 4 !important; } /* Foto */
+        [data-news-sidebar-left] > div:nth-child(2) { order: 5 !important; } /* Video */
+        [data-news-sidebar-right] > div:nth-child(3) { order: 6 !important; } /* Iklan (Banner) */
+
+        /* Rekomendasi & Lainnya: 3 kolom di tablet */
+        [data-news-grid="reco"],
+        [data-news-grid="more"] {
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        }
+
+        /* Point 1 (revisi): item sidebar ditampilkan SEMUA (tersusun
+           vertikal), panel kanan di-scroll vertikal dengan tinggi = konten
+           utama — lihat aturan [data-news-sidebar] / [data-news-scroll]. */
+      }
+
+      /* Konten utama (Berita Terbaru): 1 kolom di mobile & tablet */
+      @media (max-width: 1023.98px) {
+        [data-news-main] [data-news-grid] {
+          grid-template-columns: minmax(0, 1fr) !important;
+        }
+
+        /* Point 4: thumbnail sidebar mengikuti tinggi judul + deskripsi
+           (mobile & tablet). Lebar tetap 8rem; tinggi stretch ke tinggi teks. */
+        [data-news-list] > .group,
+        [data-news-video] > .group,
+        [data-news-photo] > .group {
+          align-items: stretch !important;
+        }
+        [data-news-list] > .group > div:first-child,
+        [data-news-video] > .group > div:first-child,
+        [data-news-photo] > .group > div:first-child {
+          height: auto !important;
+          align-self: stretch !important;
+          min-height: 6rem !important;
+        }
+        [data-news-list] > .group > div:first-child img,
+        [data-news-video] > .group > div:first-child img,
+        [data-news-photo] > .group > div:first-child img {
+          position: absolute !important;
+          inset: 0 !important;
+        }
+      }
+
+      /* ══ LAYOUT DESKTOP (≥1024px) (Owner 2026-10-17) ══
+         Wrapper sidebar dilepas (display:contents) sehingga kedua <aside>
+         kembali menjadi kolom kiri & kanan pada grid 12 kolom yang sama. */
+      @media (min-width: 1024px) {
+        [data-news-sidebar],
+        [data-news-scroll] {
+          display: contents !important;
+        }
+
+        /* Wrapper dilepas (display:contents) tetapi `space-y-8` masih
+           menyisakan margin-top 2rem pada <aside> kedua, sehingga sidebar
+           kanan turun 32px. Netralkan di desktop. */
+        [data-news-sidebar-left],
+        [data-news-sidebar-right] {
+          margin-top: 0 !important;
+        }
+
+        [data-news-sidebar-left] {
+          grid-column: 1 / span 3 !important;
+          grid-row: 1 !important;
+        }
+
+        [data-news-main] {
+          grid-column: 4 / span 6 !important;
+          grid-row: 1 !important;
+        }
+
+        [data-news-sidebar-right] {
+          grid-column: 10 / span 3 !important;
+          grid-row: 1 !important;
+        }
+
+        /* Konten utama (Berita Terbaru): 2 kolom di desktop */
+        [data-news-main] [data-news-grid] {
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        /* Rekomendasi & Lainnya: 4 kolom penuh di desktop */
+        [data-news-grid="reco"],
+        [data-news-grid="more"] {
+          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        }
+
+        /* Tipografi tidak lagi berbeda di desktop: skala seragam (lihat blok
+           dasar di atas) berlaku untuk mobile, tablet, dan desktop. */
+
+        /* Point 2: foto hero (2 kartu kanan) tampil utuh tanpa crop di desktop. */
+        [data-hero-stack] img {
+          object-fit: contain !important;
+        }
+      }
+
+      /* ══ BADGE (Owner 2026-10-17) — seluruh badge dibuat seragam & mudah
+         dibaca di semua ukuran layar. Mobile 11px; tablet & desktop 12px.
+         Padding diseragamkan (py-0.5 px-1.5); warna/radius tiap badge tetap.
+         Hanya menyasar elemen ber-atribut data-badge, tidak menyentuh teks
+         info (tanggal/sumber) atau elemen lain. */
+      [data-badge] {
+        font-size: 0.6875rem !important;
+        line-height: 1.3 !important;
+        padding: 0.125rem 0.375rem !important;
+      }
+      [data-badge] i {
+        font-size: 0.85em !important;
+        line-height: 1;
+      }
+      @media (min-width: 768px) {
+        [data-badge] {
+          font-size: 0.75rem !important;
+        }
+      }
+
+      /* ══ INFO TAMBAHAN / META (tanggal + sumber) (Owner 2026-10-18) ══
+         Sebaris bila masih muat; otomatis menumpuk (tanggal di atas, sumber
+         di bawah) bila ruang tidak cukup — agar tidak terpotong / terlihat
+         aneh. Item yang terlalu panjang membungkus teksnya sendiri. */
+      [data-news-meta] {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        column-gap: 0.5rem !important;
+        row-gap: 0.125rem !important;
+      }
+      [data-news-meta] > span {
+        min-width: 0 !important;
+        overflow-wrap: anywhere !important;
+      }
     </style>
   </head>
   <body
@@ -66,7 +388,7 @@
     <main class="max-w-[1720px] mx-auto px-3 sm:px-5 lg:px-6 py-6 space-y-8">
       <!-- ================= HERO FEATURE SECTION ================= -->
       <section aria-label="Hero Featured Headlines" class="space-y-4">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5">
           <!-- Left Large Featured Card -->
           <article
             data-hero-large
@@ -84,21 +406,17 @@
       <!-- VISUAL SECTION DIVIDER -->
       <hr class="border-slate-200 my-6" />
 
-      <!-- ================= CATEGORY FILTER (9 kategori) ================= -->
-      <nav
-        aria-label="Filter kategori berita"
-        class="border-b border-slate-200 pb-3"
-      >
-        <div
-          data-news-filter
-          class="no-scrollbar flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1"
-        ></div>
-      </nav>
-
       <!-- ================= MAIN CONTENT & SIDEBARS (3-COLUMN EDITORIAL GRID) ================= -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-        <!-- ================= SIDEBAR KIRI ================= -->
-        <aside class="lg:col-span-3 order-2 lg:order-1 space-y-8">
+        <!-- ================= SIDEBAR (KIRI + KANAN) =================
+             Satu kontainer berisi kedua sidebar. Di tablet kontainer ini
+             menjadi SATU panel kanan (tingginya independen dari konten
+             utama). Di desktop kontainer dilepas (display:contents) agar
+             kedua <aside> kembali menjadi kolom kiri & kanan seperti semula. -->
+        <div data-news-sidebar class="order-2 lg:order-1 space-y-8">
+        <div data-news-scroll class="space-y-8">
+        <!-- ===== SIDEBAR KIRI (kolom kiri saat desktop) ===== -->
+        <aside data-news-sidebar-left class="space-y-8">
           <!-- WIDGET: BERITA INTERNASIONAL -->
           <div
             class="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-sm space-y-4"
@@ -115,6 +433,7 @@
                 <div class="w-8 h-1 bg-blue-600 rounded-full mt-1"></div>
               </div>
               <span
+                data-badge
                 class="text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100"
               >
                 Global
@@ -148,6 +467,7 @@
                 <div class="w-8 h-1 bg-red-600 rounded-full mt-1"></div>
               </div>
               <span
+                data-badge
                 class="text-[10px] font-bold text-red-600 uppercase tracking-widest bg-red-50 px-2 py-0.5 rounded-full border border-red-100 flex items-center gap-1"
               >
                 <i class="fas fa-play-circle text-[9px]"></i> Video
@@ -161,6 +481,7 @@
             class="rounded-xl overflow-hidden border border-slate-200/80 shadow-sm bg-gradient-to-br from-slate-900 to-blue-950 p-5 text-center text-white space-y-3 relative group cursor-pointer"
           >
             <span
+              data-badge
               class="absolute top-2 right-2 text-[8px] bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded font-black tracking-widest uppercase"
               >Sponsored Ad</span
             >
@@ -183,89 +504,8 @@
           </div>
         </aside>
 
-        <!-- ================= KONTEN UTAMA ================= -->
-        <div class="lg:col-span-6 order-1 lg:order-2 space-y-10">
-          <!-- SECTION 1: BERITA KATEGORI TERPILIH -->
-          <section aria-label="Berita Kategori" class="space-y-5">
-            <div
-              class="border-b border-slate-200 pb-3 flex items-center justify-between"
-            >
-              <div class="flex flex-col">
-                <span
-                  class="text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100 w-fit mb-1"
-                  data-category-badge
-                  >Kategori</span
-                >
-                <h2
-                  class="text-lg sm:text-xl font-black text-slate-900 tracking-tight"
-                  data-category-title
-                >
-                  Berita Terbaru
-                </h2>
-                <div class="w-12 h-1 bg-blue-600 rounded-full mt-1"></div>
-              </div>
-            </div>
-            <div
-              data-news-grid="category"
-              class="grid grid-cols-1 sm:grid-cols-3 gap-4"
-            ></div>
-          </section>
-
-          <!-- VISUAL SECTION DIVIDER -->
-          <hr class="border-slate-200 my-6" />
-
-          <!-- SECTION 2: BERITA REKOMENDASI -->
-          <section aria-label="Berita Rekomendasi" class="space-y-5">
-            <div
-              class="border-b border-slate-200 pb-3 flex items-center justify-between"
-            >
-              <div class="flex flex-col">
-                <h2
-                  class="text-lg sm:text-xl font-black text-slate-900 tracking-tight"
-                >
-                  Berita Rekomendasi
-                </h2>
-                <p class="text-[11px] text-slate-500 font-medium">
-                  Ulasan mendalam dan isu penting pilihan redaksi
-                </p>
-                <div class="w-12 h-1 bg-blue-600 rounded-full mt-1"></div>
-              </div>
-            </div>
-            <div
-              data-news-grid="reco"
-              class="grid grid-cols-1 sm:grid-cols-3 gap-4"
-            ></div>
-          </section>
-
-          <!-- VISUAL SECTION DIVIDER -->
-          <hr class="border-slate-200 my-6" />
-
-          <!-- SECTION 3: BERITA LAINNYA -->
-          <section aria-label="Berita Lainnya" class="space-y-5 pb-4">
-            <div
-              class="border-b border-slate-200 pb-3 flex items-center justify-between"
-            >
-              <div class="flex flex-col">
-                <h2
-                  class="text-lg sm:text-xl font-black text-slate-900 tracking-tight"
-                >
-                  Berita Lainnya
-                </h2>
-                <p class="text-[11px] text-slate-500 font-medium">
-                  Eksplorasi ragam kabar dan serba-serbi daerah
-                </p>
-                <div class="w-12 h-1 bg-blue-600 rounded-full mt-1"></div>
-              </div>
-            </div>
-            <div
-              data-news-grid="more"
-              class="grid grid-cols-1 sm:grid-cols-3 gap-4"
-            ></div>
-          </section>
-        </div>
-
-        <!-- ================= SIDEBAR KANAN ================= -->
-        <aside class="lg:col-span-3 order-3 space-y-8">
+        <!-- ===== SIDEBAR KANAN (kolom kanan saat desktop) ===== -->
+        <aside data-news-sidebar-right class="space-y-8">
           <!-- WIDGET: BERITA NASIONAL -->
           <div
             class="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-sm space-y-4"
@@ -282,6 +522,7 @@
                 <div class="w-8 h-1 bg-blue-600 rounded-full mt-1"></div>
               </div>
               <span
+                data-badge
                 class="text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100"
               >
                 Nasional
@@ -315,6 +556,7 @@
                 <div class="w-8 h-1 bg-emerald-600 rounded-full mt-1"></div>
               </div>
               <span
+                data-badge
                 class="text-[10px] font-bold text-emerald-700 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 flex items-center gap-1"
               >
                 <i class="fas fa-camera text-[9px]"></i> Foto
@@ -328,6 +570,7 @@
             class="rounded-xl overflow-hidden border border-slate-200/80 shadow-sm bg-slate-200 p-6 text-center text-slate-500 space-y-2 relative group cursor-pointer"
           >
             <span
+              data-badge
               class="text-[9px] uppercase tracking-widest font-black text-slate-400 block"
               >Advertisement</span
             >
@@ -341,7 +584,92 @@
             </div>
           </div>
         </aside>
+        </div>
+        </div>
+
+        <!-- ================= KONTEN UTAMA ================= -->
+        <div data-news-main class="lg:col-span-6 order-1 lg:order-2 space-y-10">
+          <!-- SECTION 1: BERITA KATEGORI TERPILIH -->
+          <section aria-label="Berita Kategori" class="space-y-5">
+            <div
+              class="border-b border-slate-200 pb-3 flex items-center justify-between"
+            >
+              <div class="flex flex-col">
+                <span
+                  data-badge
+                  class="text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100 w-fit mb-1"
+                  data-category-badge
+                  >Kategori</span
+                >
+                <h2
+                  class="text-lg sm:text-xl font-black text-slate-900 tracking-tight"
+                  data-category-title
+                >
+                  Berita Terbaru
+                </h2>
+                <div class="w-12 h-1 bg-blue-600 rounded-full mt-1"></div>
+              </div>
+            </div>
+            <div
+              data-news-grid="category"
+              class="grid grid-cols-1 sm:grid-cols-3 gap-4"
+            ></div>
+          </section>
+        </div>
+
       </div>
+
+      <!-- VISUAL SECTION DIVIDER -->
+      <hr class="border-slate-200 my-6" />
+
+      <!-- SECTION 2: BERITA REKOMENDASI (FULL WIDTH) -->
+      <section aria-label="Berita Rekomendasi" class="space-y-5">
+        <div
+          class="border-b border-slate-200 pb-3 flex items-center justify-between"
+        >
+          <div class="flex flex-col">
+            <h2
+              class="text-lg sm:text-xl font-black text-slate-900 tracking-tight"
+            >
+              Berita Rekomendasi
+            </h2>
+            <p class="text-[11px] text-slate-500 font-medium">
+              Ulasan mendalam dan isu penting pilihan redaksi
+            </p>
+            <div class="w-12 h-1 bg-blue-600 rounded-full mt-1"></div>
+          </div>
+        </div>
+        <div
+          data-news-grid="reco"
+          class="grid grid-cols-1 gap-4"
+        ></div>
+      </section>
+
+      <!-- VISUAL SECTION DIVIDER -->
+      <hr class="border-slate-200 my-6" />
+
+      <!-- SECTION 3: BERITA LAINNYA (FULL WIDTH) -->
+      <section aria-label="Berita Lainnya" class="space-y-5 pb-4">
+        <div
+          class="border-b border-slate-200 pb-3 flex items-center justify-between"
+        >
+          <div class="flex flex-col">
+            <h2
+              class="text-lg sm:text-xl font-black text-slate-900 tracking-tight"
+            >
+              Berita Lainnya
+            </h2>
+            <p class="text-[11px] text-slate-500 font-medium">
+              Eksplorasi ragam kabar dan serba-serbi daerah
+            </p>
+            <div class="w-12 h-1 bg-blue-600 rounded-full mt-1"></div>
+          </div>
+        </div>
+        <div
+          data-news-grid="more"
+          class="grid grid-cols-1 gap-4"
+        ></div>
+      </section>
     </main>
 
     <!-- GSAP (animasi scroll) -->
@@ -938,24 +1266,145 @@
       image: "news/berita3.png",
       featured: false,
     },
+    // Tambahan data mock untuk widget sidebar (Internasional & Nasional) — 5 item.
+    {
+      id: 28,
+      slug: "forum-iklim-internasional-sepakati-pendanaan-transisi-energi",
+      title: "Forum Iklim Internasional Sepakati Pendanaan Transisi Energi",
+      excerpt: "Sejumlah negara menyepakati skema pendanaan bersama untuk transisi energi.",
+      content: [
+        "Forum iklim tingkat internasional menyepakati skema pendanaan bersama untuk mendukung transisi energi. Kesepakatan ini menekankan peralihan bertahap menuju sumber energi yang lebih bersih.",
+        "Perwakilan negara membahas mekanisme pembagian beban pembiayaan serta pendampingan teknologi. Negara berkembang diharapkan memperoleh dukungan agar transisi berjalan adil.",
+        "Selain pendanaan, pertemuan menyoroti pentingnya pengawasan capaian tiap negara. Pelaporan berkala disepakati sebagai alat memantau kemajuan bersama.",
+        "Hasil kesepakatan akan ditindaklanjuti pada pertemuan lanjutan. Pengamat menilai implementasi di lapangan menjadi ujian utama dari komitmen ini.",
+      ],
+      category: "internasional",
+      categoryLabel: "Internasional",
+      author: "Redaksi Pasinfo",
+      source: "global.info",
+      published_at: "2026-10-14T09:00:00+07:00",
+      published_label: "14 Okt 2026",
+      image: card(3),
+      featured: false,
+    },
+    {
+      id: 29,
+      slug: "kolaborasi-lintas-negara-riset-pangan-berkelanjutan",
+      title: "Kolaborasi Lintas Negara Perkuat Riset Pangan Berkelanjutan",
+      excerpt: "Riset pangan berkelanjutan dikembangkan melalui kolaborasi lintas negara.",
+      content: [
+        "Sejumlah lembaga riset dari berbagai negara menjalin kolaborasi untuk memperkuat riset pangan berkelanjutan. Fokusnya mencakup ketahanan pangan dan efisiensi produksi.",
+        "Pertukaran data dan metode penelitian disepakati agar hasil riset dapat diterapkan lebih luas. Kolaborasi ini diharapkan mempercepat inovasi di sektor pangan.",
+        "Selain teknologi, penguatan kapasitas peneliti muda menjadi bagian dari kerja sama. Program pelatihan bersama direncanakan berjalan berkala.",
+        "Temuan riset akan dibagikan melalui forum terbuka. Pendekatan kolaboratif dinilai penting menghadapi tantangan pangan jangka panjang.",
+      ],
+      category: "internasional",
+      categoryLabel: "Internasional",
+      author: "Redaksi Pasinfo",
+      source: "global.info",
+      published_at: "2026-10-14T10:30:00+07:00",
+      published_label: "14 Okt 2026",
+      image: card(0),
+      featured: false,
+    },
+    {
+      id: 30,
+      slug: "pertemuan-regional-bahas-konektivitas-perdagangan",
+      title: "Pertemuan Regional Bahas Konektivitas dan Perdagangan",
+      excerpt: "Konektivitas dan kelancaran perdagangan menjadi bahasan pertemuan regional.",
+      content: [
+        "Pertemuan regional membahas upaya meningkatkan konektivitas antarnegara. Kelancaran arus barang dan jasa menjadi salah satu agenda utama.",
+        "Perwakilan negara bertukar pandangan mengenai penyederhanaan prosedur dan penguatan infrastruktur. Langkah ini dinilai dapat mempercepat proses perdagangan.",
+        "Selain itu, pertemuan menyoroti pentingnya koordinasi menghadapi gejolak ekonomi global. Kerja sama yang erat dianggap membantu menjaga stabilitas kawasan.",
+        "Kesepakatan teknis akan disusun pada pertemuan berikutnya. Pelaku usaha berharap hasilnya mempermudah kegiatan lintas negara.",
+      ],
+      category: "internasional",
+      categoryLabel: "Internasional",
+      author: "Redaksi Pasinfo",
+      source: "global.info",
+      published_at: "2026-10-14T13:00:00+07:00",
+      published_label: "14 Okt 2026",
+      image: card(2),
+      featured: false,
+    },
+    {
+      id: 31,
+      slug: "program-transportasi-publik-terpadu-nasional-diperluas",
+      title: "Program Transportasi Publik Terpadu Nasional Diperluas",
+      excerpt: "Program transportasi publik terpadu diperluas ke sejumlah daerah.",
+      content: [
+        "Program transportasi publik terpadu diperluas ke sejumlah daerah. Langkah ini diarahkan agar perpindahan antar moda lebih mudah dan terjangkau.",
+        "Penambahan rute dan integrasi jadwal menjadi bagian dari perluasan tersebut. Pengguna diharapkan merasakan layanan yang lebih terhubung.",
+        "Pemerintah menekankan pentingnya kenyamanan dan keselamatan penumpang. Fasilitas pendukung di titik transit turut dibenahi.",
+        "Evaluasi penerapan dilakukan berkala bersama pemangku kepentingan. Masukan pengguna menjadi bahan penyempurnaan layanan.",
+      ],
+      category: "nasional",
+      categoryLabel: "Nasional",
+      author: "Redaksi Pasinfo",
+      source: "nasional.info",
+      published_at: "2026-10-14T08:00:00+07:00",
+      published_label: "14 Okt 2026",
+      image: card(1),
+      featured: false,
+    },
+    {
+      id: 32,
+      slug: "upaya-nasional-tekan-angka-kemiskinan-daerah",
+      title: "Upaya Nasional Tekan Angka Kemiskinan di Daerah",
+      excerpt: "Berbagai upaya nasional disiapkan untuk menekan angka kemiskinan di daerah.",
+      content: [
+        "Sejumlah upaya nasional disiapkan untuk menekan angka kemiskinan di daerah. Pendekatan difokuskan pada peningkatan pendapatan dan akses layanan dasar.",
+        "Program pemberdayaan masyarakat menjadi salah satu strategi utama. Peserta dibekali keterampilan dan pendampingan agar lebih mandiri.",
+        "Sinergi antara pemerintah pusat dan daerah ditekankan dalam pelaksanaan. Data yang akurat menjadi dasar penargetan program.",
+        "Evaluasi berkala dilakukan untuk mengukur hasil. Penyesuaian kebijakan akan mengikuti temuan di lapangan.",
+      ],
+      category: "nasional",
+      categoryLabel: "Nasional",
+      author: "Redaksi Pasinfo",
+      source: "nasional.info",
+      published_at: "2026-10-14T08:30:00+07:00",
+      published_label: "14 Okt 2026",
+      image: card(3),
+      featured: false,
+    },
+    {
+      id: 33,
+      slug: "penguatan-layanan-kesehatan-dasar-di-daerah-nasional",
+      title: "Penguatan Layanan Kesehatan Dasar di Daerah Jadi Prioritas",
+      excerpt: "Penguatan layanan kesehatan dasar di daerah menjadi salah satu prioritas.",
+      content: [
+        "Penguatan layanan kesehatan dasar di daerah menjadi salah satu prioritas. Fokus diarahkan pada pemerataan akses dan peningkatan fasilitas.",
+        "Tenaga kesehatan menerima pendampingan agar layanan semakin tertata. Sarana pendukung di fasilitas kesehatan turut dilengkapi.",
+        "Pemerintah mendorong pencegahan melalui edukasi masyarakat. Pemeriksaan berkala menjadi bagian dari upaya menjaga kesehatan warga.",
+        "Pemantauan capaian dilakukan secara berkala. Masukan dari daerah menjadi dasar perbaikan program berikutnya.",
+      ],
+      category: "nasional",
+      categoryLabel: "Nasional",
+      author: "Redaksi Pasinfo",
+      source: "nasional.info",
+      published_at: "2026-10-14T09:30:00+07:00",
+      published_label: "14 Okt 2026",
+      image: card(0),
+      featured: false,
+    },
   ];
 
   // Widget "Video Terkait" (mock, tanpa URL video nyata)
   var VIDEOS = [
-    { title: "Pantauan Udara Pembangunan Jalan Akses Utama", duration: "02:45", date: "13 Okt 2026", image: card(0) },
-    { title: "Liputan Kemeriahan Pawai Budaya Daerah", duration: "05:12", date: "13 Okt 2026", image: card(1) },
-    { title: "Dokumentasi Keindahan Destinasi Ekowisata Lokal", duration: "01:30", date: "13 Okt 2026", image: card(2) },
-    { title: "Wawancara Pelaku Usaha Kreatif Muda", duration: "04:15", date: "13 Okt 2026", image: card(3) },
-    { title: "Dokumenter Singkat Jejak Sejarah Kota", duration: "08:20", date: "13 Okt 2026", image: card(0) },
+    { title: "Pantauan Udara Pembangunan Jalan Akses Utama", desc: "Rekaman udara memperlihatkan progres pembangunan jalan akses utama.", duration: "02:45", date: "13 Okt 2026", image: card(0) },
+    { title: "Liputan Kemeriahan Pawai Budaya Daerah", desc: "Cuplikan kemeriahan pawai budaya yang diikuti berbagai komunitas.", duration: "05:12", date: "13 Okt 2026", image: card(1) },
+    { title: "Dokumentasi Keindahan Destinasi Ekowisata Lokal", desc: "Dokumentasi singkat pesona destinasi ekowisata di daerah.", duration: "01:30", date: "13 Okt 2026", image: card(2) },
+    { title: "Wawancara Pelaku Usaha Kreatif Muda", desc: "Perbincangan dengan pelaku usaha kreatif tentang perjalanan usahanya.", duration: "04:15", date: "13 Okt 2026", image: card(3) },
+    { title: "Dokumenter Singkat Jejak Sejarah Kota", desc: "Penelusuran singkat jejak sejarah dan bangunan lama di kota.", duration: "08:20", date: "13 Okt 2026", image: card(0) },
   ];
 
   // Widget "Foto Terkait" (mock)
   var PHOTOS = [
-    { title: "Galeri Foto: Antusias Warga Menyambut Gelaran Pasar", count: 8, date: "13 Okt 2026", image: card(1) },
-    { title: "Lensa Visual: Karya Produk Unggulan UMKM Daerah", count: 12, date: "13 Okt 2026", image: card(2) },
-    { title: "Retrospeksi Foto: Wajah Baru Ruang Terbuka Hijau", count: 6, date: "13 Okt 2026", image: card(3) },
-    { title: "Bidikan Kamera: Komunitas Tanam Bibit Pohon", count: 10, date: "13 Okt 2026", image: card(0) },
-    { title: "Kirab Budaya: Warna-Warni Baju Adat dalam Lensa", count: 15, date: "13 Okt 2026", image: card(1) },
+    { title: "Galeri Foto: Antusias Warga Menyambut Gelaran Pasar", desc: "Kumpulan foto antusiasme warga menyambut gelaran pasar.", count: 8, date: "13 Okt 2026", image: card(1) },
+    { title: "Lensa Visual: Karya Produk Unggulan UMKM Daerah", desc: "Potret produk unggulan hasil karya pelaku UMKM daerah.", count: 12, date: "13 Okt 2026", image: card(2) },
+    { title: "Retrospeksi Foto: Wajah Baru Ruang Terbuka Hijau", desc: "Dokumentasi perubahan wajah ruang terbuka hijau kota.", count: 6, date: "13 Okt 2026", image: card(3) },
+    { title: "Bidikan Kamera: Komunitas Tanam Bibit Pohon", desc: "Momen komunitas menanam bibit pohon bersama warga.", count: 10, date: "13 Okt 2026", image: card(0) },
+    { title: "Kirab Budaya: Warna-Warni Baju Adat dalam Lensa", desc: "Warna-warni baju adat yang terekam dalam kirab budaya.", count: 15, date: "13 Okt 2026", image: card(1) },
   ];
 
   window.NEWS_DATA = {
@@ -1027,7 +1476,7 @@
             '<img src="' + img(a.image) + '" alt="' + esc(a.title) + '" class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" />' +
             '<div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>' +
             '<div class="relative z-10 space-y-2.5">' +
-            '<span class="inline-block px-2.5 py-0.5 bg-blue-600 text-white text-[10px] font-extrabold uppercase tracking-wider rounded shadow-sm">' + esc(a.categoryLabel) + "</span>" +
+            '<span data-badge class="inline-block px-2.5 py-0.5 bg-blue-600 text-white text-[10px] font-extrabold uppercase tracking-wider rounded shadow-sm">' + esc(a.categoryLabel) + "</span>" +
             '<h1 class="text-lg sm:text-xl lg:text-2xl font-bold text-white leading-tight group-hover:text-blue-300 transition-colors">' + esc(a.title) + "</h1>" +
             '<p class="text-xs text-slate-300 line-clamp-2 leading-relaxed">' + esc(a.excerpt) + "</p>" +
             '<div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-300 font-medium pt-1 border-t border-white/10">' +
@@ -1043,7 +1492,7 @@
             '<img src="' + img(a.image) + '" alt="' + esc(a.title) + '" class="absolute inset-0 w-full h-full object-cover opacity-75 group-hover:scale-105 transition-transform duration-700" />' +
               '<div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent"></div>' +
               '<div class="relative z-10 space-y-1.5">' +
-              '<span class="inline-block px-2 py-0.5 bg-blue-600 text-white text-[9px] font-extrabold uppercase tracking-wider rounded shadow-sm">' + esc(a.categoryLabel) + "</span>" +
+              '<span data-badge class="inline-block px-2 py-0.5 bg-blue-600 text-white text-[9px] font-extrabold uppercase tracking-wider rounded shadow-sm">' + esc(a.categoryLabel) + "</span>" +
               '<h2 class="text-sm sm:text-base font-bold text-white leading-snug group-hover:text-blue-300 transition-colors">' + esc(a.title) + "</h2>" +
               '<div class="flex flex-wrap items-center gap-2 text-[10px] text-slate-300 font-medium pt-1 border-t border-white/10">' +
               '<span class="text-white font-semibold">' + esc(a.author) + "</span><span>\u2022</span>" +
@@ -1056,14 +1505,14 @@
           return wrap(
             "group bg-white p-3 rounded-xl border border-slate-200/80 shadow-sm flex flex-col justify-between h-full hover:border-blue-500 hover:shadow-md transition-all duration-200 cursor-pointer",
             '<div class="space-y-2">' +
-              '<div class="overflow-hidden rounded-lg bg-slate-100 aspect-[16/10] relative">' +
+              '<div data-card-media class="overflow-hidden rounded-lg bg-slate-100 aspect-[16/10] relative">' +
               '<img src="' + img(a.image) + '" alt="' + esc(a.title) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />' +
-              '<span class="absolute top-2 left-2 px-2 py-0.5 bg-blue-600 text-white text-[9px] font-extrabold uppercase tracking-wider rounded shadow-sm">' + esc(a.categoryLabel) + "</span>" +
+              '<span data-badge class="absolute top-2 left-2 px-2 py-0.5 bg-blue-600 text-white text-[9px] font-extrabold uppercase tracking-wider rounded shadow-sm">' + esc(a.categoryLabel) + "</span>" +
               "</div>" +
-              '<h3 class="text-xs sm:text-sm font-bold text-slate-900 leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">' + esc(a.title) + "</h3>" +
+              '<h3 class="text-xs sm:text-sm font-bold text-slate-900 leading-snug line-clamp-3 group-hover:text-blue-600 transition-colors">' + esc(a.title) + "</h3>" +
               '<p class="text-[11px] text-slate-500 leading-relaxed line-clamp-2">' + esc(a.excerpt) + "</p>" +
               "</div>" +
-              '<div class="flex items-center justify-between text-[10px] text-slate-500 pt-2 border-t border-slate-100 mt-2.5">' +
+              '<div data-news-meta class="flex flex-wrap items-center justify-between gap-y-0.5 text-[10px] text-slate-500 pt-2 border-t border-slate-100 mt-2.5">' +
               '<span class="flex items-center gap-1"><i class="far fa-clock text-blue-600"></i> ' + esc(a.published_label) + "</span>" +
               '<span class="font-medium text-slate-600 flex items-center gap-1"><i class="fas fa-globe text-slate-400 text-[9px]"></i> ' + esc(a.source) + "</span>" +
               "</div>"
@@ -1071,40 +1520,46 @@
         }
         function listItem(a, accent) {
           return wrap(
-            "group flex gap-3 items-center cursor-pointer",
+            "group flex gap-3 items-start cursor-pointer",
             '<div class="w-20 h-14 shrink-0 overflow-hidden rounded-lg bg-slate-100 relative">' +
               '<img src="' + img(a.image) + '" alt="' + esc(a.title) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />' +
-              '<span class="absolute top-1 left-1 px-1 bg-blue-600 text-white text-[7px] font-bold rounded">' + esc(a.categoryLabel) + "</span>" +
+              '<span data-badge class="absolute top-1 left-1 px-1 bg-blue-600 text-white text-[7px] font-bold rounded">' + esc(a.categoryLabel) + "</span>" +
               "</div>" +
-              '<div class="space-y-1 min-w-0 flex-1">' +
-              '<h4 class="text-xs font-bold text-slate-900 leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">' + esc(a.title) + "</h4>" +
-              '<span class="text-[9px] text-slate-400 block"><i class="far fa-clock ' + (accent || "text-blue-600") + '"></i> ' + esc(a.published_label) + "</span>" +
+              '<div class="space-y-1.5 min-w-0 flex-1">' +
+              '<h4 class="text-xs font-bold text-slate-900 leading-snug line-clamp-3 group-hover:text-blue-600 transition-colors">' + esc(a.title) + "</h4>" +
+              '<p class="text-[11px] text-slate-500 leading-snug line-clamp-2">' + esc(a.excerpt) + "</p>" +
+              '<div data-news-meta class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] text-slate-400">' +
+                '<span><i class="far fa-clock ' + (accent || "text-blue-600") + '"></i> ' + esc(a.published_label) + "</span>" +
+                (a.source ? '<span><i class="fas fa-globe text-slate-400"></i> ' + esc(a.source) + "</span>" : "") +
+                "</div>" +
               "</div>"
           );
         }
         function videoItem(v) {
           return wrap(
-            "group flex gap-3 items-center cursor-pointer",
+            "group flex gap-3 items-start cursor-pointer",
             '<div class="w-20 h-14 shrink-0 overflow-hidden rounded-lg bg-slate-900 relative">' +
               '<img src="' + img(v.image) + '" alt="' + esc(v.title) + '" class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-300" />' +
-              '<div class="absolute inset-0 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center shadow"><i class="fas fa-play text-[8px] pl-0.5"></i></div></div>' +
-              '<span class="absolute bottom-0.5 right-0.5 px-1 bg-slate-950/80 text-white text-[7px] font-mono font-bold rounded">' + esc(v.duration) + "</span>" +
+              '<div class="absolute inset-0 flex items-center justify-center"><div class="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center shadow"><i class="fas fa-play text-xs pl-0.5"></i></div></div>' +
+              '<span data-badge class="absolute bottom-0.5 right-0.5 px-1 bg-slate-950/80 text-white text-[10px] font-mono font-bold rounded">' + esc(v.duration) + "</span>" +
               "</div>" +
-              '<div class="space-y-1 min-w-0 flex-1">' +
-              '<h4 class="text-xs font-bold text-slate-900 leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">' + esc(v.title) + "</h4>" +
+              '<div class="space-y-1.5 min-w-0 flex-1">' +
+              '<h4 class="text-xs font-bold text-slate-900 leading-snug line-clamp-3 group-hover:text-blue-600 transition-colors">' + esc(v.title) + "</h4>" +
+              '<p class="text-[11px] text-slate-500 leading-snug line-clamp-2">' + esc(v.desc) + "</p>" +
               '<span class="text-[9px] text-slate-400 block"><i class="far fa-clock text-red-600"></i> ' + esc(v.date) + "</span>" +
               "</div>"
           );
         }
         function photoItem(p) {
           return wrap(
-            "group flex gap-3 items-center cursor-pointer",
+            "group flex gap-3 items-start cursor-pointer",
             '<div class="w-20 h-14 shrink-0 overflow-hidden rounded-lg bg-slate-100 relative">' +
               '<img src="' + img(p.image) + '" alt="' + esc(p.title) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />' +
-              '<span class="absolute top-1 left-1 px-1 bg-emerald-600 text-white text-[7px] font-bold rounded flex items-center gap-0.5"><i class="fas fa-images"></i> ' + esc(p.count) + "</span>" +
+              '<span data-badge class="absolute top-1 left-1 px-1 bg-emerald-600 text-white text-[7px] font-bold rounded flex items-center gap-0.5"><i class="fas fa-images"></i> ' + esc(p.count) + "</span>" +
               "</div>" +
-              '<div class="space-y-1 min-w-0 flex-1">' +
-              '<h4 class="text-xs font-bold text-slate-900 leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">' + esc(p.title) + "</h4>" +
+              '<div class="space-y-1.5 min-w-0 flex-1">' +
+              '<h4 class="text-xs font-bold text-slate-900 leading-snug line-clamp-3 group-hover:text-blue-600 transition-colors">' + esc(p.title) + "</h4>" +
+              '<p class="text-[11px] text-slate-500 leading-snug line-clamp-2">' + esc(p.desc) + "</p>" +
               '<span class="text-[9px] text-slate-400 block"><i class="far fa-clock text-emerald-600"></i> ' + esc(p.date) + "</span>" +
               "</div>"
           );

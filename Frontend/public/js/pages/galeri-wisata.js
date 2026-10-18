@@ -79,7 +79,16 @@
   var galleryGrid = $("gallery-grid");
   var galleryPager = $("gallery-pager");
 
-  function renderCategorySidebar() {
+  // Owner 2026-10-17 (instruksi 4): sidebar kategori dihapus dari HTML galeri.
+  // Kategori kini chip horizontal dengan UI/UX filter budaya.html (basis chip
+  // px-4 py-1.5 text-sm, tanpa ikon), warna aktif/idle mengikuti domain
+  // wisata. #category-sidebar tetap dipakai sebagai container chip agar
+  // delegasi klik tidak berubah.
+  const GALLERY_FILTER_BASE = "shrink-0 px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap";
+  const GALLERY_FILTER_ACTIVE = "bg-red-600 text-white";
+  const GALLERY_FILTER_IDLE = "bg-red-100 text-red-700";
+
+  function renderCategoryChips() {
     var items = ["Semua"].concat(
       CATEGORIES.map(function (c) {
         return c.name;
@@ -89,13 +98,10 @@
       .map(function (cat) {
         var active = cat === activeCategory;
         return (
-          "<li>" +
-          '<button type="button" data-cat="' + esc(cat) + '" class="w-full text-left px-3 py-2 rounded-xl flex items-center gap-2 font-medium transition ' +
-          (active ? "bg-red-100 text-red-600 font-bold" : "hover:bg-gray-100 text-gray-700") +
-          '">' +
-          '<svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>' +
+          '<button type="button" data-cat="' + esc(cat) + '" class="' +
+          GALLERY_FILTER_BASE + " " + (active ? GALLERY_FILTER_ACTIVE : GALLERY_FILTER_IDLE) + '">' +
           esc(cat) +
-          "</button></li>"
+          "</button>"
         );
       })
       .join("");
@@ -148,16 +154,59 @@
     renderPager(data);
   }
 
+  // Owner 2026-10-17 (instruksi 3): pager galeri disamakan pager daftar
+  // destinasi wisata (wisata-listing.js): panah prev/next, jendela 3 angka
+  // dengan "…", halaman aktif merah domain wisata.
+  const PAGER_BASE = "min-w-[2rem] h-8 px-2 rounded-md text-xs font-bold transition-colors";
+  const PAGER_ACTIVE = "bg-red-600 text-white";
+  const PAGER_IDLE = "bg-white text-slate-600 ring-1 ring-gray-200 hover:bg-gray-100";
+
+  function pagerItems(current, total) {
+    // Konsep sama dengan wisata-listing.js: jendela 3 angka berakhir di
+    // halaman aktif (tidak menambah angka), angka awal muncul saat jendela
+    // menyentuh halaman terakhir.
+    var size = 3;
+    var start = Math.max(1, Math.min(current - (size - 1), total - size + 1));
+    var end = Math.min(total, start + size - 1);
+    var items = [];
+    if (start > 1 && end >= total) {
+      items.push(1);
+      if (start > 2) items.push("…");
+    }
+    for (var i = start; i <= end; i++) items.push(i);
+    if (end < total) {
+      items.push("…");
+      items.push(total);
+    }
+    return items;
+  }
+
   function renderPager(data) {
     var n = totalPages(data);
     var html = "";
-    for (var i = 1; i <= n; i++) {
-      var active = i === currentPage;
-      html +=
-        '<button type="button" data-page="' + i + '" aria-label="Halaman ' + i + '" class="w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center transition ' +
-        (active ? "bg-red-500 text-white" : "bg-gray-200 text-gray-600 hover:bg-gray-300") +
-        '">' + i + "</button>";
+    if (n <= 1) {
+      galleryPager.innerHTML = "";
+      return;
     }
+    html +=
+      '<button type="button" data-page-prev aria-label="Halaman sebelumnya" ' +
+      (currentPage <= 1 ? "disabled" : "") +
+      ' class="' + PAGER_BASE + " " + PAGER_IDLE + ' disabled:opacity-40">&lsaquo;</button>';
+    pagerItems(currentPage, n).forEach(function (it) {
+      if (it === "…") {
+        html +=
+          '<span aria-hidden="true" class="' + PAGER_BASE + ' text-slate-400 select-none">&hellip;</span>';
+        return;
+      }
+      var on = it === currentPage;
+      html +=
+        '<button type="button" data-page="' + it + '" aria-label="Halaman ' + it + '" class="' +
+        PAGER_BASE + " " + (on ? PAGER_ACTIVE : PAGER_IDLE) + '">' + it + "</button>";
+    });
+    html +=
+      '<button type="button" data-page-next aria-label="Halaman berikutnya" ' +
+      (currentPage >= n ? "disabled" : "") +
+      ' class="' + PAGER_BASE + " " + PAGER_IDLE + ' disabled:opacity-40">&rsaquo;</button>';
     galleryPager.innerHTML = html;
   }
 
@@ -187,8 +236,8 @@
       '<img src="' + esc(photo) + '" alt="' + esc(item.name) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" loading="lazy" />' +
       "</div>" +
       '<div class="flex flex-col flex-1 p-4 bg-white">' +
-      '<h3 class="font-bold text-gray-900 text-base line-clamp-2 mb-2">' + esc(item.name) + "</h3>" +
-      (desc ? '<p class="text-xs text-gray-600 line-clamp-2 mb-3">' + esc(desc) + "</p>" : "") +
+      '<h3 class="font-bold text-gray-900 text-xl line-clamp-2 mb-2">' + esc(item.name) + "</h3>" +
+      (desc ? '<p class="text-sm text-gray-600 line-clamp-2 mb-3">' + esc(desc) + "</p>" : "") +
       '<div class="text-xs text-gray-600 mt-auto">' +
       (loc ? '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_lokasi-hitam.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + esc(loc) + "</p>" : "") +
       "</div>" +
@@ -227,13 +276,18 @@
 
   // Delegasi klik untuk filter & pagination (navigasi kartu = <a href> biasa).
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-cat],[data-page]");
+    var t = e.target.closest("[data-cat],[data-page],[data-page-prev],[data-page-next]");
     if (!t) return;
     if (t.hasAttribute("data-cat")) {
       activeCategory = t.getAttribute("data-cat");
       currentPage = 1;
-      renderCategorySidebar();
+      renderCategoryChips();
       renderGalleryGrid();
+    } else if (t.hasAttribute("data-page-prev") || t.hasAttribute("data-page-next")) {
+      currentPage = t.hasAttribute("data-page-prev") ? currentPage - 1 : currentPage + 1;
+      renderGalleryGrid();
+      var grid = $("gallery-grid");
+      if (grid && grid.scrollIntoView) grid.scrollIntoView({ behavior: "smooth", block: "nearest" });
     } else if (t.hasAttribute("data-page")) {
       currentPage = parseInt(t.getAttribute("data-page"), 10) || 1;
       renderGalleryGrid();
@@ -252,7 +306,7 @@
 
   // Init (data-wisata.js + data-budaya.js wajib termuat sebelumnya).
   applyHeroBackdrop();
-  renderCategorySidebar();
+  renderCategoryChips();
   renderGalleryGrid();
   renderRecommendations();
 })();

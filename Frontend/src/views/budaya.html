@@ -250,6 +250,20 @@
       .bud-accent-ring {
         box-shadow: 0 0 0 2px var(--bud-accent);
       }
+
+      /* Tablet 768-1023px (Owner 2026-10-17, paritas wisata/kuliner): peta +
+         card detail disandingkan 60/40 agar card detail tidak full-width
+         (terlalu besar/gepeng saat menumpuk). align-items:start → tinggi card
+         mengikuti konten. Mobile tetap menumpuk; desktop (lg+) layout 2/3-1/3. */
+      @media (min-width: 768px) and (max-width: 1023.98px) {
+        #map-detail-grid {
+          grid-template-columns: 3fr 2fr;
+          align-items: start;
+        }
+        #bud-featured > div {
+          padding: 1.25rem;
+        }
+      }
     </style>
   </head>
   <body class="bg-gray-50 text-gray-800 font-sans" data-page-active="budaya" data-asset-prefix="../../public" data-wisata-href="wisata.html" data-header-overlay="dark" data-hero-label="Galeri Budaya Pasuruan" data-hero-bg-label="Latar hero budaya" data-hero-badge-class="bud-accent" data-hero-badge="Budaya" data-hero-location="Pasuruan Raya" data-hero-title-class="text-3xl sm:text-4xl md:text-6xl lg:text-4xl xl:text-5xl 2xl:text-7xl font-extrabold text-white tracking-tight leading-[1.1] drop-shadow-md" data-hero-title="Eksplorasi Budaya&lt;br /&gt; Pasuruan" data-hero-desc="Kenali tradisi, kesenian, situs sejarah, dan museum khas Pasuruan dalam satu halaman jelajah budaya." data-hero-cards-label="Thumbnail antrean budaya" data-home-href="../../index.html">
@@ -291,7 +305,9 @@
           </p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Tablet: layout diatur #map-detail-grid (style scoped di head).
+              Desktop: 2/3 peta + 1/3 detail (lg). Mobile: menumpuk (1 kolom). -->
+        <div id="map-detail-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Map Area (Leaflet interaktif) -->
           <div class="lg:col-span-2 flex flex-col bg-white border-2 p-5 rounded-xl h-full">
             <span class="font-bold text-gray-700 text-2xl">Peta Budaya</span>
@@ -369,7 +385,7 @@
                 Agenda budaya terdekat di wilayah Pasuruan Raya.
               </p>
             </div>
-            <a href="agenda_budaya.html" id="bud-calendar-toggle" class="shrink-0 text-xs font-bold bud-accent-text">Lihat Semua Agenda &rarr;</a>
+            <a href="agenda_budaya.html" id="bud-calendar-toggle" class="shrink-0 text-sm font-bold bud-accent-text">Lihat Semua Agenda &rarr;</a>
           </div>
           <div
             id="bud-calendar"
@@ -390,11 +406,11 @@
                 Cuplikan galeri budaya pilihan dari berbagai wilayah Pasuruan.
               </p>
             </div>
-            <a href="cerita_budaya.html" id="bud-gallery-toggle" class="shrink-0 text-xs font-bold bud-accent-text">Lihat Semua Cerita &rarr;</a>
+            <a href="semua_cerita_budaya.html" id="bud-gallery-toggle" class="shrink-0 text-sm font-bold bud-accent-text">Lihat Semua Cerita &rarr;</a>
           </div>
           <div
             id="bud-gallery"
-            class="grid grid-cols-2 md:grid-cols-4 gap-4"
+            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"
           >
             <!-- Ubin galeri dirender via JS (placeholder) -->
           </div>

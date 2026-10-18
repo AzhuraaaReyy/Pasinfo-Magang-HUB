@@ -348,9 +348,11 @@
           });
         })();
 
-        // Galeri: carousel placeholder (prev/next + klik thumb ganti foto besar).
-        var galeriIndex = 0;
-        // Galeri memakai gambar contoh domain (Owner 2026-10-14).
+        // Galeri: Owner 2026-10-17 (instruksi 1) — tanpa panah prev/next dan
+        // tanpa ganti foto lokal di card. Foto utama + thumbs hanya dipaint
+        // sekali; semua foto = <a> menuju galeri_kuliner.html (klik foto =
+        // navigasi galeri, keputusan Owner). Thumb "Lihat semua foto" sudah
+        // <a> di markup.
         var GALERI_LABELS = ["Foto 1", "Foto 2", "Foto 3"];
         function galeriPhoto(i) {
           var n = KULINER_FALLBACK_PHOTOS.length;
@@ -359,14 +361,11 @@
         function paintGaleri() {
           var main = $("galeri-main");
           if (main) {
-            main.innerHTML = '<img src="' + galeriPhoto(galeriIndex) + '" alt="Foto galeri ' + item.name + '" class="w-full h-full object-cover" />';
-            main.setAttribute("aria-label", GALERI_LABELS[galeriIndex] + ": " + item.name);
+            main.innerHTML = '<a href="galeri_kuliner.html" class="block w-full h-full"><img src="' + galeriPhoto(0) + '" alt="Foto galeri ' + item.name + '" class="w-full h-full object-cover" /></a>';
+            main.setAttribute("aria-label", GALERI_LABELS[0] + ": " + item.name);
           }
           var thumbs = document.querySelectorAll("#galeri-thumbs .thumb-btn");
           for (var k = 0; k < thumbs.length; k++) {
-            var on = k === galeriIndex;
-            thumbs[k].classList.toggle("ring-2", on);
-            thumbs[k].classList.toggle("ring-blue-600", on);
             if (k < KULINER_FALLBACK_PHOTOS.length) {
               thumbs[k].style.backgroundImage = 'url("' + galeriPhoto(k) + '")';
               thumbs[k].style.backgroundSize = "cover";
@@ -374,23 +373,6 @@
               thumbs[k].textContent = "";
             }
           }
-        }
-        function galeriGo(n) {
-          var count = KULINER_FALLBACK_PHOTOS.length;
-          galeriIndex = ((n % count) + count) % count;
-          paintGaleri();
-        }
-        var gp = $("galeri-prev"), gn = $("galeri-next");
-        if (gp) gp.addEventListener("click", function () { galeriGo(galeriIndex - 1); });
-        if (gn) gn.addEventListener("click", function () { galeriGo(galeriIndex + 1); });
-        var thumbsAll = document.querySelectorAll("#galeri-thumbs .thumb-btn");
-        for (var ti = 0; ti < thumbsAll.length; ti++) {
-          (function (btn) {
-            btn.addEventListener("click", function () {
-              var v = parseInt(btn.getAttribute("data-thumb"), 10);
-              galeriGo(isNaN(v) ? 0 : v);
-            });
-          })(thumbsAll[ti]);
         }
         paintGaleri();
 
@@ -417,26 +399,36 @@
               rating: rating,
               category: raw[m].category || "",
               image: raw[m].image || "",
+              description: raw[m].description || "",
             });
           }
         } catch (e) { validMenus = []; }
         var menuList = validMenus.length ? validMenus : _placeholderMenus;
         function menuCard(menu, idx) {
           var photo = menu.image || KULINER_THUMB_PHOTOS[(idx || 0) % KULINER_THUMB_PHOTOS.length];
-          var catBadge = menu.category
-            ? '<span class="inline-block mb-1 mr-1 px-1.5 py-0.5 rounded bg-gray-100 text-[9px] sm:text-[10px] font-semibold text-gray-600">' + menu.category + "</span>"
-            : "";
+          // Owner 2026-10-17: kartu menu mengikuti pola badge kartu wisata
+          // (keputusan Owner) — kategori biru kiri-atas, rating putih
+          // kanan-atas, foto h-44, judul text-xl, deskripsi text-sm, harga
+          // baris ikon text-xs.
           return (
-            '<article class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">' +
-            '<div class="h-24 sm:h-28"><img src="' + photo + '" alt="Foto ' + menu.name + '" loading="lazy" class="w-full h-full object-cover" /></div>' +
-            '<div class="p-2.5 sm:p-3">' +
-            catBadge +
-            '<div class="flex items-center justify-between gap-2">' +
-            '<h3 class="text-[11px] sm:text-xs font-bold text-gray-900 line-clamp-1">' + menu.name + "</h3>" +
-            '<span class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-semibold text-gray-700 shrink-0"><span aria-hidden="true" class="text-amber-400">★</span>' + (menu.rating || rating) + "</span>" +
+            '<article class="relative rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white h-full flex flex-col">' +
+            '<div class="absolute top-3 left-3 right-3 flex items-center justify-between z-10">' +
+            (menu.category
+              ? '<span class="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-md">' + menu.category + "</span>"
+              : "") +
+            '<span class="inline-block px-2.5 py-1 bg-white text-gray-900 text-xs font-semibold rounded-md flex items-center gap-1">' +
+            '<img src="../../public/assets/icons/icon_rating.svg" alt="" class="w-4 h-4" />' + (menu.rating || rating) +
+            "</span>" +
             "</div>" +
-            '<p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">' + menu.price + "</p>" +
-            "</div></article>"
+            '<div class="relative h-44 overflow-hidden bg-gray-200"><img src="' + photo + '" alt="Foto ' + menu.name + '" loading="lazy" class="w-full h-full object-cover" /></div>' +
+            '<div class="flex flex-col flex-1 p-4 bg-white">' +
+            '<h3 class="font-bold text-gray-900 text-xl line-clamp-2 mb-2">' + menu.name + "</h3>" +
+            (menu.description ? '<p class="text-sm text-gray-600 line-clamp-2 mb-3">' + menu.description + "</p>" : "") +
+            '<div class="text-xs text-gray-600 mt-auto">' +
+            '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_harga-tiket.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + menu.price + "</p>" +
+            "</div>" +
+            "</div>" +
+            "</article>"
           );
         }
         function renderMenus() {
@@ -462,26 +454,53 @@
           }
           return "";
         }
-        function recoSubline(d) {
-          return fmtDist(d) || d.address || "";
-        }
         function recoCard(d, idx, photoFn) {
-          var subline = recoSubline(d);
+          // Owner 2026-10-17: kartu direstrukturisasi mengikuti kartu
+          // rekomendasi detail_wisata.html (keputusan Owner) — badge kategori
+          // warna kiri-atas, badge rating putih kanan-atas, foto h-44, judul
+          // text-xl, deskripsi text-sm, baris info ikon text-xs.
+          var isWisata = d._href && d._href.indexOf("detail_wisata") !== -1;
           var href = d._href || ("detail_kuliner.html?slug=" + d.slug);
           var photo = photoFn ? photoFn(d) : null;
+          var catId = d.categoryId || d.category_id || "";
+          var catName_val = "";
+          if (isWisata) {
+            var WC = (window.PASINFO_WISATA && window.PASINFO_WISATA.categories) || [];
+            for (var w = 0; w < WC.length; w++) {
+              if (WC[w].id === catId) { catName_val = WC[w].name; break; }
+            }
+            if (!catName_val) catName_val = "Wisata";
+          } else {
+            catName_val = catName(catId) || "Kuliner";
+          }
+          var badgeBg = isWisata ? "#dc2626" : "#2563eb";
+          var rating = d.rating != null && d.rating !== "" ? d.rating : "-";
+          var desc = d.short_description || "";
+          var loc = d.address || "";
+          var dist = fmtDist(d);
           var media = photo
-            ? '<div class="h-24 sm:h-28"><img src="' + photo + '" alt="Foto ' + d.name + '" loading="lazy" class="w-full h-full object-cover" /></div>'
-            : '<div class="h-24 sm:h-28 bg-gradient-to-br from-amber-800 via-stone-700 to-slate-800" role="img" aria-label="Foto ' + d.name + ' (placeholder)"></div>';
+            ? '<div class="relative h-44 overflow-hidden bg-gray-200"><img src="' + photo + '" alt="Foto ' + d.name + '" loading="lazy" class="w-full h-full object-cover" /></div>'
+            : '<div class="relative h-44 overflow-hidden bg-gradient-to-br from-amber-800 via-stone-700 to-slate-800" role="img" aria-label="Foto ' + d.name + ' (placeholder)"></div>';
           return (
-            '<a href="' + href + '" class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow group block">' +
-            media +
-            '<div class="p-2.5 sm:p-3">' +
-            '<div class="flex items-center justify-between gap-2">' +
-            '<h3 class="text-[11px] sm:text-xs font-bold text-gray-900 line-clamp-1 group-hover:text-blue-700">' + d.name + "</h3>" +
-            '<span class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-semibold text-gray-700 shrink-0"><span aria-hidden="true" class="text-amber-400">★</span>' + (d.rating != null ? d.rating : "-") + "</span>" +
+            '<a href="' + href + '" class="group block no-underline h-full">' +
+            '<article class="relative rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full flex flex-col bg-white">' +
+            '<div class="absolute top-3 left-3 right-3 flex items-center justify-between z-10">' +
+            '<span class="inline-block px-3 py-1 text-white text-xs font-bold rounded-md" style="background-color:' + badgeBg + '">' + catName_val + "</span>" +
+            '<span class="inline-block px-2.5 py-1 bg-white text-gray-900 text-xs font-semibold rounded-md flex items-center gap-1">' +
+            '<img src="../../public/assets/icons/icon_rating.svg" alt="" class="w-4 h-4" />' + rating +
+            "</span>" +
             "</div>" +
-            (subline ? '<p class="text-[10px] sm:text-[11px] text-gray-500 mt-0.5">' + subline + "</p>" : "") +
-            "</div></a>"
+            media +
+            '<div class="flex flex-col flex-1 p-4 bg-white">' +
+            '<h3 class="font-bold text-gray-900 text-xl line-clamp-2 mb-2">' + d.name + "</h3>" +
+            (desc ? '<p class="text-sm text-gray-600 line-clamp-2 mb-3">' + desc + "</p>" : "") +
+            '<div class="text-xs text-gray-600 mt-auto space-y-1">' +
+            (loc ? '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_lokasi-hitam.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + loc + "</p>" : "") +
+            (dist ? '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_jarak.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + dist + "</p>" : "") +
+            "</div>" +
+            "</div>" +
+            "</article>" +
+            "</a>"
           );
         }
         function renderReco(id, list, photoFn) {

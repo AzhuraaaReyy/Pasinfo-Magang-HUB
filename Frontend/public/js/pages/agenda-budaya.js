@@ -10,16 +10,21 @@
  *     situs-sejarah: museum|situs|candi|sejarah
  *   Label filter mengikuti MOCKUP (Tradisional/Sejarah), bukan kategori
  *   halaman — keputusan mockup-wins (seperti galeri).
- * - Foto: poster-dummy.svg lokal (mockup-png sebagai konten dihapus).
- * - Pagination jujur (4/halaman) + teks dinamis; widget kalender bisa
- *   navigasi bulan + titik event dari data.
+ * - Foto agenda: aset budaya lokal Owner (hash cultureId), menggantikan
+ *   poster-dummy.svg (Owner 2026-10-17). Hero memakai aset lokal pilihan
+ *   Owner (Tari Terbang) — foto asli agenda menyusul.
+ * - Pagination jujur (4/halaman) + teks dinamis; widget kalender AKTIF
+ *   (Owner 2026-10-17/18): SEMUA tanggal bisa diklik = filter agenda tanggal
+ *   itu (tanggal tanpa agenda → daftar kosong); tanggal ber-acara didandani
+ *   aksen budaya; klik ulang/tombol "Semua tanggal" untuk reset. Pager
+ *   mengikuti listing budaya + animasi fade/stagger saat pergantian halaman
+ *   (WAAPI).
  * - Rekomendasi Serupa/Lainnya ← cultures REAL (detail_budaya);
  *   Destinasi ← wisata REAL (detail_wisata), teaser slice tanpa acuan.
  */
 (function () {
   "use strict";
 
-  var POSTER = "../../public/assets/images/poster-dummy.svg";
   var PER_PAGE = 4;
 
   var MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
@@ -75,29 +80,47 @@
 
   var currentCategory = "Semua";
   var currentPage = 1;
+  // Owner 2026-10-17: kalender aktif — {y, m, d} tanggal event yang dipilih
+  // di widget kalender (null = semua tanggal; klik tanggal sama = batal).
+  var selectedDate = null;
 
   var agendaListEl = $("agenda-list");
   var filtersEl = $("agenda-filters");
   var pagerEl = $("agenda-pager");
 
-  var DOT_SVG = '<svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" stroke-width="2"/></svg>';
   var PIN_SVG = '<svg class="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>';
   var CAL_SVG = '<svg class="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+
+  // Owner 2026-10-17: filter kategori jadi strip chip horizontal di atas
+  // daftar — UI/UX persis filter galeri_budaya (tanpa ikon, chip
+  // px-4 py-1.5 text-sm), warna aktif/idle aksen budaya.
+  var BUD_AG_FILTER_BASE = "shrink-0 px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap";
+  var BUD_AG_FILTER_ACTIVE = "bud-accent";
+  var BUD_AG_FILTER_IDLE = "bud-accent-soft";
 
   function renderFilters() {
     filtersEl.innerHTML = FILTERS.map(function (f) {
       var on = f.value === currentCategory;
       return (
-        '<button type="button" data-agcat="' + f.value + '" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ' +
-        (on ? "bg-gray-200 text-gray-900 font-bold" : "bg-gray-50 text-gray-600 hover:bg-gray-100") +
-        '"><span>' + DOT_SVG + "</span><span>" + f.label + "</span></button>"
+        '<button type="button" data-agcat="' + f.value + '" class="' +
+        BUD_AG_FILTER_BASE + " " + (on ? BUD_AG_FILTER_ACTIVE : BUD_AG_FILTER_IDLE) + '">' +
+        f.label + "</button>"
       );
     }).join("");
   }
 
   function filteredAgenda() {
     return CAL.filter(function (a) {
-      return currentCategory === "Semua" || agendaCategory(a.title) === currentCategory;
+      if (currentCategory !== "Semua" && agendaCategory(a.title) !== currentCategory) {
+        return false;
+      }
+      if (selectedDate) {
+        var mi = agendaMonthIdx(a);
+        if (!mi || mi.y !== selectedDate.y || mi.m !== selectedDate.m || parseInt(a.day_label, 10) !== selectedDate.d) {
+          return false;
+        }
+      }
+      return true;
     });
   }
 
@@ -105,7 +128,40 @@
     return Math.max(1, Math.ceil(list.length / PER_PAGE));
   }
 
-  function renderAgendaList() {
+  // Owner 2026-10-17 (instruksi 3): kartu agenda memakai aset lokal Owner
+  // (hash cultureId → BUDAYA_PHOTOS), menggantikan poster-dummy.svg.
+  function agendaPhotoFor(a) {
+    var key = a && a.cultureId ? String(a.cultureId) : String(a && a.title) || "";
+    var sum = 0;
+    for (var i = 0; i < key.length; i++) sum += key.charCodeAt(i);
+    return BUDAYA_PHOTOS[sum % BUDAYA_PHOTOS.length];
+  }
+
+  // Owner 2026-10-17: animasi pergantian halaman daftar — konsep sama
+  // dengan wisata-listing.js (WAAPI, stagger 60ms, cubic-bezier .22,1,.36,1,
+  // fallback aman bila WAAPI/prefers-reduced-motion tidak tersedia).
+  function animateCardsIn(container) {
+    var cards = Array.prototype.slice.call(container.querySelectorAll("[data-agenda-card]"));
+    var reducedMotion =
+      window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    cards.forEach(function (card, i) {
+      if (!card.animate || reducedMotion) return;
+      card.animate(
+        [
+          { opacity: 0, transform: "translateY(18px)" },
+          { opacity: 1, transform: "translateY(0)" },
+        ],
+        {
+          duration: 520,
+          delay: i * 60,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          fill: "backwards",
+        }
+      );
+    });
+  }
+
+  function renderAgendaList(animate) {
     var list = filteredAgenda();
     if (currentPage > totalPages(list)) currentPage = totalPages(list);
     var start = (currentPage - 1) * PER_PAGE;
@@ -118,56 +174,66 @@
       agendaListEl.innerHTML = pageItems
         .map(function (a) {
           return (
-            '<div class="bg-white rounded-2xl border border-gray-200 p-4 flex flex-col sm:flex-row items-center gap-4 hover:shadow-md transition-shadow relative">' +
+            // Owner 2026-10-17 (instruksi 3): foto memenuhi lebar baris card
+            // saat mobile (h-40) agar img terlihat jelas; desktop/tablet
+            // tetap thumb 28x24 seperti semula.
+            '<article data-agenda-card class="bg-white rounded-2xl border border-gray-200 p-4 flex flex-col sm:flex-row items-center gap-4 hover:shadow-md transition-shadow relative">' +
             '<div class="flex-shrink-0 text-center px-2">' +
           '<span class="block text-2xl font-black bud-accent-text leading-none">' + esc(a.day_label) + "</span>" +
           '<span class="block text-sm font-extrabold bud-accent-text leading-tight">' + esc(a.month_label) + "</span>" +
           '<span class="block text-sm font-extrabold bud-accent-text leading-tight">' + esc(agendaYear(a) || "") + "</span>" +
             "</div>" +
-            '<div class="w-full sm:w-28 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">' +
-            '<img src="' + POSTER + '" alt="' + esc(a.title) + '" loading="lazy" class="w-full h-full object-cover" />' +
+            '<div class="w-full sm:w-28 h-40 sm:h-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">' +
+            '<img src="' + agendaPhotoFor(a) + '" alt="' + esc(a.title) + '" loading="lazy" class="w-full h-full object-cover" />' +
             "</div>" +
             '<div class="flex-1 min-w-0 w-full">' +
             '<span class="inline-block bud-accent text-[10px] font-bold px-2.5 py-0.5 rounded-md mb-1">' + esc(agendaCategory(a.title) === "tradisi" ? "Tradisi" : agendaCategory(a.title) === "situs-sejarah" ? "Sejarah" : "Kesenian") + "</span>" +
-            '<h3 class="text-base font-bold text-gray-900 line-clamp-1">' + esc(a.title) + "</h3>" +
-            '<div class="flex items-center gap-3 text-[11px] text-gray-500 my-1">' +
+            '<h3 class="text-xl font-bold text-gray-900 line-clamp-1">' + esc(a.title) + "</h3>" +
+            '<div class="flex items-center gap-3 text-xs text-gray-500 my-1">' +
             '<span class="flex items-center gap-1">' + PIN_SVG + " " + esc(a.location || "") + "</span>" +
             '<span class="flex items-center gap-1">' + CAL_SVG + " " + esc(agendaTime(a)) + "</span>" +
             "</div>" +
-            '<p class="text-xs text-gray-500 line-clamp-2">' + esc(a.desc) + "</p>" +
+            '<p class="text-sm text-gray-500 line-clamp-2">' + esc(a.desc) + "</p>" +
             "</div>" +
             '<div class="sm:self-end w-full sm:w-auto text-right mt-2 sm:mt-0">' +
             statusBadge(a.status) +
-            "</div></div>"
+            "</div></article>"
           );
         })
         .join("");
     }
+    // Animasi hanya dipanggil saat interaksi (ganti halaman/filter/kalender),
+    // bukan pada render awal — renderAgendaList(true).
+    if (animate) animateCardsIn(agendaListEl);
     var countEl = $("agenda-count");
     if (countEl) countEl.textContent = list.length + " hasil ditemukan";
-    var rangeEl = $("agenda-range");
-    if (rangeEl) {
-      rangeEl.textContent = list.length
-        ? "Menampilkan data dari " + (start + 1) + " - " + Math.min(start + PER_PAGE, list.length)
-        : "Menampilkan data dari 0 - 0";
-    }
-    var pageEl = $("agenda-pageinfo");
-    if (pageEl) pageEl.textContent = "Menampilkan page " + currentPage + " dari " + totalPages(list);
+    // Owner 2026-10-18: teks "Menampilkan data/page" dihapus (Owner).
     renderPagination(list);
   }
+
+  // Owner 2026-10-17: pager = konsep halaman daftar budaya (budaya-listing.js):
+  // panah prev/next dengan state disabled, angka aktif bud-accent, leisure
+  // ring putih-lembut, tanpa jeda "…" (mengikuti listing budaya).
+  var BUD_AG_PAGER_BASE = "min-w-[2rem] h-8 px-2 rounded-md text-sm font-bold transition-colors";
+  var BUD_AG_PAGER_ACTIVE = "bud-accent";
+  var BUD_AG_PAGER_IDLE = "bg-white text-slate-600 ring-1 ring-gray-200 hover:bg-gray-100";
 
   function renderPagination(list) {
     var n = totalPages(list);
     var html =
-      '<button type="button" data-agpage="prev" aria-label="Halaman sebelumnya" class="w-6 h-6 rounded bg-gray-100 text-gray-500 flex items-center justify-center text-xs">&lsaquo;</button>';
+      '<button type="button" data-agpage="prev" aria-label="Halaman sebelumnya" ' +
+      (currentPage <= 1 ? "disabled " : "") +
+      'class="' + BUD_AG_PAGER_BASE + " " + BUD_AG_PAGER_IDLE + ' disabled:opacity-40">&lsaquo;</button>';
     for (var i = 1; i <= n; i++) {
       html +=
-        '<button type="button" data-agpage="' + i + '" aria-label="Halaman ' + i + '"' + (i === currentPage ? ' aria-current="page"' : "") + ' class="w-6 h-6 rounded text-xs flex items-center justify-center ' +
-          (i === currentPage ? "bud-accent text-white font-bold" : "bg-gray-100 text-gray-600 hover:bg-gray-200") +
-        '">' + i + "</button>";
+        '<button type="button" data-agpage="' + i + '" aria-label="Halaman ' + i + '" ' +
+        (i === currentPage ? 'aria-current="page" ' : "") +
+        'class="' + BUD_AG_PAGER_BASE + " " + (i === currentPage ? BUD_AG_PAGER_ACTIVE : BUD_AG_PAGER_IDLE) + '">' + i + "</button>";
     }
     html +=
-      '<button type="button" data-agpage="next" aria-label="Halaman berikutnya" class="w-6 h-6 rounded bg-gray-100 text-gray-500 flex items-center justify-center text-xs">&rsaquo;</button>';
+      '<button type="button" data-agpage="next" aria-label="Halaman berikutnya" ' +
+      (currentPage >= n ? "disabled " : "") +
+      'class="' + BUD_AG_PAGER_BASE + " " + BUD_AG_PAGER_IDLE + ' disabled:opacity-40">&rsaquo;</button>';
     pagerEl.innerHTML = html;
   }
 
@@ -211,14 +277,35 @@
     for (var p = offset - 1; p >= 0; p--) {
       html += '<span class="text-gray-300">' + (prevDays - p) + "</span>";
     }
+    var info = $("cal-filter-info");
     for (var d = 1; d <= days; d++) {
+      // Owner 2026-10-18: SEMUA tanggal bulan aktif bisa dipilih (klik = filter
+      // agenda tanggal itu; tanpa agenda → daftar kosong). Tanggal ber-acara
+      // memakai warna aksen budaya (bud-accent, bukan biru); tanggal lain
+      // netral dan tetap clickable. Tanggal terpilih diberi ring aksen.
+      var sel = selectedDate && selectedDate.y === calYear && selectedDate.m === calMonth && selectedDate.d === d;
+      var cls = "w-8 h-8 mx-auto rounded-full font-bold ";
       if (eventDays[d]) {
-        html += '<span class="bg-blue-600 text-white rounded-full font-bold">' + d + "</span>";
+        cls += "bud-accent text-white";
       } else {
-        html += "<span>" + d + "</span>";
+        cls += "text-gray-700 hover:bg-gray-100";
       }
+      if (sel) cls += " bud-accent-ring";
+      html +=
+        '<button type="button" data-calday="' + d + '" aria-label="Agenda tanggal ' + d + " " +
+        MONTHS[calMonth] + " " + calYear + '" class="' + cls + '">' + d + "</button>";
     }
     grid.innerHTML = html;
+    if (info) {
+      if (selectedDate) {
+        info.innerHTML =
+          '<p class="mb-1.5 font-semibold">Agenda tanggal ' + selectedDate.d + " " +
+          MONTHS[selectedDate.m] + " " + selectedDate.y + "</p>" +
+          '<button type="button" data-caldclear class="bud-accent-soft rounded-md px-2.5 py-1 text-[11px] font-bold">Semua tanggal</button>';
+      } else {
+        info.textContent = "Klik tanggal untuk memfilter agenda tanggal itu (Owner 2026-10-18: semua tanggal aktif).";
+      }
+    }
   }
 
   // Foto contoh domain bergilir (media.url masih null) — sama seperti galeri/detail.
@@ -285,8 +372,8 @@
       '<img src="' + esc(photo) + '" alt="' + esc(item.name) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" loading="lazy" />' +
       "</div>" +
       '<div class="flex flex-col flex-1 p-4 bg-white">' +
-      '<h3 class="font-bold text-gray-900 text-base line-clamp-2 mb-2">' + esc(item.name) + "</h3>" +
-      (desc ? '<p class="text-xs text-gray-600 line-clamp-2 mb-3">' + esc(desc) + "</p>" : "") +
+      '<h3 class="font-bold text-gray-900 text-xl line-clamp-2 mb-2">' + esc(item.name) + "</h3>" +
+      (desc ? '<p class="text-sm text-gray-600 line-clamp-2 mb-3">' + esc(desc) + "</p>" : "") +
       '<div class="text-xs text-gray-600 mt-auto">' +
       (loc ? '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_lokasi-hitam.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + esc(loc) + "</p>" : "") +
       "</div>" +
@@ -317,20 +404,40 @@
 
   // Delegasi klik.
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-agcat],[data-agpage],[data-cal-nav]");
+    var t = e.target.closest("[data-agcat],[data-agpage],[data-cal-nav],[data-calday],[data-caldclear]");
     if (!t) return;
     if (t.hasAttribute("data-agcat")) {
       currentCategory = t.getAttribute("data-agcat");
       currentPage = 1;
       renderFilters();
-      renderAgendaList();
+      renderAgendaList(true);
+    } else if (t.hasAttribute("data-calday")) {
+      // Kalender aktif: klik tanggal event → filter agenda tanggal itu;
+      // klik tanggal yang sama → batal (kembali semua tanggal).
+      var day = parseInt(t.getAttribute("data-calday"), 10) || 1;
+      if (selectedDate && selectedDate.y === calYear && selectedDate.m === calMonth && selectedDate.d === day) {
+        selectedDate = null;
+      } else {
+        selectedDate = { y: calYear, m: calMonth, d: day };
+      }
+      currentPage = 1;
+      renderCalendar();
+      renderAgendaList(true);
+    } else if (t.hasAttribute("data-caldclear")) {
+      selectedDate = null;
+      currentPage = 1;
+      renderCalendar();
+      renderAgendaList(true);
     } else if (t.hasAttribute("data-agpage")) {
       var v = t.getAttribute("data-agpage");
       var n = totalPages(filteredAgenda());
       if (v === "prev") currentPage = Math.max(1, currentPage - 1);
       else if (v === "next") currentPage = Math.min(n, currentPage + 1);
       else currentPage = Math.min(n, Math.max(1, parseInt(v, 10) || 1));
-      renderAgendaList();
+      renderAgendaList(true);
+      if (agendaListEl && agendaListEl.scrollIntoView) {
+        agendaListEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
     } else if (t.hasAttribute("data-cal-nav")) {
       var step = parseInt(t.getAttribute("data-cal-nav"), 10) || 0;
       var dt = new Date(calYear, calMonth + step, 1);

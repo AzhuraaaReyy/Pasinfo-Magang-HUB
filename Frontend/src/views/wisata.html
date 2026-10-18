@@ -38,6 +38,22 @@
           ),
           url("../../public/assets/images/wisata/optimized/bromo_banner.webp");
       }
+
+      /* Tablet 768-1023px (Owner 2026-10-17): peta + card detail disandingkan
+           60/40 supaya card detail tidak lagi full-width (terlalu besar dan
+           gepeng saat menumpuk). align-items:start → tinggi card mengikuti
+           konten (tanpa stretch kosong ke bawah). Padding card sedikit
+           dinaikkan agar terasa lega + premium. Mobile tetap menumpuk normal,
+           desktop (lg+) tetap layout 2/3-1/3 yang sudah ada. */
+      @media (min-width: 768px) and (max-width: 1023.98px) {
+        #map-detail-grid {
+          grid-template-columns: 3fr 2fr;
+          align-items: start;
+        }
+        #dest-detail > div {
+          padding: 1.25rem;
+        }
+      }
     </style>
   </head>
   <body
@@ -97,7 +113,9 @@
           </p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Tablet: layout diatur #map-detail-grid (style scoped di head).
+              Desktop: 2/3 peta + 1/3 detail (lg). Mobile: menumpuk (1 kolom). -->
+        <div id="map-detail-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Map Area -->
           <div
             class="lg:col-span-2 flex flex-col bg-white border-2 p-5 rounded-xl h-full"
@@ -153,10 +171,11 @@
           </p>
         </div>
 
-        <!-- Categories / Filter Tabs -- Owner 2026-10-14: wrap di mobile
-             agar semua kategori terlihat (tidak terpotong). -->
+        <!-- Categories / Filter Tabs -- Owner 2026-10-17: satu baris +
+              scroll horizontal di mobile (overflow-x-auto) agar semua kategori
+              tetap terjangkau, tidak lagi wrap menumpuk tinggi. -->
         <div
-          class="flex flex-wrap gap-2 pb-4 mb-2"
+          class="flex flex-nowrap gap-2 pb-4 mb-2 overflow-x-auto no-scrollbar"
           role="group"
           aria-label="Filter kategori destinasi"
         >
@@ -165,7 +184,7 @@
             data-filter-btn
             data-filter="Semua"
             aria-pressed="true"
-            class="bg-red-600 text-white px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
+            class="bg-red-600 text-white shrink-0 px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
           >
             Semua
           </button>
@@ -174,7 +193,7 @@
             data-filter-btn
             data-filter="Wisata Alam"
             aria-pressed="false"
-            class="bg-red-100 text-red-700 px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
+            class="bg-red-100 text-red-700 shrink-0 px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
           >
             Wisata Alam
           </button>
@@ -183,7 +202,7 @@
             data-filter-btn
             data-filter="Keluarga"
             aria-pressed="false"
-            class="bg-red-100 text-red-700 px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
+            class="bg-red-100 text-red-700 shrink-0 px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
           >
             Keluarga
           </button>
@@ -192,7 +211,7 @@
             data-filter-btn
             data-filter="Sejarah & Budaya"
             aria-pressed="false"
-            class="bg-red-100 text-red-700 px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
+            class="bg-red-100 text-red-700 shrink-0 px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
           >
             Sejarah & Budaya
           </button>
@@ -201,7 +220,7 @@
             data-filter-btn
             data-filter="Wisata Religi"
             aria-pressed="false"
-            class="bg-red-100 text-red-700 px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
+            class="bg-red-100 text-red-700 shrink-0 px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
           >
             Wisata Religi
           </button>
@@ -278,11 +297,11 @@
                     <div class="text-yellow-400 text-xs mb-1.5 tracking-wider">
                       ★★★★★
                     </div>
-                    <p class="reco-card__name text-xs font-bold leading-snug mb-1 text-white">
+                    <p class="reco-card__name text-xl font-bold leading-snug line-clamp-2 mb-1 text-white">
                       Taman Safari Indonesia II Prigen
                     </p>
                     <p
-                      class="reco-card__desc text-[11px] text-gray-100 line-clamp-2 leading-relaxed"
+                      class="reco-card__desc text-sm text-gray-100 line-clamp-2 leading-relaxed"
                     >
                       Taman safari di kaki Gunung Arjuno–Welirang yang
                       menyatukan konservasi satwa dengan wisata keluarga.
@@ -311,11 +330,11 @@
                     <div class="text-yellow-400 text-xs mb-1.5 tracking-wider">
                       ★★★★★
                     </div>
-                    <p class="reco-card__name text-xs font-bold leading-snug mb-1 text-white">
+                    <p class="reco-card__name text-xl font-bold leading-snug line-clamp-2 mb-1 text-white">
                       Kebun Raya Purwodadi
                     </p>
                     <p
-                      class="reco-card__desc text-[11px] text-gray-100 line-clamp-2 leading-relaxed"
+                      class="reco-card__desc text-sm text-gray-100 line-clamp-2 leading-relaxed"
                     >
                       Kebun botani di Kecamatan Purwosari dengan koleksi
                       tanaman khas dataran rendah beriklim kering.
@@ -350,11 +369,11 @@
                     <div class="text-yellow-400 text-xs mb-1.5 tracking-wider">
                       ★★★★★
                     </div>
-                    <p class="reco-card__name text-xs font-bold leading-snug mb-1 text-white">
+                    <p class="reco-card__name text-xl font-bold leading-snug line-clamp-2 mb-1 text-white">
                       Penanjakan Bromo (Penanjakan 1)
                     </p>
                     <p
-                      class="reco-card__desc text-[11px] text-gray-100 line-clamp-2 leading-relaxed"
+                      class="reco-card__desc text-sm text-gray-100 line-clamp-2 leading-relaxed"
                     >
                       Titik pandang paling terkenal untuk menikmati matahari
                       terbit di Taman Nasional Bromo Tengger Semeru.
@@ -383,11 +402,11 @@
                     <div class="text-yellow-400 text-xs mb-1.5 tracking-wider">
                       ★★★★★
                     </div>
-                    <p class="reco-card__name text-xs font-bold leading-snug mb-1 text-white">
+                    <p class="reco-card__name text-xl font-bold leading-snug line-clamp-2 mb-1 text-white">
                       Bukit Cinta (Bromo Tengger Semeru)
                     </p>
                     <p
-                      class="reco-card__desc text-[11px] text-gray-100 line-clamp-2 leading-relaxed"
+                      class="reco-card__desc text-sm text-gray-100 line-clamp-2 leading-relaxed"
                     >
                       Titik pandang di kawasan Bromo Tengger Semeru yang berada
                       di wilayah Wonokitri, Tosari.
@@ -416,11 +435,11 @@
                     <div class="text-yellow-400 text-xs mb-1.5 tracking-wider">
                       ★★★★★
                     </div>
-                    <p class="reco-card__name text-xs font-bold leading-snug mb-1 text-white">
+                    <p class="reco-card__name text-xl font-bold leading-snug line-clamp-2 mb-1 text-white">
                       Air Terjun Kakek Bodo
                     </p>
                     <p
-                      class="reco-card__desc text-[11px] text-gray-100 line-clamp-2 leading-relaxed"
+                      class="reco-card__desc text-sm text-gray-100 line-clamp-2 leading-relaxed"
                     >
                       Air terjun populer di kawasan Prigen, tidak jauh dari
                       kawasan wisata Tretes.

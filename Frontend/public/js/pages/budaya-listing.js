@@ -99,20 +99,20 @@
       const budGrid = document.getElementById("bud-grid");
        const budEmpty = document.getElementById("bud-empty");
         const budFiltersWrap = document.getElementById("bud-filters");
-        const BUD_FILTER_BASE = "px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap";
+        const BUD_FILTER_BASE = "px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap";
         const BUD_FILTER_ACTIVE = "bud-accent";
         const BUD_FILTER_IDLE = "bud-accent-soft";
 
       function budCardHTML(d) {
          let meta = "";
          if (d.rating) {
-           meta += '<div class="flex items-center gap-1">' + BUD_ICON_STAR + "<span>" + d.rating + (d.reviews ? " (" + d.reviews + ")" : "") + "</span></div>";
+           meta += '<div class="flex items-center gap-1.5">' + BUD_ICON_STAR + "<span>" + d.rating + (d.reviews ? " (" + d.reviews + ")" : "") + "</span></div>";
          }
          if (d.location) {
-           meta += '<div class="flex items-center gap-1">' + BUD_ICON_PIN + "<span>" + d.location + "</span></div>";
+           meta += '<div class="flex items-center gap-1.5">' + BUD_ICON_PIN + "<span>" + d.location + "</span></div>";
          }
          if (d.hours) {
-           meta += '<div class="flex items-center gap-1">' + BUD_ICON_CLOCK + "<span>" + d.hours + "</span></div>";
+           meta += '<div class="flex items-center gap-1.5">' + BUD_ICON_CLOCK + "<span>" + d.hours + "</span></div>";
          }
          const mediaInner = d.photo
            ? '<img src="' + d.photo + '" alt="Foto ' + d.name + '" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />'
@@ -123,7 +123,7 @@
             '" data-bud-slug="' +
             d.slug +
             '" class="budaya-card group h-full bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden flex flex-col cursor-pointer hover:-translate-y-2 hover:scale-[1.015] hover:shadow-2xl transition-all duration-300 ease-out will-change-transform">' +
-             '<div class="relative h-40 sm:h-48 lg:h-52 overflow-hidden shrink-0">' +
+              '<div class="relative h-44 sm:h-48 lg:h-52 overflow-hidden shrink-0">' +
                mediaInner +
                '<span class="absolute top-2 left-2 bud-accent text-white text-[10px] px-2 py-0.5 rounded">' + d.category + "</span>" +
                '<div class="absolute top-2 right-2 flex items-center gap-1.5">' +
@@ -132,9 +132,9 @@
                "</div>" +
              "</div>" +
              '<div class="p-4 flex flex-1 flex-col">' +
-               '<h3 class="font-bold text-base sm:text-lg text-gray-900 uppercase leading-snug line-clamp-2">' + d.name + "</h3>" +
-               '<p class="text-xs sm:text-sm text-gray-500 mt-1.5 leading-relaxed line-clamp-2">' + d.short_description + "</p>" +
-               '<div class="pt-3 mt-3 text-xs sm:text-[13px] text-gray-600 space-y-1.5">' + meta + "</div>" +
+                '<h3 class="font-bold text-xl text-gray-900 uppercase leading-snug line-clamp-2">' + d.name + "</h3>" +
+                '<p class="text-sm text-gray-500 mt-1.5 leading-relaxed line-clamp-2">' + d.short_description + "</p>" +
+                '<div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-600 space-y-1.5">' + meta + "</div>" +
              "</div>" +
            "</article>"
          );
@@ -152,9 +152,9 @@
             '<div class="px-4 pt-4"><span class="text-sm font-bold text-gray-900">Budaya</span></div>' +
             '<div class="mt-2">' + mediaInner + "</div>" +
             '<div class="p-4">' +
-              '<h3 class="font-bold text-base text-gray-900">' + d.name + "</h3>" +
-              '<p class="text-[11px] text-gray-500 mt-1 line-clamp-3">' + d.short_description + "</p>" +
-              '<dl class="mt-3 space-y-2 text-[11px] text-gray-600">' +
+              '<h3 class="font-bold text-xl text-gray-900">' + d.name + "</h3>" +
+              '<p class="text-sm text-gray-500 mt-1 line-clamp-3">' + d.short_description + "</p>" +
+              '<dl class="mt-3 space-y-2 text-xs text-gray-600">' +
                 (d.rating ? '<div class="flex items-center gap-2"><dt class="sr-only">Rating</dt><dd class="flex items-center gap-1">' + BUD_ICON_STAR + "<span>" + d.rating + (d.reviews ? " (" + d.reviews + ")" : "") + "</span></dd></div>" : "") +
                 '<div class="flex items-center gap-2"><dt class="w-16 shrink-0 text-gray-400">Kategori</dt><dd class="font-semibold text-gray-700">' + d.category + "</dd></div>" +
                 '<div class="flex items-center gap-2"><dt class="w-16 shrink-0 text-gray-400">Lokasi</dt><dd>' + d.location + "</dd></div>" +
@@ -175,9 +175,9 @@
               mediaInner +
             "</div>" +
             '<figcaption class="p-4 flex flex-1 flex-col">' +
-              '<p class="text-sm sm:text-base font-bold text-gray-900 uppercase line-clamp-1">' + v.title + "</p>" +
-              (v.desc ? '<p class="text-xs sm:text-sm text-gray-500 mt-1.5 leading-relaxed line-clamp-2">' + v.desc + "</p>" : "") +
-              '<div class="mt-auto pt-3"><span class="text-xs sm:text-sm font-bold bud-accent-text">Baca Selengkapnya &rarr;</span></div>' +
+              '<p class="text-xl font-bold text-gray-900 uppercase line-clamp-1">' + v.title + "</p>" +
+              (v.desc ? '<p class="text-sm text-gray-500 mt-1.5 leading-relaxed line-clamp-2">' + v.desc + "</p>" : "") +
+              '<div class="mt-auto pt-3"><span class="text-sm font-bold bud-accent-text">Baca Selengkapnya &rarr;</span></div>' +
             "</figcaption>" +
           "</figure>"
         );
@@ -221,13 +221,13 @@
               '<div class="absolute top-2 right-2">' + budStatusBadge(a.status) + "</div>" +
             "</div>" +
             '<div class="p-3 sm:p-4 flex flex-1 flex-col">' +
-              '<h3 class="font-bold text-sm sm:text-base text-gray-900 line-clamp-1">' + a.title + "</h3>" +
-              (desc ? '<p class="text-xs sm:text-sm text-gray-500 mt-1 line-clamp-2">' + desc + "</p>" : "") +
-              '<div class="mt-2 text-[11px] text-gray-500 space-y-1">' +
+              '<h3 class="font-bold text-xl text-gray-900 line-clamp-1">' + a.title + "</h3>" +
+              (desc ? '<p class="text-sm text-gray-500 mt-1 line-clamp-2">' + desc + "</p>" : "") +
+              '<div class="mt-2 text-xs text-gray-500 space-y-1">' +
                 (when ? '<p class="flex items-center gap-1">' + BUD_ICON_CLOCK + "<span>" + when + "</span></p>" : "") +
                 (loc ? '<p class="flex items-center gap-1">' + BUD_ICON_PIN + "<span>" + loc + "</span></p>" : "") +
               "</div>" +
-              '<span class="mt-auto pt-2 inline-block text-xs sm:text-sm font-bold bud-accent-text">Detail &rarr;</span>' +
+              '<span class="mt-auto pt-2 inline-block text-sm font-bold bud-accent-text">Detail &rarr;</span>' +
             "</div>" +
           "</article>"
         );
@@ -243,7 +243,7 @@
          return 12;
        }
        const budPager = document.getElementById("bud-pager");
-       const BUD_PAGER_BASE = "min-w-[2rem] h-8 px-2 rounded-md text-xs font-bold transition-colors";
+       const BUD_PAGER_BASE = "min-w-[2rem] h-8 px-2 rounded-md text-sm font-bold transition-colors";
         const BUD_PAGER_ACTIVE = "bud-accent";
        const BUD_PAGER_IDLE = "bg-white text-slate-600 ring-1 ring-gray-200 hover:bg-gray-100";
 

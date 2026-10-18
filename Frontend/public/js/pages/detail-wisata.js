@@ -645,7 +645,10 @@
           "</span>";
       }
       if (isVideo && src) inner += PLAY_BADGE;
-      return '<div class="relative overflow-hidden rounded-lg bg-gray-200 group ' + slot + '">' + inner + "</div>";
+      // Owner 2026-10-17 (instruksi 1): setiap foto di card galeri = <a>
+      // menuju galeri_wisata.html (klik foto = navigasi galeri, keputusan
+      // Owner). Halaman detail wisata memang tidak punya panah galeri.
+      return '<a href="galeri_wisata.html" aria-label="Lihat galeri ' + esc(label) + '" class="relative overflow-hidden rounded-lg bg-gray-200 group ' + slot + '">' + inner + "</a>";
     }
 
     /* ---------- 6. INFORMASI TAMBAHAN: cuaca & harga tiket ---------- */
@@ -808,10 +811,12 @@
         '</div>' +
         
         '<div class="flex flex-col flex-1 p-4 bg-white">' +
-        '<h3 class="font-bold text-gray-900 text-base line-clamp-2 mb-2">' +
+        // Owner 2026-10-17: hierarki kartu rekomendasi — judul text-xl,
+        // deskripsi text-sm, meta text-xs (sama di mobile/tablet/desktop).
+        '<h3 class="font-bold text-gray-900 text-xl line-clamp-2 mb-2">' +
         esc(cardName) +
         '</h3>' +
-        '<p class="text-xs text-gray-600 line-clamp-2 mb-3">' +
+        '<p class="text-sm text-gray-600 line-clamp-2 mb-3">' +
         esc(cardDesc) +
         '</p>' +
         '<div class="text-xs text-gray-600 space-y-1">' +

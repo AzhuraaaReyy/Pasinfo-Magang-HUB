@@ -86,7 +86,7 @@
       const destGrid = document.getElementById("dest-grid");
       const destEmpty = document.getElementById("dest-empty");
       const filterBtns = Array.from(document.querySelectorAll("[data-filter-btn]"));
-      const FILTER_BASE = "px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap";
+      const FILTER_BASE = "shrink-0 px-4 py-1.5 rounded-md text-xs font-medium whitespace-nowrap";
       const FILTER_ACTIVE = "bg-red-600 text-white";
       const FILTER_IDLE = "bg-red-100 text-red-700";
 
@@ -122,9 +122,12 @@
               "</div>" +
             "</div>" +
             '<div class="p-4 flex flex-1 flex-col">' +
-              '<h3 class="font-bold text-base sm:text-lg text-gray-900 uppercase leading-snug line-clamp-2">' + d.name + "</h3>" +
-              '<p class="text-xs sm:text-sm text-gray-500 mt-1.5 leading-relaxed line-clamp-2">' + d.short_description + "</p>" +
-              '<div class="pt-3 mt-3 border-t border-gray-200 text-xs sm:text-[13px] text-gray-600 space-y-1.5">' + meta + "</div>" +
+              // Owner 2026-10-17: konsistensi judul/deskripsi semua kartu
+              // wisata — judul text-xl, deskripsi text-sm, meta text-xs
+              // (sama di mobile/tablet/desktop; paritas kartu rekomendasi).
+              '<h3 class="font-bold text-xl text-gray-900 uppercase leading-snug line-clamp-2">' + d.name + "</h3>" +
+              '<p class="text-sm text-gray-500 mt-1.5 leading-relaxed line-clamp-2">' + d.short_description + "</p>" +
+              '<div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-600 space-y-1.5">' + meta + "</div>" +
             "</div>" +
           "</article>"
         );

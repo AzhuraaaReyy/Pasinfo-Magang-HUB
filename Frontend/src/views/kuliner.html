@@ -220,6 +220,20 @@
         outline: 2px solid #1d4ed8;
         outline-offset: 2px;
       }
+
+      /* Tablet 768-1023px (Owner 2026-10-17, paritas wisata): peta + card
+         detail disandingkan 60/40 agar card detail tidak full-width (terlalu
+         besar/gepeng saat menumpuk). align-items:start → tinggi card
+         mengikuti konten. Mobile tetap menumpuk; desktop (lg+) layout 2/3-1/3. */
+      @media (min-width: 768px) and (max-width: 1023.98px) {
+        #map-detail-grid {
+          grid-template-columns: 3fr 2fr;
+          align-items: start;
+        }
+        #kul-detail > div {
+          padding: 1.25rem;
+        }
+      }
     </style>
   </head>
   <body
@@ -278,7 +292,9 @@
           </p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Tablet: layout diatur #map-detail-grid (style scoped di head).
+              Desktop: 2/3 peta + 1/3 detail (lg). Mobile: menumpuk (1 kolom). -->
+        <div id="map-detail-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Map Area -->
           <div
             class="lg:col-span-2 flex flex-col bg-white border-2 p-5 rounded-xl h-full"
@@ -454,12 +470,12 @@
                       ★★★★★
                     </div>
                     <p
-                      class="reco-card__name text-xs font-bold leading-snug mb-1 text-white"
+                      class="reco-card__name text-xl font-bold leading-snug line-clamp-2 mb-1 text-white"
                     >
                       Waroeng Sambel
                     </p>
                     <p
-                      class="reco-card__desc text-[11px] text-gray-100 line-clamp-2 leading-relaxed"
+                      class="reco-card__desc text-sm text-gray-100 line-clamp-2 leading-relaxed"
                     >
                       Rumah makan sambal di Jl. Raya Pandaan-Bangil dengan
                       beberapa paket hidangan.
@@ -489,12 +505,12 @@
                       ★★★★★
                     </div>
                     <p
-                      class="reco-card__name text-xs font-bold leading-snug mb-1 text-white"
+                      class="reco-card__name text-xl font-bold leading-snug line-clamp-2 mb-1 text-white"
                     >
                       Warung Teko Beji
                     </p>
                     <p
-                      class="reco-card__desc text-[11px] text-gray-100 line-clamp-2 leading-relaxed"
+                      class="reco-card__desc text-sm text-gray-100 line-clamp-2 leading-relaxed"
                     >
                       Restoran bergazebo dengan kolam ikan dan area bermain
                       anak.
@@ -530,12 +546,12 @@
                       ★★★★★
                     </div>
                     <p
-                      class="reco-card__name text-xs font-bold leading-snug mb-1 text-white"
+                      class="reco-card__name text-xl font-bold leading-snug line-clamp-2 mb-1 text-white"
                     >
                       Nasi Punel Bu Hj. Lin
                     </p>
                     <p
-                      class="reco-card__desc text-[11px] text-gray-100 line-clamp-2 leading-relaxed"
+                      class="reco-card__desc text-sm text-gray-100 line-clamp-2 leading-relaxed"
                     >
                       Nasi punel khas Bangil dengan lauk empal, lidah, babat,
                       dan ayam.
@@ -565,12 +581,12 @@
                       ★★★★★
                     </div>
                     <p
-                      class="reco-card__name text-xs font-bold leading-snug mb-1 text-white"
+                      class="reco-card__name text-xl font-bold leading-snug line-clamp-2 mb-1 text-white"
                     >
                       Depot Nasi Punel Setia Budi Bangil
                     </p>
                     <p
-                      class="reco-card__desc text-[11px] text-gray-100 line-clamp-2 leading-relaxed"
+                      class="reco-card__desc text-sm text-gray-100 line-clamp-2 leading-relaxed"
                     >
                       Nasi punel dengan pilihan lauk daging, ayam, dan jeroan.
                     </p>
@@ -599,12 +615,12 @@
                       ★★★★★
                     </div>
                     <p
-                      class="reco-card__name text-xs font-bold leading-snug mb-1 text-white"
+                      class="reco-card__name text-xl font-bold leading-snug line-clamp-2 mb-1 text-white"
                     >
                       Warung Pojok Nasi Punel Bangil
                     </p>
                     <p
-                      class="reco-card__desc text-[11px] text-gray-100 line-clamp-2 leading-relaxed"
+                      class="reco-card__desc text-sm text-gray-100 line-clamp-2 leading-relaxed"
                     >
                       Warung kecil dengan tempat duduk terbatas dan sering antre
                       di Bangil.

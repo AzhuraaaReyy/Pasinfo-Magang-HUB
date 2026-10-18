@@ -163,9 +163,12 @@
               "</div>" +
             "</div>" +
             '<div class="p-4 flex flex-1 flex-col">' +
-              '<h3 class="font-bold text-base sm:text-lg text-gray-900 uppercase leading-snug line-clamp-2">' + d.name + "</h3>" +
-              '<p class="text-xs sm:text-sm text-gray-500 mt-1.5 leading-relaxed line-clamp-2">' + d.short_description + "</p>" +
-              '<div class="pt-3 mt-3 border-t border-gray-200 text-xs sm:text-[13px] text-gray-600 space-y-1.5">' + meta + "</div>" +
+              // Owner 2026-10-17: konsistensi judul/deskripsi semua kartu —
+              // judul text-xl, deskripsi text-sm, meta text-xs (paritas
+              // wisata-listing.js; sama di mobile/tablet/desktop).
+              '<h3 class="font-bold text-xl text-gray-900 uppercase leading-snug line-clamp-2">' + d.name + "</h3>" +
+              '<p class="text-sm text-gray-500 mt-1.5 leading-relaxed line-clamp-2">' + d.short_description + "</p>" +
+              '<div class="pt-3 mt-3 border-t border-gray-200 text-xs text-gray-600 space-y-1.5">' + meta + "</div>" +
             "</div>" +
           "</article>"
         );
@@ -183,9 +186,9 @@
             '<div class="px-4 pt-4"><span class="text-sm font-bold text-gray-900">Kuliner</span></div>' +
             '<div class="mt-2">' + mediaInner + "</div>" +
             '<div class="p-4">' +
-              '<h3 class="font-bold text-base text-gray-900">' + d.name + "</h3>" +
-              '<p class="text-[11px] text-gray-500 mt-1 line-clamp-3">' + d.short_description + "</p>" +
-              '<dl class="mt-3 space-y-2 text-[11px] text-gray-600">' +
+              '<h3 class="font-bold text-xl text-gray-900">' + d.name + "</h3>" +
+              '<p class="text-sm text-gray-500 mt-1 line-clamp-3">' + d.short_description + "</p>" +
+              '<dl class="mt-3 space-y-2 text-xs text-gray-600">' +
                 '<div class="flex items-center gap-2"><dt class="sr-only">Rating</dt><dd class="flex items-center gap-1">' + KUL_ICON_STAR + "<span>" + d.rating + (d.reviews ? " (" + d.reviews + ")" : "") + "</span></dd></div>" +
                 '<div class="flex items-center gap-2"><dt class="w-16 shrink-0 text-gray-400">Kategori</dt><dd class="font-semibold text-gray-700">' + d.category + "</dd></div>" +
                 '<div class="flex items-center gap-2"><dt class="w-16 shrink-0 text-gray-400">Lokasi</dt><dd>' + d.location + "</dd></div>" +

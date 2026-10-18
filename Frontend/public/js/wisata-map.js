@@ -582,14 +582,17 @@
        " · " +
        categoryName(d.categoryId) +
        "</p>" +
-       '<h3 class="font-bold text-base text-gray-900">' +
-       d.name +
-       "</h3>" +
-       '<p class="text-xs text-gray-500 mt-1 leading-relaxed">' +
-       (d.short_description || "") +
-       "</p>" +
-       "</div>" +
-       '<div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-gray-100 text-[11px] text-gray-600">' +
+        // Owner 2026-10-17: konsistensi judul/deskripsi semua kartu wisata —
+        // judul text-xl, deskripsi text-sm, meta text-xs (paritas kartu
+        // listing & rekomendasi).
+        '<h3 class="font-bold text-xl text-gray-900">' +
+        d.name +
+        "</h3>" +
+        '<p class="text-sm text-gray-500 mt-1 leading-relaxed">' +
+        (d.short_description || "") +
+        "</p>" +
+        "</div>" +
+        '<div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-gray-100 text-xs text-gray-600">' +
        rows +
        "</div>" +
        cta +

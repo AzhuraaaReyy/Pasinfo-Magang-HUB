@@ -193,13 +193,15 @@
         '<div class="flex items-center justify-between">' +
         '<div class="flex items-center gap-3">' +
         '<div class="w-9 h-9 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center text-gray-500 text-xs font-bold" aria-hidden="true">' + esc(r.initials || "P") + "</div>" +
-        '<span class="text-xs font-bold text-gray-900">' + esc(r.name) + "</span>" +
+        // Owner 2026-10-17: hierarki kartu review mengikuti kartu destinasi —
+        // nama (judul) text-xl, isi ulasan text-sm, meta (tanggal/aksi) text-xs.
+        '<span class="text-xl font-bold text-gray-900">' + esc(r.name) + "</span>" +
         "</div>" +
         '<div class="text-yellow-400 text-xs font-bold" role="img" aria-label="Rating ' + (r.rating || 5) + ' dari 5">' + stars(r.rating) + "</div>" +
         "</div>" +
-        '<p class="text-xs text-gray-600 leading-relaxed">' + esc(r.text) + "</p>" +
+        '<p class="text-sm text-gray-600 leading-relaxed">' + esc(r.text) + "</p>" +
         (photos ? '<div class="flex items-center gap-2 pt-1" aria-hidden="true">' + photos + "</div>" : "") +
-        '<div class="flex items-center justify-between text-[11px] text-gray-400 pt-2 border-t border-gray-100">' +
+        '<div class="flex items-center justify-between text-xs text-gray-400 pt-2 border-t border-gray-100">' +
         "<span>" + esc(r.date) + "</span>" +
         '<div class="flex items-center gap-4 text-gray-600">' +
         '<button type="button" data-like="' + idx + '" class="flex items-center gap-1 hover:text-blue-600 transition-colors" aria-label="Suka ulasan ini">' + HEART_SVG +
@@ -290,6 +292,10 @@
     });
 
     // Menu & Harga: window.PASINFO_KULINER_MENUS[slug] (4 item pertama, MOCK).
+    // Owner 2026-10-17: konsep kartu menu disamakan dengan detail_kuliner.js
+    // (menuCard) — badge kategori biru kiri-atas, badge rating putih
+    // kanan-atas (icon_rating.svg), foto h-44, judul text-xl, deskripsi
+    // text-sm, harga baris ikon icon_harga-tiket.svg text-xs.
     var menuGrid = $("menu-harga-grid");
     if (menuGrid) {
       var mpool = (window.PASINFO_KULINER_MENUS && window.PASINFO_KULINER_MENUS[item.slug]) || [];
@@ -300,14 +306,26 @@
         menuGrid.innerHTML = mshow.map(function (m) {
           var price = m.price_label || (m.price != null ? "Rp " + m.price : "");
           return (
-            '<article class="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-2xs flex flex-col h-full">' +
-            '<div class="relative h-24 bg-gradient-to-br from-amber-700 to-slate-800 overflow-hidden">' +
+            '<article class="relative rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white h-full flex flex-col">' +
+            '<div class="absolute top-3 left-3 right-3 flex items-center justify-between z-10">' +
+            (m.category
+              ? '<span class="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-md">' + esc(m.category) + "</span>"
+              : "") +
+            '<span class="inline-block px-2.5 py-1 bg-white text-gray-900 text-xs font-semibold rounded-md flex items-center gap-1">' +
+            '<img src="../../public/assets/icons/icon_rating.svg" alt="" class="w-4 h-4" />' + (m.rating != null ? m.rating : (item.rating != null ? item.rating : "-")) +
+            "</span>" +
+            "</div>" +
+            '<div class="relative h-44 overflow-hidden bg-gray-200">' +
             (m.image ? '<img src="' + m.image + '" alt="Foto ' + esc(m.name) + '" loading="lazy" class="w-full h-full object-cover" />' : "") +
             "</div>" +
-            '<div class="p-2.5 flex-1 flex flex-col">' +
-            '<h4 class="text-xs font-bold text-gray-900 line-clamp-1">' + esc(m.name) + "</h4>" +
-            '<p class="text-[10px] text-gray-500 mt-0.5">' + esc(price) + "</p>" +
-            "</div></article>"
+            '<div class="flex flex-col flex-1 p-4 bg-white">' +
+            '<h4 class="font-bold text-gray-900 text-xl line-clamp-2 mb-2">' + esc(m.name) + "</h4>" +
+            (m.description ? '<p class="text-sm text-gray-600 line-clamp-2 mb-3">' + esc(m.description) + "</p>" : "") +
+            '<div class="text-xs text-gray-600 mt-auto">' +
+            '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_harga-tiket.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + esc(price) + "</p>" +
+            "</div>" +
+            "</div>" +
+            "</article>"
           );
         }).join("");
       }
@@ -332,26 +350,62 @@
     }
 
     // Rekomendasi ← kuliner REAL; Sekitar ← wisata TERDEKAT (jarak real).
-    // Struktur kartu disamakan dgn detail_kuliner.html: foto + nama + rating
-    // + baris info (alamat utk rekomendasi, jarak utk sekitar).
-    function cardMedia(d, photoFn) {
-      var photo = photoFn ? photoFn(d) : null;
-      return photo
-        ? '<div class="h-24 sm:h-28"><img src="' + photo + '" alt="Foto ' + esc(d.name) + '" loading="lazy" class="w-full h-full object-cover" /></div>'
-        : '<div class="h-24 sm:h-28 bg-gradient-to-br from-amber-800 via-stone-700 to-slate-800" role="img" aria-label="Foto ' + esc(d.name) + ' (placeholder)"></div>';
+    // Struktur kartu diseragamkan dengan kartu rekomendasi detail_wisata.html
+    // (Owner 2026-10-17): badge kategori warna kiri-atas, badge rating putih
+    // kanan-atas, foto h-44, judul text-xl, deskripsi text-sm, baris info
+    // ikon text-xs.
+    function fmtDistKm(d) {
+      if (d && d._distKm != null && window.PasinfoNearby) {
+        return window.PasinfoNearby.fmtKm(d._distKm);
+      }
+      return "";
     }
-    function sharedCard(d, href, photoFn, subline) {
-      var rating = d.rating != null ? d.rating : "-";
+    function sharedCard(d, href, photoFn) {
+      var rating = d.rating != null && d.rating !== "" ? d.rating : "-";
+      var isWisata = href && href.indexOf("detail_wisata") !== -1;
+      var catId = d.categoryId || "";
+      var catName_val = "";
+      if (isWisata) {
+        var WC = (window.PASINFO_WISATA && window.PASINFO_WISATA.categories) || [];
+        for (var w = 0; w < WC.length; w++) {
+          if (WC[w].id === catId) { catName_val = WC[w].name; break; }
+        }
+        if (!catName_val) catName_val = "Wisata";
+      } else {
+        var KC = DATA.categories || [];
+        for (var k = 0; k < KC.length; k++) {
+          if (KC[k].id === catId) { catName_val = KC[k].name; break; }
+        }
+        if (!catName_val) catName_val = "Kuliner";
+      }
+      var badgeBg = isWisata ? "#dc2626" : "#2563eb";
+      var photo = photoFn ? photoFn(d) : null;
+      var media = photo
+        ? '<div class="relative h-44 overflow-hidden bg-gray-200"><img src="' + photo + '" alt="Foto ' + esc(d.name) + '" loading="lazy" class="w-full h-full object-cover" /></div>'
+        : '<div class="relative h-44 overflow-hidden bg-gradient-to-br from-amber-800 via-stone-700 to-slate-800" role="img" aria-label="Foto ' + esc(d.name) + ' (placeholder)"></div>';
+      var desc = d.short_description || "";
+      var loc = d.address || "";
+      var dist = fmtDistKm(d);
       return (
-        '<a href="' + href + '" class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow group block">' +
-        cardMedia(d, photoFn) +
-        '<div class="p-2.5 sm:p-3">' +
-        '<div class="flex items-center justify-between gap-2">' +
-        '<h3 class="text-[11px] sm:text-xs font-bold text-gray-900 line-clamp-1 group-hover:text-blue-700">' + esc(d.name) + "</h3>" +
-        '<span class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-semibold text-gray-700 shrink-0"><span aria-hidden="true" class="text-amber-400">★</span>' + rating + "</span>" +
+        '<a href="' + href + '" class="group block no-underline h-full">' +
+        '<article class="relative rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full flex flex-col bg-white">' +
+        '<div class="absolute top-3 left-3 right-3 flex items-center justify-between z-10">' +
+        '<span class="inline-block px-3 py-1 text-white text-xs font-bold rounded-md" style="background-color:' + badgeBg + '">' + esc(catName_val) + "</span>" +
+        '<span class="inline-block px-2.5 py-1 bg-white text-gray-900 text-xs font-semibold rounded-md flex items-center gap-1">' +
+        '<img src="../../public/assets/icons/icon_rating.svg" alt="" class="w-4 h-4" />' + rating +
+        "</span>" +
         "</div>" +
-        (subline ? '<p class="text-[10px] sm:text-[11px] text-gray-500 mt-0.5">' + esc(subline) + "</p>" : "") +
-        "</div></a>"
+        media +
+        '<div class="flex flex-col flex-1 p-4 bg-white">' +
+        '<h3 class="font-bold text-gray-900 text-xl line-clamp-2 mb-2">' + esc(d.name) + "</h3>" +
+        (desc ? '<p class="text-sm text-gray-600 line-clamp-2 mb-3">' + esc(desc) + "</p>" : "") +
+        '<div class="text-xs text-gray-600 mt-auto space-y-1">' +
+        (loc ? '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_lokasi-hitam.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + esc(loc) + "</p>" : "") +
+        (dist ? '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_jarak.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + esc(dist) + "</p>" : "") +
+        "</div>" +
+        "</div>" +
+        "</article>" +
+        "</a>"
       );
     }
     var others = DATA.culinaries.filter(function (d) {
@@ -364,7 +418,7 @@
     var recoGrid = $("reco-kuliner-grid");
     if (recoGrid) {
       recoGrid.innerHTML = recoList.map(function (d) {
-        return sharedCard(d, "detail_kuliner.html?slug=" + d.slug, kulinerThumbFor, d.address || "");
+        return sharedCard(d, "detail_kuliner.html?slug=" + d.slug, kulinerThumbFor);
       }).join("");
     }
     // Sekitar: destinasi wisata TERDEKAT by jarak real (nearby.js).
@@ -378,8 +432,7 @@
       } catch (e) { sekitar = []; }
       if (!sekitar.length) sekitar = wisata.slice(0, 4);
       destGrid.innerHTML = sekitar.map(function (d) {
-        var dist = d._distKm != null && window.PasinfoNearby ? window.PasinfoNearby.fmtKm(d._distKm) : (d.address || "");
-        return sharedCard(d, "detail_wisata.html?slug=" + d.slug, wisataPhotoFor, dist);
+        return sharedCard(d, "detail_wisata.html?slug=" + d.slug, wisataPhotoFor);
       }).join("");
     }
     // Judul sekitar mengikuti wilayah (sama dgn detail/menu_kuliner).

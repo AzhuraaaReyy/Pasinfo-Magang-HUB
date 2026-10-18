@@ -360,12 +360,23 @@
           border-bottom: none !important;
         }
 
-        /* Panel kanan · Berita Terbaru (span 2 baris) */
+        /* Panel kanan · Berita Terbaru (span 2 baris).
+           `contain: size` membuat tinggi panel TIDAK dihitung dari isinya,
+           sehingga baris grid tetap ditentukan kolom kiri (main card + 2
+           card) dan tidak ikut memanjang. Tinggi panel = tinggi kolom kiri;
+           bila daftar lebih panjang → scroll vertikal internal, dengan
+           scrollbar disembunyikan lewat class `no-scrollbar`. */
         [data-hero-aside] {
           grid-column: 2;
           grid-row: 1 / span 2;
           padding: 0 0 0 1.5rem !important;
           border-left: 1px solid #e5e7eb !important;
+          height: auto !important;
+          min-height: 0;
+          contain: size;
+          overflow-y: auto;
+          overflow-x: hidden;
+          overscroll-behavior: contain;
         }
 
         /* Teks main content rata kiri */
@@ -376,15 +387,19 @@
           padding-right: 0 !important;
         }
 
-        /* Berita Terbaru mengisi penuh tinggi panel kanan (konsep sama
-           tinggi). Bila panel kiri lebih tinggi, item daftar ikut
-           merenggang sehingga daftar mencapai bagian bawah. */
+        /* Berita Terbaru: mengisi tinggi panel bila muat (item merenggang),
+           tetapi TIDAK menyusut bila daftar lebih panjang — supaya daftar
+           dapat di-scroll alih-alih terpotong/terjepit. */
+        [data-hero-aside] > * {
+          flex: 0 0 auto;
+        }
+
         [data-hero-aside] > ul {
-          flex: 1 1 auto;
+          flex: 1 0 auto;
         }
 
         [data-hero-aside] > ul > li {
-          flex: 1 1 auto;
+          flex: 1 0 auto;
           display: flex;
           align-items: center;
         }
@@ -495,6 +510,135 @@
         a[class*="text-brand"] {
           min-height: 44px;
           min-width: 44px;
+        }
+      }
+
+      /* ══ TIPOGRAFI & GAMBAR MOBILE & TABLET (Owner 2026-10-17, rev.2) ══
+         Judul section (hanya "Berita Pilihan" & "Pasinfo Jelajah") = text-4xl.
+         Semua judul lain (main & aside, termasuk judul item sidebar "Berita
+         Terbaru" & judul item daftar kategori) = text-2xl, dipotong maks 2 baris.
+         Semua teks penjelas (deskripsi) = text-xl.
+         Info tambahan (tanggal/kategori/sumber/penulis + badge kategori) = 1rem.
+         Gambar pada baris berdampingan mengikuti tinggi teks di sebelahnya.
+         Hanya berlaku di bawah 1024px; tampilan desktop tidak berubah. */
+      @media (max-width: 1023.98px) {
+        /* ── Judul section = text-4xl (2.25rem), tidak dipotong ── */
+        #pilihan-heading,
+        #jelajah-heading {
+          font-size: 2.25rem !important;
+          line-height: 1.25 !important;
+        }
+
+        /* ── Semua judul lain = text-2xl (1.5rem) ── */
+        [data-hero-mid] h2,
+        [data-hero-left] article h3,
+        [data-hero-aside] h2,
+        [data-hero-aside] li h3,
+        [aria-labelledby="pilihan-heading"] article h3,
+        [aria-labelledby="jelajah-heading"] article h3,
+        [data-category-slider] h3,
+        [data-category-slider] h4 {
+          font-size: 1.5rem !important;
+          line-height: 1.3 !important;
+        }
+
+        /* Judul yang tidak muat dipotong maksimal 2 baris.
+           (Judul kategori [data-category-slider] h3 dikecualikan karena
+           berisi ikon dan tidak pernah panjang.) */
+        [data-hero-mid] h2,
+        [data-hero-left] article h3,
+        [data-hero-aside] h2,
+        [data-hero-aside] li h3,
+        [aria-labelledby="pilihan-heading"] article h3,
+        [aria-labelledby="jelajah-heading"] article h3,
+        [data-category-slider] h4 {
+          display: -webkit-box !important;
+          -webkit-box-orient: vertical !important;
+          -webkit-line-clamp: 2 !important;
+          overflow: hidden !important;
+        }
+
+        /* ── Semua teks penjelas (deskripsi) = text-xl (1.25rem) ── */
+        [data-hero-mid] p.mt-3,
+        [aria-labelledby="pilihan-heading"] > .container-page > div > p,
+        [aria-labelledby="pilihan-heading"] article p,
+        [aria-labelledby="jelajah-heading"] > .container-page > div > p,
+        [aria-labelledby="jelajah-heading"] article p {
+          font-size: 1.25rem !important;
+          line-height: 1.6 !important;
+        }
+
+        /* ── Info tambahan = 1rem (tanggal/kategori/sumber/penulis + badge) ── */
+        .hague-badge,
+        [aria-labelledby="pilihan-heading"] article [class~="text-[10px]"],
+        [aria-labelledby="jelajah-heading"] article [class~="absolute"][class~="rounded-full"],
+        .metadata-wrapper,
+        .metadata-wrapper.metadata-sm,
+        [data-hero-left-text] p,
+        [data-hero-aside] li p,
+        [data-hero-text] p.text-xs {
+          font-size: 1rem !important;
+          line-height: 1.5 !important;
+        }
+
+        /* ── Gambar "Berita Terbaru" (mobile): thumbnail landscape 4:3 tetap
+           di samping teks, ukuran tetap 96x72px. ── */
+        [data-hero-aside] li > a {
+          align-items: center !important;
+        }
+        [data-hero-aside] li > a > div:last-child {
+          width: 6rem !important;
+          height: 4.5rem !important;
+          align-self: center !important;
+        }
+
+        /* ── Tablet (≥768px): judul "Berita Terbaru" tampil sampai 3 baris
+           (2 baris terasa kurang terlihat), dan gambar mengikuti TINGGI blok
+           teks di sebelahnya supaya proporsional (tidak sempit/gepeng).
+           Lebar gambar = 42% baris (tetap, tidak ikut memengaruhi tinggi),
+           sedangkan tinggi mengikuti tinggi teks via `align-self: stretch`.
+           `<img>` dibuat absolute agar dimensi intrinsic-nya tidak ikut
+           menentukan tinggi baris (tinggi murni dari teks). ── */
+        @media (min-width: 768px) {
+          [data-hero-aside] li h3 {
+            -webkit-line-clamp: 3 !important;
+          }
+          [data-hero-aside] li > a {
+            align-items: stretch !important;
+          }
+          [data-hero-aside] li > a > div:last-child {
+            position: relative !important;
+            flex: 0 0 42% !important;
+            width: auto !important;
+            height: auto !important;
+            min-height: 0 !important;
+            align-self: stretch !important;
+          }
+          [data-hero-aside] li > a > div:last-child > img {
+            position: absolute !important;
+            inset: 0 !important;
+            height: 100% !important;
+            width: 100% !important;
+          }
+        }
+
+        /* ── Gambar daftar kategori: tinggi mengikuti blok teks di
+           sebelahnya (lebar tetap, gambar dipotong via object-cover). ── */
+        [data-category-slider] li > a {
+          align-items: stretch !important;
+        }
+        [data-category-slider] li > a > div:first-child {
+          height: auto !important;
+        }
+
+        /* Kartu grid "Berita Pilihan": samakan tinggi gambar antar-kartu
+           dengan rasio tetap 16:9. Ini mengalahkan aturan `aspect-ratio:auto;
+           min-height:200px` (<=768px) yang membuat tinggi gambar bisa
+           berbeda mengikuti rasio asli tiap file. (Kartu "Pasinfo Jelajah"
+           sudah seragam via h-48 sehingga tidak diubah.) */
+        [aria-labelledby="pilihan-heading"] article a > div:first-child {
+          aspect-ratio: 16 / 9 !important;
+          min-height: 0 !important;
         }
       }
 

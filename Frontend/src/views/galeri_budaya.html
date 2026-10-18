@@ -56,6 +56,8 @@
     class="bg-white text-gray-800 font-sans"
     data-page-active="galeri-budaya"
     data-asset-prefix="../../public"
+    data-wisata-href="wisata.html"
+    data-home-href="../../index.html"
   >
     <!-- HEADER / NAVBAR -->
     <div data-layout-header></div>
@@ -106,29 +108,25 @@
       <!-- FILTER MEDIA (SEMUA / FOTO / VIDEO) DIHAPUS
            (Owner 2026-10-16) — galeri budaya hanya berisi foto budaya. -->
 
-      <!-- MAIN CONTENT: SIDEBAR + GRID GALERI -->
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-        <!-- SIDEBAR KIRI -->
-        <aside class="space-y-6">
-          <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4">
-            <h3 class="font-bold text-sm text-gray-900 mb-3">
-              Kategori Budaya
-            </h3>
-            <ul id="category-sidebar" class="space-y-1.5 text-xs">
-              <!-- Menu Kategori dirender via JS -->
-            </ul>
-          </div>
+      <!-- MAIN CONTENT: FILTER KATEGORI + GRID GALERI -->
+      <!-- Owner 2026-10-17: sidebar kategori + Space Iklan samping dihapus
+           (keputusan Owner: iklan galeri yang dihapus hanya yang di sidebar).
+           Kategori jadi chip horizontal mengikuti UI/UX filter budaya.html
+           (tanpa ikon); warna chip mengikuti domain. Layout galeri satu
+           kolom penuh; iklan besar bawah halaman dipertahankan. -->
+      <div class="mb-8">
+        <!-- Filter kategori (chip horizontal, dirender via JS) -->
+        <div
+          id="category-sidebar"
+          class="flex space-x-2 overflow-x-auto no-scrollbar pb-4 mb-6"
+          role="group"
+          aria-label="Filter kategori galeri"
+        >
+          <!-- Chip kategori dirender via JS -->
+        </div>
 
-          <!-- Space Iklan Sidebar -->
-          <div
-            class="bg-gray-100 border border-gray-200 rounded-2xl h-48 flex items-center justify-center p-4"
-          >
-            <span class="font-bold text-gray-600 text-sm">Space Iklan</span>
-          </div>
-        </aside>
-
-        <!-- AREA GRID GALERI (RIGHT CONTENT) -->
-        <div class="lg:col-span-3">
+        <!-- AREA GRID GALERI -->
+        <div>
           <!-- Sub-header Grid -->
           <div class="flex items-center justify-between mb-4">
             <span id="gallery-count" class="text-xs font-bold text-gray-900"
@@ -158,16 +156,16 @@
           </p>
 
           <!-- Pagination -->
+          <!-- Owner 2026-10-18: teks "Menampilkan data/page" dihapus (Owner)
+               — pager saja, dipusatkan, bersih & rapi. -->
           <div
-            class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2"
+            class="flex items-center justify-center border-t pt-3"
           >
-            <p class="text-xs text-gray-500" id="gallery-range">Menampilkan data dari 1 - 9</p>
             <nav
               id="gallery-pager"
               class="flex items-center gap-1.5"
               aria-label="Pagination galeri"
             ></nav>
-            <p class="text-xs text-gray-500" id="gallery-pageinfo">Menampilkan page 1 - 20</p>
           </div>
         </div>
       </div>
@@ -188,7 +186,7 @@
               </div>
               <a
                 href="budaya.html"
-                class="text-[11px] font-semibold bud-accent-text hover:underline whitespace-nowrap mt-2 sm:mt-0"
+                class="text-sm font-semibold bud-accent-text hover:underline whitespace-nowrap mt-2 sm:mt-0"
                 >Jelajah Sekarang →</a
               >
             </div>
@@ -213,7 +211,7 @@
               </div>
               <a
                 href="budaya.html"
-                class="text-[11px] font-semibold bud-accent-text hover:underline whitespace-nowrap mt-2 sm:mt-0"
+                class="text-sm font-semibold bud-accent-text hover:underline whitespace-nowrap mt-2 sm:mt-0"
                 >Jelajah Sekarang →</a
               >
             </div>
@@ -238,7 +236,7 @@
               </div>
               <a
                 href="wisata.html"
-                class="text-[11px] font-semibold bud-accent-text hover:underline whitespace-nowrap mt-2 sm:mt-0"
+                class="text-sm font-semibold bud-accent-text hover:underline whitespace-nowrap mt-2 sm:mt-0"
                 >Jelajah Sekarang →</a
               >
             </div>

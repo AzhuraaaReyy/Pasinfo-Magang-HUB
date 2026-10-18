@@ -223,30 +223,34 @@
         ? '<img src="' + m.image + '" alt="Foto ' + esc(m.name) + '" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />'
         : '<span class="text-white/70 text-xs font-semibold">Foto segera hadir</span>';
       var badge = m.category
-        ? '<span class="absolute top-3 left-3 px-2.5 py-1 bg-blue-600 text-white text-[10px] font-bold uppercase rounded-lg">' + esc(m.category) + "</span>"
+        ? '<span class="absolute top-3 left-3 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-md">' + esc(m.category) + "</span>"
         : "";
       var ratingLike =
         '<span class="absolute top-3 right-3 flex items-center gap-1.5">' +
-        '<span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/90 text-[10px] font-bold text-gray-800 shadow-sm"><span aria-hidden="true" class="text-amber-400">★</span>' + (m.rating != null ? m.rating : "-") + "</span>" +
+        '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white text-gray-900 text-xs font-semibold"><img src="../../public/assets/icons/icon_rating.svg" alt="" class="w-4 h-4" />' + (m.rating != null ? m.rating : "-") + "</span>" +
         '<button type="button" data-like="' + esc(m.id) + '" aria-pressed="false" aria-label="Suka menu ' + esc(m.name) + '" class="w-7 h-7 rounded-lg bg-white/90 flex items-center justify-center text-gray-500 hover:text-red-500 shadow-sm transition-colors">' + HEART_SVG + "</button>" +
         "</span>";
+      // Owner 2026-10-17: kartu menu mengikuti pola badge kartu wisata
+      // (keputusan Owner) — kategori biru kiri-atas, rating putih
+      // kanan-atas, foto h-44, judul text-xl, deskripsi text-sm, meta
+      // (lokasi/jam/rating/harga) text-xs, semua tanpa variant breakpoint.
       var desc = m.description
-        ? '<p class="text-[11px] text-gray-500 mt-1 line-clamp-2">' + esc(m.description) + "</p>"
+        ? '<p class="text-sm text-gray-600 mt-1 line-clamp-2">' + esc(m.description) + "</p>"
         : "";
       return (
         '<article class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 flex flex-col h-full group">' +
-        '<div class="relative h-40 sm:h-44 bg-gradient-to-br from-amber-800 via-stone-700 to-slate-800 flex items-center justify-center overflow-hidden">' + media + badge + ratingLike + "</div>" +
+        '<div class="relative h-44 bg-gradient-to-br from-amber-800 via-stone-700 to-slate-800 flex items-center justify-center overflow-hidden">' + media + badge + ratingLike + "</div>" +
         '<div class="p-4 flex-1 flex flex-col justify-between">' +
         "<div>" +
-        '<h4 class="font-bold text-gray-900 text-sm sm:text-base line-clamp-2 group-hover:text-blue-700 transition-colors">' + esc(m.name) + "</h4>" +
+        '<h4 class="font-bold text-gray-900 text-xl line-clamp-2 group-hover:text-blue-700 transition-colors">' + esc(m.name) + "</h4>" +
         desc +
-        '<div class="mt-2 space-y-1 text-[11px] text-gray-600">' +
+        '<div class="mt-2 space-y-1 text-xs text-gray-600">' +
         '<p class="flex items-center gap-1.5"><img src="../../public/assets/icons/icon_lokasi-hitam.svg" alt="" aria-hidden="true" class="h-3 w-3 shrink-0 object-contain" /><span class="line-clamp-1">' + esc(placeLocation) + "</span></p>" +
         '<p class="flex items-center gap-1.5 flex-wrap"><img src="../../public/assets/icons/icon_waktu.svg" alt="" aria-hidden="true" class="h-3 w-3 shrink-0 object-contain" /><span>' + esc(jamDisplay) + '</span><span class="' + statusBadgeClass + '">' + esc(placeStatus.label) + "</span></p>" +
         "</div>" +
         "</div>" +
         '<div class="mt-3 pt-3 border-t border-gray-100">' +
-        '<span class="text-sm font-bold text-blue-700">' + esc(m.price) + "</span>" +
+        '<span class="text-xs font-bold text-blue-700">' + esc(m.price) + "</span>" +
         "</div></div></article>"
       );
     }
@@ -392,26 +396,62 @@
     });
     renderMenus();
 
-    // Rekomendasi + Sekitar: struktur kartu diseragamkan dengan
-    // detail_kuliner.html (Owner 2026-10-15): foto kecil, nama, rating, baris info.
-    function cardMedia(d, photoFn) {
-      var photo = photoFn ? photoFn(d) : null;
-      return photo
-        ? '<div class="h-24 sm:h-28"><img src="' + photo + '" alt="Foto ' + esc(d.name) + '" loading="lazy" class="w-full h-full object-cover" /></div>'
-        : '<div class="h-24 sm:h-28 bg-gradient-to-br from-amber-800 via-stone-700 to-slate-800" role="img" aria-label="Foto ' + esc(d.name) + ' (placeholder)"></div>';
+    // Rekomendasi + Sekitar: struktur kartu diseragamkan dengan kartu
+    // rekomendasi detail_wisata.html (Owner 2026-10-17): badge kategori warna
+    // kiri-atas, badge rating putih kanan-atas, foto h-44, judul text-xl,
+    // deskripsi text-sm, baris info ikon text-xs.
+    function fmtDistKm(d) {
+      if (d && d._distKm != null && window.PasinfoNearby) {
+        return window.PasinfoNearby.fmtKm(d._distKm);
+      }
+      return "";
     }
-    function sharedCard(d, href, photoFn, subline) {
-      var rating = d.rating != null ? d.rating : "-";
+    function sharedCard(d, href, photoFn) {
+      var rating = d.rating != null && d.rating !== "" ? d.rating : "-";
+      var isWisata = href && href.indexOf("detail_wisata") !== -1;
+      var catId = d.categoryId || "";
+      var catName_val = "";
+      if (isWisata) {
+        var WC = (window.PASINFO_WISATA && window.PASINFO_WISATA.categories) || [];
+        for (var w = 0; w < WC.length; w++) {
+          if (WC[w].id === catId) { catName_val = WC[w].name; break; }
+        }
+        if (!catName_val) catName_val = "Wisata";
+      } else {
+        var KC = DATA.categories || [];
+        for (var k = 0; k < KC.length; k++) {
+          if (KC[k].id === catId) { catName_val = KC[k].name; break; }
+        }
+        if (!catName_val) catName_val = "Kuliner";
+      }
+      var badgeBg = isWisata ? "#dc2626" : "#2563eb";
+      var photo = photoFn ? photoFn(d) : null;
+      var media = photo
+        ? '<div class="relative h-44 overflow-hidden bg-gray-200"><img src="' + photo + '" alt="Foto ' + esc(d.name) + '" loading="lazy" class="w-full h-full object-cover" /></div>'
+        : '<div class="relative h-44 overflow-hidden bg-gradient-to-br from-amber-800 via-stone-700 to-slate-800" role="img" aria-label="Foto ' + esc(d.name) + ' (placeholder)"></div>';
+      var desc = d.short_description || "";
+      var loc = d.address || "";
+      var dist = fmtDistKm(d);
       return (
-        '<a href="' + href + '" class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow group block">' +
-        cardMedia(d, photoFn) +
-        '<div class="p-2.5 sm:p-3">' +
-        '<div class="flex items-center justify-between gap-2">' +
-        '<h3 class="text-[11px] sm:text-xs font-bold text-gray-900 line-clamp-1 group-hover:text-blue-700">' + esc(d.name) + "</h3>" +
-        '<span class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-semibold text-gray-700 shrink-0"><span aria-hidden="true" class="text-amber-400">★</span>' + rating + "</span>" +
+        '<a href="' + href + '" class="group block no-underline h-full">' +
+        '<article class="relative rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full flex flex-col bg-white">' +
+        '<div class="absolute top-3 left-3 right-3 flex items-center justify-between z-10">' +
+        '<span class="inline-block px-3 py-1 text-white text-xs font-bold rounded-md" style="background-color:' + badgeBg + '">' + esc(catName_val) + "</span>" +
+        '<span class="inline-block px-2.5 py-1 bg-white text-gray-900 text-xs font-semibold rounded-md flex items-center gap-1">' +
+        '<img src="../../public/assets/icons/icon_rating.svg" alt="" class="w-4 h-4" />' + rating +
+        "</span>" +
         "</div>" +
-        (subline ? '<p class="text-[10px] sm:text-[11px] text-gray-500 mt-0.5">' + esc(subline) + "</p>" : "") +
-        "</div></a>"
+        media +
+        '<div class="flex flex-col flex-1 p-4 bg-white">' +
+        '<h3 class="font-bold text-gray-900 text-xl line-clamp-2 mb-2">' + esc(d.name) + "</h3>" +
+        (desc ? '<p class="text-sm text-gray-600 line-clamp-2 mb-3">' + esc(desc) + "</p>" : "") +
+        '<div class="text-xs text-gray-600 mt-auto space-y-1">' +
+        (loc ? '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_lokasi-hitam.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + esc(loc) + "</p>" : "") +
+        (dist ? '<p class="flex items-center gap-1"><img src="../../public/assets/icons/icon_jarak.svg" alt="" class="w-4 h-4 flex-shrink-0" />' + esc(dist) + "</p>" : "") +
+        "</div>" +
+        "</div>" +
+        "</article>" +
+        "</a>"
       );
     }
 
@@ -425,7 +465,7 @@
     var recoGrid = $("reco-grid");
     if (recoGrid) {
       recoGrid.innerHTML = recoList.map(function (d) {
-        return sharedCard(d, "detail_kuliner.html?slug=" + d.slug, kulinerThumbFor, d.address || "");
+        return sharedCard(d, "detail_kuliner.html?slug=" + d.slug, kulinerThumbFor);
       }).join("");
     }
 
@@ -439,8 +479,7 @@
     var nearbyGrid = $("nearby-grid");
     if (nearbyGrid) {
       nearbyGrid.innerHTML = sekitar.map(function (d) {
-        var dist = d._distKm != null && window.PasinfoNearby ? window.PasinfoNearby.fmtKm(d._distKm) : "";
-        return sharedCard(d, "detail_wisata.html?slug=" + d.slug, wisataPhotoFor, dist);
+        return sharedCard(d, "detail_wisata.html?slug=" + d.slug, wisataPhotoFor);
       }).join("");
     }
     // Judul sekitar mengikuti wilayah, sama dengan detail_kuliner.js.
