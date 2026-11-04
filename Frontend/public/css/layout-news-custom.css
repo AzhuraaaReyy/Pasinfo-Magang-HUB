@@ -1,0 +1,343 @@
+
+      body {
+        font-family: "Roboto", sans-serif;
+        background-color: #f8fafc;
+        color: #0f172a;
+        -webkit-font-smoothing: antialiased;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      /* Kategori filter aktif */
+      .news-chip.is-active {
+        background-color: #1d4ed8;
+        border-color: #1d4ed8;
+        color: #ffffff;
+      }
+
+      /* ══ TIPOGRAFI (Owner 2026-10-17) — disamakan dengan homepage ══
+         Hierarki menurun & seragam di mobile, tablet, dan desktop:
+           · Judul section (Kategori/Rekomendasi/Lainnya) = text-2xl (1.5rem)
+           · Judul konten utama (hero + kartu Berita Kategori) = text-2xl (1.5rem)
+           · Judul kartu section (Rekomendasi & Lainnya) = text-xl (1.25rem)
+           · Judul widget & item aside = 1rem (16px)
+           · Deskripsi = text-sm (0.875rem)
+           · Info tambahan (penulis/tanggal/sumber) = 0.75rem (12px);
+             tidak melebihi judul & deskripsi. */
+
+      /* ── Judul section = text-2xl (1.5rem) ── */
+      section[aria-label="Berita Kategori"] h2,
+      section[aria-label="Berita Rekomendasi"] h2,
+      section[aria-label="Berita Lainnya"] h2 {
+        font-size: 1.5rem !important;
+        line-height: 1.2 !important;
+      }
+
+      /* ── Judul konten utama (hero + kartu Berita Kategori) = text-2xl (1.5rem) ── */
+      [data-hero-large] h1,
+      [data-hero-stack] h2,
+      [data-news-main] [data-news-grid] h3 {
+        font-size: 1.5rem !important;
+        line-height: 1.3 !important;
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        -webkit-line-clamp: 3 !important;
+        overflow: hidden !important;
+      }
+
+      /* ── Judul kartu section (Rekomendasi & Berita Lainnya) = text-xl (1.25rem) ── */
+      [data-news-grid="reco"] h3,
+      [data-news-grid="more"] h3 {
+        font-size: 1.25rem !important;
+        line-height: 1.3 !important;
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        -webkit-line-clamp: 3 !important;
+        overflow: hidden !important;
+      }
+
+      /* ── Judul widget & item aside = 1rem (16px) ── */
+      [data-news-sidebar] h3,
+      [data-news-list] h4,
+      [data-news-video] h4,
+      [data-news-photo] h4 {
+        font-size: 1rem !important;
+        line-height: 1.35 !important;
+      }
+      [data-news-list] h4,
+      [data-news-video] h4,
+      [data-news-photo] h4 {
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        -webkit-line-clamp: 3 !important;
+        overflow: hidden !important;
+      }
+
+      /* ── Deskripsi = text-sm (0.875rem) ── */
+      [data-hero-large] p,
+      [data-hero-stack] p,
+      [data-news-grid] p,
+      section[aria-label="Berita Rekomendasi"] p,
+      section[aria-label="Berita Lainnya"] p,
+      [data-news-list] p,
+      [data-news-video] p,
+      [data-news-photo] p {
+        font-size: 0.875rem !important;
+        line-height: 1.6 !important;
+      }
+      [data-hero-large] p,
+      [data-hero-stack] p,
+      [data-news-grid] p {
+        -webkit-line-clamp: unset !important;
+        overflow: visible !important;
+      }
+      [data-news-list] p,
+      [data-news-video] p,
+      [data-news-photo] p {
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        -webkit-line-clamp: 2 !important;
+        overflow: hidden !important;
+        color: #64748b !important;
+      }
+
+      /* ── Info tambahan (penulis/tanggal/sumber) = 0.75rem (12px) ── */
+      [data-hero-large] [class~="text-[11px]"],
+      [data-hero-stack] [class~="text-[10px]"],
+      [data-news-grid] [class~="text-[10px]"],
+      [data-news-list] [class~="text-[9px]"],
+      [data-news-video] [class~="text-[9px]"],
+      [data-news-photo] [class~="text-[9px]"] {
+        font-size: 0.75rem !important;
+        line-height: 1.5 !important;
+      }
+
+      /* ══ GAMBAR (Owner 2026-11-08) ══
+         Kartu konten utama: rasio seragam 16/9 (sesuai aset -card.jpg)
+         agar crop konsisten. Thumbnail sidebar diperbesar (8rem x 6rem)
+         supaya gambar terlihat jelas dan tingginya seukuran 3 baris judul. */
+      [data-card-media] {
+        aspect-ratio: 16 / 9 !important;
+      }
+      [data-card-media] img,
+      [data-news-list] > .group > div:first-child img,
+      [data-news-video] > .group > div:first-child img,
+      [data-news-photo] > .group > div:first-child img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        object-position: center !important;
+      }
+      [data-news-list] > .group > div:first-child,
+      [data-news-video] > .group > div:first-child,
+      [data-news-photo] > .group > div:first-child {
+        width: 8rem !important;
+        height: 6rem !important;
+        flex: 0 0 auto !important;
+      }
+
+      /* Point 5: kartu dalam satu baris grid sama tinggi (equal height). */
+      [data-news-grid] {
+        align-items: stretch !important;
+      }
+
+      /* ══ LAYOUT TABLET (768–1023.98px) (Owner 2026-10-17) ══
+         Konten utama + sidebar menjadi 2 panel:
+           · panel kiri = konten utama (kartu berita grid 2 kolom),
+           · panel kanan = gabungan widget sidebar (satu kolom, tinggi
+             independen dari konten utama).
+         Urutan panel kanan (tablet):
+           Internasional → Nasional → Iklan → Foto → Video → Iklan.
+         Hero sudah otomatis 2 panel via `md:grid-cols-2` pada grid hero.
+         Perubahan hanya di rentang tablet; mobile & desktop tidak berubah. */
+      @media (min-width: 768px) and (max-width: 1023.98px) {
+        /* Kontainer utama: 2 kolom (kiri konten, kanan sidebar) */
+        main > div {
+          grid-template-columns: minmax(0, 1fr) minmax(0, 340px) !important;
+          gap: 2rem !important;
+          align-content: start !important;
+        }
+
+        /* Konten utama: panel kiri (tinggi independen, tidak direntangkan) */
+        [data-news-main] {
+          grid-column: 1 !important;
+          grid-row: 1 !important;
+          align-self: start !important;
+        }
+
+        /* Wrapper sidebar: SATU panel kanan yang tingginya SAMA dengan
+           konten utama (grid stretch). Semua data tetap tampil; isi panel
+           di-scroll vertikal lewat [data-news-scroll]. */
+        [data-news-sidebar] {
+          grid-column: 2 !important;
+          grid-row: 1 !important;
+          align-self: stretch !important;
+          position: relative !important;
+          overflow: visible !important;
+        }
+        [data-news-scroll] {
+          position: absolute !important;
+          inset: 0 !important;
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
+          -webkit-overflow-scrolling: touch;
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 2rem !important;
+          padding-right: 0.5rem !important;
+        }
+
+        /* Kedua sub-sidebar dilebur agar widget-nya jadi item flex wrapper */
+        [data-news-sidebar-left],
+        [data-news-sidebar-right] {
+          display: contents !important;
+        }
+
+        /* Hapus margin space-y milik aside; jarak diatur flex gap wrapper.
+           flex-shrink:0 wajib agar widget iklan (yang punya overflow:hidden
+           sehingga min-height:auto = 0) tidak kolaps disusutkan flex. */
+        [data-news-sidebar-left] > div,
+        [data-news-sidebar-right] > div {
+          margin-top: 0 !important;
+          flex-shrink: 0 !important;
+        }
+
+        /* Urutan widget panel kanan */
+        [data-news-sidebar-left] > div:nth-child(1) { order: 1 !important; } /* Internasional */
+        [data-news-sidebar-right] > div:nth-child(1) { order: 2 !important; } /* Nasional */
+        [data-news-sidebar-left] > div:nth-child(3) { order: 3 !important; } /* Iklan (Sponsored) */
+        [data-news-sidebar-right] > div:nth-child(2) { order: 4 !important; } /* Foto */
+        [data-news-sidebar-left] > div:nth-child(2) { order: 5 !important; } /* Video */
+        [data-news-sidebar-right] > div:nth-child(3) { order: 6 !important; } /* Iklan (Banner) */
+
+        /* Rekomendasi & Lainnya: 3 kolom di tablet */
+        [data-news-grid="reco"],
+        [data-news-grid="more"] {
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        }
+
+        /* Point 1 (revisi): item sidebar ditampilkan SEMUA (tersusun
+           vertikal), panel kanan di-scroll vertikal dengan tinggi = konten
+           utama — lihat aturan [data-news-sidebar] / [data-news-scroll]. */
+      }
+
+      /* Konten utama (Berita Terbaru): 1 kolom di mobile & tablet */
+      @media (max-width: 1023.98px) {
+        [data-news-main] [data-news-grid] {
+          grid-template-columns: minmax(0, 1fr) !important;
+        }
+
+        /* Point 4: thumbnail sidebar mengikuti tinggi judul + deskripsi
+           (mobile & tablet). Lebar tetap 8rem; tinggi stretch ke tinggi teks. */
+        [data-news-list] > .group,
+        [data-news-video] > .group,
+        [data-news-photo] > .group {
+          align-items: stretch !important;
+        }
+        [data-news-list] > .group > div:first-child,
+        [data-news-video] > .group > div:first-child,
+        [data-news-photo] > .group > div:first-child {
+          height: auto !important;
+          align-self: stretch !important;
+          min-height: 6rem !important;
+        }
+        [data-news-list] > .group > div:first-child img,
+        [data-news-video] > .group > div:first-child img,
+        [data-news-photo] > .group > div:first-child img {
+          position: absolute !important;
+          inset: 0 !important;
+        }
+      }
+
+      /* ══ LAYOUT DESKTOP (≥1024px) (Owner 2026-10-17) ══
+         Wrapper sidebar dilepas (display:contents) sehingga kedua <aside>
+         kembali menjadi kolom kiri & kanan pada grid 12 kolom yang sama. */
+      @media (min-width: 1024px) {
+        [data-news-sidebar],
+        [data-news-scroll] {
+          display: contents !important;
+        }
+
+        /* Wrapper dilepas (display:contents) tetapi `space-y-8` masih
+           menyisakan margin-top 2rem pada <aside> kedua, sehingga sidebar
+           kanan turun 32px. Netralkan di desktop. */
+        [data-news-sidebar-left],
+        [data-news-sidebar-right] {
+          margin-top: 0 !important;
+        }
+
+        [data-news-sidebar-left] {
+          grid-column: 1 / span 3 !important;
+          grid-row: 1 !important;
+        }
+
+        [data-news-main] {
+          grid-column: 4 / span 6 !important;
+          grid-row: 1 !important;
+        }
+
+        [data-news-sidebar-right] {
+          grid-column: 10 / span 3 !important;
+          grid-row: 1 !important;
+        }
+
+        /* Konten utama (Berita Terbaru): 2 kolom di desktop */
+        [data-news-main] [data-news-grid] {
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        /* Rekomendasi & Lainnya: 4 kolom penuh di desktop */
+        [data-news-grid="reco"],
+        [data-news-grid="more"] {
+          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        }
+
+        /* Tipografi tidak lagi berbeda di desktop: skala seragam (lihat blok
+           dasar di atas) berlaku untuk mobile, tablet, dan desktop. */
+
+        /* Point 2: foto hero (2 kartu kanan) tampil utuh tanpa crop di desktop. */
+        [data-hero-stack] img {
+          object-fit: contain !important;
+        }
+      }
+
+      /* ══ BADGE (Owner 2026-10-17) — seluruh badge dibuat seragam & mudah
+         dibaca di semua ukuran layar. Mobile 11px; tablet & desktop 12px.
+         Padding diseragamkan (py-0.5 px-1.5); warna/radius tiap badge tetap.
+         Hanya menyasar elemen ber-atribut data-badge, tidak menyentuh teks
+         info (tanggal/sumber) atau elemen lain. */
+      [data-badge] {
+        font-size: 0.6875rem !important;
+        line-height: 1.3 !important;
+        padding: 0.125rem 0.375rem !important;
+      }
+      [data-badge] i {
+        font-size: 0.85em !important;
+        line-height: 1;
+      }
+      @media (min-width: 768px) {
+        [data-badge] {
+          font-size: 0.75rem !important;
+        }
+      }
+
+      /* ══ INFO TAMBAHAN / META (tanggal + sumber) (Owner 2026-10-18) ══
+         Sebaris bila masih muat; otomatis menumpuk (tanggal di atas, sumber
+         di bawah) bila ruang tidak cukup — agar tidak terpotong / terlihat
+         aneh. Item yang terlalu panjang membungkus teksnya sendiri. */
+      [data-news-meta] {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        column-gap: 0.5rem !important;
+        row-gap: 0.125rem !important;
+      }
+      [data-news-meta] > span {
+        min-width: 0 !important;
+        overflow-wrap: anywhere !important;
+      }
+    

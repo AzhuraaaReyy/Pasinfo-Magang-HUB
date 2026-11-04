@@ -18,50 +18,7 @@
          detail_budaya / galeri_budaya (Owner 2026-10-16). Utility
          violet/violet solid tidak ada di public/css/styles.css terkompilasi
          dan build:css tidak dijalankan -> didefinisikan scoped di sini. -->
-    <style>
-      :root {
-        --bud-accent: #6d28d9;
-        --bud-accent-dark: #5b21b6;
-        --bud-accent-soft: #ede9fe;
-      }
-      .bud-accent {
-        background-color: var(--bud-accent);
-        color: #fff;
-      }
-      .bud-accent:hover {
-        background-color: var(--bud-accent-dark);
-      }
-      .bud-accent-soft {
-        background-color: var(--bud-accent-soft);
-        color: var(--bud-accent);
-      }
-      .bud-accent-text {
-        color: var(--bud-accent);
-      }
-      .bud-accent-text:hover {
-        color: var(--bud-accent-dark);
-      }
-      .bud-accent-ring {
-        box-shadow: 0 0 0 2px var(--bud-accent);
-      }
-      /* Filter kategori: di mobile jadi baris yang bisa digeser horizontal
-         (scrollbar disembunyikan). Mirror #menu-filter-row menu_kuliner.html. */
-      @media (max-width: 639.98px) {
-        #cerita-filter-row {
-          flex-wrap: nowrap;
-          overflow-x: auto;
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-          padding-bottom: 2px;
-        }
-        #cerita-filter-row::-webkit-scrollbar {
-          display: none;
-        }
-        #cerita-filter-row > button {
-          flex: 0 0 auto;
-        }
-      }
-    </style>
+        <link rel="stylesheet" href="../../public/css/semua-cerita-budaya.css" />
     <!-- GSAP Animations (Owner override design.md §49-50; pola menu_kuliner):
          CDN + ScrollTrigger, urutan terjaga: gsap → ScrollTrigger → animasi. -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>

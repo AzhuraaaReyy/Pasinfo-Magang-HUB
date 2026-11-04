@@ -1,0 +1,234 @@
+
+      body {
+        font-family: "Roboto", sans-serif;
+        background-color: #ffffff;
+        color: #334155;
+        -webkit-font-smoothing: antialiased;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      /* ══ TIPOGRAFI (Owner 2026-10-17) — konsisten dengan LayoutNews.html ══
+         Hierarki menurun & seragam di mobile, tablet, dan desktop:
+           · Judul artikel/konten utama = text-2xl (1.5rem)
+           · Judul section utama (Rekomendasi/Pasuruan Lainnya) = text-2xl (1.5rem)
+           · Judul kartu section (Rekomendasi/Pasuruan Lainnya) = text-xl (1.25rem)
+           · Judul widget & item aside = 1rem (16px)
+           · Deskripsi/ringkasan = text-sm (0.875rem); isi bacaan = 1rem
+           · Info tambahan (penulis/tanggal/sumber) = 0.75rem (12px);
+             tidak melebihi judul & deskripsi. */
+
+      /* ── Konten utama (artikel) ── */
+      [data-article-title] {
+        font-size: 1.5rem !important;
+        line-height: 1.3 !important;
+        font-weight: 800 !important;
+      }
+      [data-article-excerpt] {
+        font-size: 0.875rem !important;
+        line-height: 1.6 !important;
+      }
+      [data-article-content],
+      [data-article-content] blockquote {
+        font-size: 1rem !important;
+        line-height: 1.7 !important;
+      }
+      [data-article-excerpt] + div {
+        font-size: 0.75rem !important;
+        line-height: 1.5 !important;
+      }
+
+      /* ── Judul widget aside & judul section utama ── */
+      [data-widget-title] {
+        font-size: 1rem !important;
+      }
+      [data-section-title] {
+        font-size: 1.5rem !important;
+        line-height: 1.2 !important;
+      }
+
+      /* ── Kartu aside (Terbaru/Terpopuler/Video/Foto) ──
+         Judul daftar horizontal dibatasi 2 baris agar tinggi baris tetap
+         ringkas dan thumbnail landscape tidak "tenggelam"; Foto Terkait
+         (grid) tetap 3 baris. */
+      [data-news-list] h3,
+      [data-news-video] h3,
+      [data-news-photo-grid] h3 {
+        font-size: 1rem !important;
+        line-height: 1.35 !important;
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+      }
+      [data-news-list] h3,
+      [data-news-video] h3 {
+        -webkit-line-clamp: 2 !important;
+      }
+      [data-news-photo-grid] h3 {
+        -webkit-line-clamp: 3 !important;
+      }
+      [data-news-list] [data-news-desc],
+      [data-news-video] [data-news-desc],
+      [data-news-photo-grid] [data-news-desc] {
+        font-size: 0.875rem !important;
+        line-height: 1.5 !important;
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        -webkit-line-clamp: 2 !important;
+        overflow: hidden !important;
+        color: #64748b !important;
+      }
+      [data-news-list] [class~="text-[9px]"],
+      [data-news-list] [class~="text-[10px]"],
+      [data-news-video] [class~="text-[9px]"],
+      [data-news-photo-grid] [class~="text-[9px]"] {
+        font-size: 0.75rem !important;
+        line-height: 1.5 !important;
+      }
+
+      /* ── Item aside (daftar horizontal Terkait/Terbaru/Terpopuler/Video) ──
+         1) Thumbnail memakai aset landscape 16:9 (beritaN-card.jpg) dengan
+            ukuran tetap 5rem x 4rem, ditampilkan object-cover (tanpa
+            distorsi) dan diposisikan di TENGAH baris → sisa ruang simetris
+            atas-bawah, tidak ada gambar yang menjadi vertikal.
+         2) Divider tipis antar item (kecuali item terakhir). */
+      [data-news-list] > .group,
+      [data-news-video] > .group {
+        align-items: center !important;
+      }
+      [data-news-list] > .group:not(:last-child),
+      [data-news-video] > .group:not(:last-child) {
+        padding-bottom: 0.75rem !important;
+        border-bottom: 1px solid #e5e7eb !important;
+      }
+
+      /* ── Kartu grid (Berita Rekomendasi Lainnya / Pasuruan Lainnya) ──
+         Judul tetap mengalir (tidak dipotong) di semua ukuran layar. */
+      [data-news-grid] h3 {
+        font-size: 1.25rem !important;
+        line-height: 1.3 !important;
+        -webkit-line-clamp: unset !important;
+        overflow: visible !important;
+      }
+      [data-news-grid] [data-news-desc] {
+        font-size: 0.875rem !important;
+        line-height: 1.6 !important;
+        -webkit-line-clamp: unset !important;
+        overflow: visible !important;
+        color: #64748b !important;
+      }
+      [data-news-grid] [class~="text-[9px]"] {
+        font-size: 0.75rem !important;
+        line-height: 1.5 !important;
+      }
+
+      /* ══ LAYOUT TABLET (768–1023.98px) (Owner 2026-10-17) ══
+         Area utama menjadi 2 panel:
+           · panel kiri  = konten utama (artikel),
+           · panel kanan = gabungan SEMUA widget aside dalam satu panel.
+         Tinggi panel kanan = tinggi panel kiri (grid stretch / equal-height),
+         isi panel di-scroll vertikal; urutan widget tetap seperti sekarang.
+         Perubahan hanya di rentang tablet; mobile & desktop tidak berubah. */
+      @media (min-width: 768px) and (max-width: 1023.98px) {
+        [data-news-layout] {
+          grid-template-columns: minmax(0, 1fr) minmax(0, 340px) !important;
+          gap: 2rem !important;
+          align-content: start !important;
+        }
+
+        /* Konten utama: panel kiri (tinggi independen, tidak direntangkan) */
+        [data-news-main] {
+          grid-column: 1 !important;
+          grid-row: 1 !important;
+          align-self: start !important;
+        }
+
+        /* Wrapper sidebar: SATU panel kanan setinggi konten utama */
+        [data-news-sidebar] {
+          grid-column: 2 !important;
+          grid-row: 1 !important;
+          align-self: stretch !important;
+          position: relative !important;
+          overflow: visible !important;
+        }
+        [data-news-scroll] {
+          position: absolute !important;
+          inset: 0 !important;
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
+          -webkit-overflow-scrolling: touch;
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 2rem !important;
+          padding-right: 0.5rem !important;
+        }
+
+        /* Kedua aside dilebur agar widget-nya jadi item flex panel kanan */
+        [data-news-sidebar-left],
+        [data-news-sidebar-right] {
+          display: contents !important;
+        }
+
+        /* Hapus margin space-y milik aside; jarak diatur flex gap wrapper.
+           flex-shrink:0 agar kartu iklan (overflow:hidden, min-height:auto=0)
+           tidak kolaps saat panel di-scroll. */
+        [data-news-sidebar-left] > section,
+        [data-news-sidebar-right] > section {
+          margin-top: 0 !important;
+          flex-shrink: 0 !important;
+        }
+
+        /* Berita Pasuruan Lainnya: 3 kolom di tablet */
+        [data-news-grid="pasuruan"] {
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        }
+      }
+
+      /* ══ LAYOUT DESKTOP (≥1024px) (Owner 2026-10-17) ══
+         Wrapper dilepas (display:contents) sehingga kedua <aside> kembali
+         menjadi kolom kiri & kanan pada grid 12 kolom yang sama. */
+      @media (min-width: 1024px) {
+        [data-news-sidebar],
+        [data-news-scroll] {
+          display: contents !important;
+        }
+        [data-news-sidebar-left],
+        [data-news-sidebar-right] {
+          margin-top: 0 !important;
+        }
+        [data-news-sidebar-left] {
+          grid-column: 1 / span 3 !important;
+          grid-row: 1 !important;
+        }
+        /* Kolom artikel = panel scroll internal (Owner 2026-10-18).
+           main dibuat setinggi baris grid (ditentukan sidebar tertinggi) dan
+           isinya di-scroll di dalam panel, sehingga komentar panjang tidak
+           memanjangkan halaman. min-height 100vh mencegah panel terlalu
+           pendek bila suatu saat kolom sidebar lebih pendek dari layar.
+           Scrollbar panel disembunyikan lewat class no-scrollbar, jadi tidak
+           ada padding gutter (konten memakai lebar kolom penuh). */
+        [data-news-main] {
+          grid-column: 4 / span 6 !important;
+          grid-row: 1 !important;
+          position: relative !important;
+          align-self: stretch !important;
+          min-height: 100vh;
+        }
+        [data-news-main-scroll] {
+          position: absolute !important;
+          inset: 0 !important;
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
+          -webkit-overflow-scrolling: touch;
+        }
+        [data-news-sidebar-right] {
+          grid-column: 10 / span 3 !important;
+          grid-row: 1 !important;
+        }
+      }
+    

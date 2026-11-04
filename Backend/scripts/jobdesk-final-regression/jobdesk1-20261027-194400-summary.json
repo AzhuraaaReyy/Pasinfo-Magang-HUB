@@ -1,0 +1,180 @@
+﻿[
+    {
+        "id":  "KUL-03",
+        "question":  "Ada rekomendasi kuliner lokal Pasuruan nggak?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  8179,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "KUL-04",
+        "question":  "Saya mencari makanan tradisional, bukan kafe atau minuman. Tempat apa yang sesuai?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  3652,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "KUL-05",
+        "question":  "Saya berada di Pasuruan Utara dan ingin makan siang. Ada pilihan di area itu?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  3616,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "KUL-06",
+        "question":  "Jenis makanan apa yang disajikan di Nasi Punel Bu Hj. Lin?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "relevant",
+        "retrieval_k":  5,
+        "context_k":  1,
+        "context_similarity_min":  0.6817944307127755,
+        "llm_latency_ms":  7867,
+        "sources":  [
+                        {
+                            "distance":  0.31820556928722454,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "semantic",
+                            "similarity":  0.6817944307127755,
+                            "source_id":  1,
+                            "source_label":  "Nasi Punel Bu Hj. Lin",
+                            "source_type":  "culinary"
+                        }
+                    ],
+        "answer":  "Nasi Punel Bu Hj. Lin menyajikan nasi punel, hidangan khas Bangil yang dikenal dengan lauknya yang beragam. Pilihan lauknya meliputi empal, lidah, babat, dan ayam, sehingga pengunjung bisa menyesuaikan dengan selera masing-masing.\n\nSumber: Nasi Punel Bu Hj. Lin",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "KUL-07",
+        "question":  "Dari rekomendasi tadi, mana yang punya alamat dan koordinat lengkap?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  4157,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "KUL-08",
+        "question":  "Berapa harga makanan dan apakah tempatnya buka malam ini?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  4350,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "BUD-01",
+        "question":  "Tradisi dan kesenian apa saja yang tersedia dalam data budaya Pasuruan?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  5055,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "BUD-02",
+        "question":  "Apa yang kamu ketahui tentang Candi Jawi?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  2597,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "BUD-03",
+        "question":  "Kalau mau belajar sejarah Pasuruan, situs apa yang bisa saya lihat?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  8306,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "BUD-04",
+        "question":  "Saya hanya punya waktu singkat dan ingin mengunjungi tempat yang punya rumah informasi. Apa pilihannya?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  5293,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    }
+]

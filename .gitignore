@@ -2,10 +2,24 @@ node_modules/
 .DS_Store
 Thumbs.db
 *.log
-
+.env
+*/.env
+# Env variants hold secrets too; only the example is committed (audit 30 Okt P4-1).
+.env.*
+!.env.example
+# Build output, local databases, and runtime logs (chat content) stay out of the repository.
+*.exe
+*.db
+*.sqlite
+log-backend.txt
 docs/
 AGENTS.md
 cards_opening - Google Chrome 2026-10-10 13-54-15.mp4
 Pasuruan Info - Eksplorasi Wisata Pasuruan Raya - Google Chrome 2026-10-12 00-37-38.mp4
 .opencode/
 .superpowers
+Backend.zip
+devbackend
+hasil-test.txt
+struktur-folder.txt
+backend.zip

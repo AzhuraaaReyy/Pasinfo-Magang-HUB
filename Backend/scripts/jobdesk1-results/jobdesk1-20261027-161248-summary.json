@@ -1,0 +1,57 @@
+﻿{
+    "id":  "KUL-08",
+    "question":  "Berapa harga makanan dan apakah tempatnya buka malam ini?",
+    "http_status":  200,
+    "assistant_status":  "complete",
+    "retrieval_k":  5,
+    "sources":  [
+                    {
+                        "distance":  0,
+                        "embedding_model":  "embeddinggemma",
+                        "retrieval_method":  "intent_category",
+                        "similarity":  1,
+                        "source_id":  1,
+                        "source_label":  "Nasi Punel Bu Hj. Lin",
+                        "source_type":  "culinary"
+                    },
+                    {
+                        "distance":  0,
+                        "embedding_model":  "embeddinggemma",
+                        "retrieval_method":  "intent_category",
+                        "similarity":  1,
+                        "source_id":  2,
+                        "source_label":  "Depot Nasi Punel Setia Budi Bangil",
+                        "source_type":  "culinary"
+                    },
+                    {
+                        "distance":  0,
+                        "embedding_model":  "embeddinggemma",
+                        "retrieval_method":  "intent_category",
+                        "similarity":  1,
+                        "source_id":  3,
+                        "source_label":  "Warung Pojok Nasi Punel Bangil",
+                        "source_type":  "culinary"
+                    },
+                    {
+                        "distance":  0,
+                        "embedding_model":  "embeddinggemma",
+                        "retrieval_method":  "intent_category",
+                        "similarity":  1,
+                        "source_id":  4,
+                        "source_label":  "Waroeng Sambel",
+                        "source_type":  "culinary"
+                    },
+                    {
+                        "distance":  0,
+                        "embedding_model":  "embeddinggemma",
+                        "retrieval_method":  "intent_category",
+                        "similarity":  1,
+                        "source_id":  5,
+                        "source_label":  "Warung Teko Beji",
+                        "source_type":  "culinary"
+                    }
+                ],
+    "answer":  "Berikut adalah daftar harga makanan dari restoran-restoran yang disebutkan:\n\n*   **Nasi Punel Bu Hj. Lin:**\n    *   Mie Goreng Jawa: Rp31.000\n    *   Lontong Sayur: Rp31.000\n    *   Pecel: Rp31.000\n    *   Empal Gentong: Rp25.000\n    *   Nasi Uduk: Rp22.000\n    *   Gado-Gado: Rp21.000\n    *   Tahu Telur: Rp26.000\n    *   Air Mineral: Rp9.000\n    *   Es Cincau: Rp7.000\n    *   Susu Jahe: Rp9.000\n    *   Soda Gembira: Rp7.000\n    *   Pisang Goreng: Rp6.000\n    *   Bakwan Sayur: Rp5.000\n    *   Perkedel Kentang: Rp7.000\n    *   Kerupuk Udang: Rp8.000\n\n*   **Depot Nasi Punel Setia Budi Bangil:**\n    *   Nasi Uduk: Rp26.000\n    *   Gado-Gado: Rp21.000\n    *   Tahu Telur: Rp18.000\n    *   Nasi Rawon: Rp23.000\n    *   Nasi Goreng Spesial: Rp25.000\n    *   Soto Ayam: Rp26.000\n    *   Ayam Goreng Kampung: Rp27.000\n    *   Kopi Hitam: Rp11.000\n    *   Kopi Susu: Rp11.000\n    *   Es Kelapa Muda: Rp11.000\n    *   Es Campur: Rp8.000\n    *   Tahu Isi: Rp6.000\n    *   Lumpia Semarang: Rp8.000",
+    "evaluation":  "REVIEW_REQUIRED",
+    "error":  null
+}

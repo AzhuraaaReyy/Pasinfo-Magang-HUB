@@ -1,0 +1,25 @@
+# Keep secrets and files the build does not need out of the Docker build context (2026-10-31).
+# The image needs only: go.mod, go.sum, cmd/, internal/, data/wilayah, cmd/seed/data.
+
+# Secrets: the container gets its values from env_file at run time, never from the image
+.env
+.env.*
+!.env.example
+
+# Reference backend, documentation, test scripts, and local binaries
+devbackend/
+docs/
+scripts/
+docker/
+*.exe
+*.log
+
+# Local SQLite fallback database and uploads
+internal/data/*.db
+uploads/
+
+# Version control and editor files
+.git
+.gitignore
+.vscode/
+.idea/

@@ -1,0 +1,554 @@
+﻿[
+    {
+        "id":  "EVT-08",
+        "question":  "Tolong rekomendasikan event akhir pekan ini yang benar-benar berlangsung.",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  3344,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.6514580963303829,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.3485419036696171,
+                                         "source_id":  1,
+                                         "source_label":  "Festival Seni Mock",
+                                         "source_type":  "event"
+                                     },
+                                     {
+                                         "distance":  0.6701648536471563,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.3298351463528437,
+                                         "source_id":  15,
+                                         "source_label":  "Festival Teater Pelajar Mock",
+                                         "source_type":  "event"
+                                     },
+                                     {
+                                         "distance":  0.6739044085797875,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.3260955914202125,
+                                         "source_id":  19,
+                                         "source_label":  "Pekan Raya Pasuruan",
+                                         "source_type":  "event"
+                                     },
+                                     {
+                                         "distance":  0.6765286624431404,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.32347133755685964,
+                                         "source_id":  28,
+                                         "source_label":  "Festival Jalur Rempah: Pagelaran Warisan Budaya Tak Benda",
+                                         "source_type":  "event"
+                                     },
+                                     {
+                                         "distance":  0.6814672540743654,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.31853274592563463,
+                                         "source_id":  16,
+                                         "source_label":  "Jelajah Museum Malam Mock",
+                                         "source_type":  "event"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "UMM-01",
+        "question":  "Apa perbedaan Kota Pasuruan dan Kabupaten Pasuruan?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  3625,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.47517009449447933,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.5248299055055207,
+                                         "source_id":  1,
+                                         "source_label":  "Kota Pasuruan",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5656364975517686,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4343635024482314,
+                                         "source_id":  35,
+                                         "source_label":  "Taman Kota Pasuruan",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.5661907253096141,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4338092746903859,
+                                         "source_id":  5,
+                                         "source_label":  "Pasuruan Selatan",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5719441515290281,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4280558484709719,
+                                         "source_id":  2,
+                                         "source_label":  "Pasuruan Timur",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5832667673488666,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4167332326511334,
+                                         "source_id":  3,
+                                         "source_label":  "Pasuruan Barat",
+                                         "source_type":  "region"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "UMM-02",
+        "question":  "Wilayah Pasuruan apa saja yang tersedia dalam basis data?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  5127,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.49899426156590165,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.5010057384340983,
+                                         "source_id":  1,
+                                         "source_label":  "Kota Pasuruan",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5038067678057596,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4961932321942404,
+                                         "source_id":  2,
+                                         "source_label":  "Pasuruan Timur",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5054938187311782,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.49450618126882184,
+                                         "source_id":  3,
+                                         "source_label":  "Pasuruan Barat",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5135263075717391,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4864736924282609,
+                                         "source_id":  5,
+                                         "source_label":  "Pasuruan Selatan",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5421614743893236,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4578385256106764,
+                                         "source_id":  4,
+                                         "source_label":  "Pasuruan Utara",
+                                         "source_type":  "region"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "UMM-03",
+        "question":  "Pasuruan itu masuk kota atau kabupaten?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  5396,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.4849754571914088,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.5150245428085912,
+                                         "source_id":  1,
+                                         "source_label":  "Kota Pasuruan",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5720845209939381,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.42791547900606186,
+                                         "source_id":  5,
+                                         "source_label":  "Pasuruan Selatan",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5867710709571369,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4132289290428631,
+                                         "source_id":  2,
+                                         "source_label":  "Pasuruan Timur",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5870108740663368,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4129891259336632,
+                                         "source_id":  35,
+                                         "source_label":  "Taman Kota Pasuruan",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.6067834580362261,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.39321654196377387,
+                                         "source_id":  3,
+                                         "source_label":  "Pasuruan Barat",
+                                         "source_type":  "region"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "UMM-04",
+        "question":  "Saya ingin mencari wisata di bagian selatan Pasuruan. Informasi wilayah apa yang tersedia?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  3659,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.45661003635080777,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.5433899636491922,
+                                         "source_id":  5,
+                                         "source_label":  "Pasuruan Selatan",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5286413150215254,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.47135868497847455,
+                                         "source_id":  1,
+                                         "source_label":  "Kota Pasuruan",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5341997130094746,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.46580028699052545,
+                                         "source_id":  35,
+                                         "source_label":  "Taman Kota Pasuruan",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.5437743391855501,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.45622566081444993,
+                                         "source_id":  2,
+                                         "source_label":  "Pasuruan Timur",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5522892395272587,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4477107604727413,
+                                         "source_id":  3,
+                                         "source_label":  "Pasuruan Barat",
+                                         "source_type":  "region"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "UMM-05",
+        "question":  "Saya sedang menyusun rencana perjalanan dan ingin tahu area yang didukung aplikasi ini.",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  3989,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.695674644869479,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.30432535513052095,
+                                         "source_id":  60,
+                                         "source_label":  "BNI wondrX 2026 Hadirkan Zona Travel sebagai Solusi Kebutuhan Perjalanan",
+                                         "source_type":  "news"
+                                     },
+                                     {
+                                         "distance":  0.7424206697562532,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.2575793302437468,
+                                         "source_id":  43,
+                                         "source_label":  "Kemendagri Perkuat Kolaborasi Lintas Kementerian dan Lembaga dalam Apresiasi Pemerintah Daerah Berprestasi",
+                                         "source_type":  "news"
+                                     },
+                                     {
+                                         "distance":  0.744019940851908,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.25598005914809197,
+                                         "source_id":  41,
+                                         "source_label":  "Kemendagri Dorong Daerah yang Cukup Pasokan Sampah dan Kapasitas Finansial untuk Menjalankan PSEL",
+                                         "source_type":  "news"
+                                     },
+                                     {
+                                         "distance":  0.7737080185065227,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.2262919814934773,
+                                         "source_id":  37,
+                                         "source_label":  "Jastip Barang Luar Negeri untuk Belanja di Amazon, eBay, AliExpress, dan USA",
+                                         "source_type":  "news"
+                                     },
+                                     {
+                                         "distance":  0.7738258256808315,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.22617417431916853,
+                                         "source_id":  6,
+                                         "source_label":  "Jelajah Sejarah Mock",
+                                         "source_type":  "event"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "UMM-06",
+        "question":  "Dari wilayah yang kamu sebutkan, mana yang memiliki data kuliner dan budaya?",
+        "http_status":  503,
+        "assistant_status":  null,
+        "retrieval_status":  null,
+        "retrieval_k":  null,
+        "context_k":  null,
+        "context_similarity_min":  null,
+        "llm_latency_ms":  null,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+
+                                 ],
+        "answer":  null,
+        "evaluation":  "EXECUTION_ERROR",
+        "error":  "The remote server returned an error: (503) Server Unavailable."
+    },
+    {
+        "id":  "UMM-07",
+        "question":  "Berapa jumlah penduduk Pasuruan saat ini?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  28139,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.5450304692947014,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.45496953070529855,
+                                         "source_id":  1,
+                                         "source_label":  "Kota Pasuruan",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5886185414422245,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4113814585577755,
+                                         "source_id":  4,
+                                         "source_label":  "Pasuruan Utara",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5963651124995555,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4036348875004445,
+                                         "source_id":  2,
+                                         "source_label":  "Pasuruan Timur",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5981555815113977,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4018444184886023,
+                                         "source_id":  3,
+                                         "source_label":  "Pasuruan Barat",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5991545732002308,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4008454267997692,
+                                         "source_id":  5,
+                                         "source_label":  "Pasuruan Selatan",
+                                         "source_type":  "region"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "UMM-08",
+        "question":  "Bagaimana kondisi lalu lintas Pasuruan sekarang?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  18608,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.66242140683362,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.33757859316637995,
+                                         "source_id":  11,
+                                         "source_label":  "Alun-Alun Pasuruan",
+                                         "source_type":  "culture"
+                                     },
+                                     {
+                                         "distance":  0.6659832599222899,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.3340167400777101,
+                                         "source_id":  1,
+                                         "source_label":  "Kota Pasuruan",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.6723157861138574,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.32768421388614255,
+                                         "source_id":  35,
+                                         "source_label":  "Taman Kota Pasuruan",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.6830782890319734,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.31692171096802657,
+                                         "source_id":  38,
+                                         "source_label":  "Masjid Agung Al-Anwar",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.6870761067685827,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.31292389323141734,
+                                         "source_id":  17,
+                                         "source_label":  "Kirab Pataka Hari Jadi Kota Pasuruan",
+                                         "source_type":  "event"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "SYS-01",
+        "question":  "   ",
+        "http_status":  400,
+        "assistant_status":  null,
+        "retrieval_status":  null,
+        "retrieval_k":  null,
+        "context_k":  null,
+        "context_similarity_min":  null,
+        "llm_latency_ms":  null,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+
+                                 ],
+        "answer":  null,
+        "evaluation":  "PASS_EXPECTED_VALIDATION",
+        "error":  null
+    }
+]

@@ -1,0 +1,26 @@
+
+      #reco-kuliner,
+      #reco-sekitar {
+        grid-auto-rows: minmax(0, 1fr);
+      }
+      #reco-kuliner > a,
+      #reco-kuliner article,
+      #reco-sekitar > a,
+      #reco-sekitar article {
+        height: 100%;
+      }
+      #reco-kuliner article h3,
+      #reco-sekitar article h3 {
+        line-height: 1.4;
+        min-height: 2.8em;
+      }
+      #reco-kuliner article h3 + p,
+      #reco-sekitar article h3 + p {
+        line-height: 1.5;
+        min-height: 3em;
+      }
+      #reco-kuliner article > div:last-child > div:last-child,
+      #reco-sekitar article > div:last-child > div:last-child {
+        margin-top: auto;
+      }
+    

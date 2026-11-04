@@ -1,0 +1,135 @@
+# =============================================================================
+# docker-compose.yml — Backend (Pasinfo API)
+# Enterprise Grade — Least Privilege & Production Hardened
+# =============================================================================
+name: pasinfo-backend
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: pasinfo-legacy-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-pasinfo}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD wajib diisi di .env (tidak ada default)}
+      POSTGRES_DB: ${DB_NAME:-pasinfo_travel}
+    ports:
+      - "${LEGACY_POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - pasinfo-legacy-pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - shared-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/raflyherdianto/pasinfo-backend:latest
+
+    container_name: pasinfo-backend
+
+    # ── Principle of Least Privilege: Dedicated non-root UID:GID ──────────────
+    user: "10001:10001"
+
+    # ── Process Init & Lifecycle Management ────────────────────────────────────
+    init: true
+    restart: unless-stopped
+
+    # ── Environment ────────────────────────────────────────────────────────────
+    env_file:
+      - .env
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    environment:
+      APP_ENV: production
+      HTTPS: "true"
+      # Container name, not the service name: shared-network is external, so another stack with a service named
+      # "postgres" on it makes Docker DNS return both databases (D1, jobdesk 31 Okt, 2026-11-03).
+      DB_HOST: pasinfo-legacy-postgres
+      DB_PORT: 5432
+      # .env holds host values (localhost); inside the container the Windows-host Ollama is reached here.
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+
+    ports:
+      - "8080:8080"
+
+    # ── Volumes ───────────────────────────────────────────────────────────────
+    volumes:
+      # Uploaded images — persisted outside the container, served by the API itself (app.Static in cmd/api/main.go)
+      - pasinfo-uploads:/app/uploads
+
+    # ── Security & Capability Hardening ───────────────────────────────────────
+    cap_drop:
+      - ALL
+    cap_add: []
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+      - /run:size=16m,mode=0755
+
+    # ── Resource Limits & Protection ──────────────────────────────────────────
+    deploy:
+      resources:
+        limits:
+          cpus: "0.80"
+          memory: "512M"
+        reservations:
+          cpus: "0.10"
+          memory: "128M"
+
+    # ── Health check ──────────────────────────────────────────────────────────
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+    # ── Watchtower Auto-Deploy Labels ─────────────────────────────────────────
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+      org.opencontainers.image.title: "pasinfo-backend"
+      org.opencontainers.image.description: "Pasinfo Backend API Service"
+      org.opencontainers.image.source: "https://github.com/raflyherdianto/pasinfo"
+
+    # ── Logging Constraints ───────────────────────────────────────────────────
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+
+    networks:
+      - shared-network
+
+# =============================================================================
+# Named volumes and networks
+# =============================================================================
+volumes:
+  pasinfo-uploads:
+    driver: local
+  pasinfo-legacy-pgdata:
+    driver: local
+
+networks:
+  shared-network:
+    name: shared-network
+    external: true

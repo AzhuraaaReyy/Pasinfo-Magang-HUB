@@ -1,0 +1,27 @@
+
+      :root {
+        --bud-accent: #6d28d9;
+        --bud-accent-dark: #5b21b6;
+        --bud-accent-soft: #ede9fe;
+      }
+      .bud-accent {
+        background-color: var(--bud-accent);
+        color: #fff;
+      }
+      .bud-accent:hover {
+        background-color: var(--bud-accent-dark);
+      }
+      .bud-accent-soft {
+        background-color: var(--bud-accent-soft);
+        color: var(--bud-accent);
+      }
+      .bud-accent-text {
+        color: var(--bud-accent);
+      }
+      .bud-accent-text:hover {
+        color: var(--bud-accent-dark);
+      }
+      .bud-accent-ring {
+        box-shadow: 0 0 0 2px var(--bud-accent);
+      }
+    

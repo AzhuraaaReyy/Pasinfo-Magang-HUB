@@ -1,0 +1,28 @@
+
+      .reco-section-bg {
+        background-image: linear-gradient(
+            to bottom,
+            rgba(15, 23, 42, 0.38) 0%,
+            rgba(15, 23, 42, 0) 34%,
+            rgba(15, 23, 42, 0) 56%,
+            rgba(15, 23, 42, 0.92) 100%
+          ),
+          url("../../public/assets/images/wisata/optimized/bromo_banner.webp");
+      }
+
+      /* Tablet 768-1023px (Owner 2026-10-17): peta + card detail disandingkan
+           60/40 supaya card detail tidak lagi full-width (terlalu besar dan
+           gepeng saat menumpuk). align-items:start → tinggi card mengikuti
+           konten (tanpa stretch kosong ke bawah). Padding card sedikit
+           dinaikkan agar terasa lega + premium. Mobile tetap menumpuk normal,
+           desktop (lg+) tetap layout 2/3-1/3 yang sudah ada. */
+      @media (min-width: 768px) and (max-width: 1023.98px) {
+        #map-detail-grid {
+          grid-template-columns: 3fr 2fr;
+          align-items: start;
+        }
+        #dest-detail > div {
+          padding: 1.25rem;
+        }
+      }
+    

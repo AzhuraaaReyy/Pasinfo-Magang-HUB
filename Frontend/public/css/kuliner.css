@@ -1,0 +1,208 @@
+
+      .reco-section-bg {
+        background-image:
+          linear-gradient(
+            to bottom,
+            rgba(15, 23, 42, 0.38) 0%,
+            rgba(15, 23, 42, 0) 34%,
+            rgba(15, 23, 42, 0) 56%,
+            rgba(15, 23, 42, 0.92) 100%
+          ),
+          url("../../public/assets/images/kuliner/optimized/soto-pasuruan.webp");
+      }
+      /* Cegah overflow horizontal (scroll samping) dari kartu coverflow sisi
+         luar yang menjulur keluar tepi (mirror wisata input.css §(J)).
+         overflow-x: clip (bukan hidden) agar tidak membuat scroll container. */
+      body[data-page-active="kuliner"] main {
+        overflow-x: clip;
+      }
+
+      /* Filter kategori kuliner: mobile = satu baris sejajar + scroll
+         horizontal (scrollbar disembunyikan). Kembali wrap di layar >=640px.
+         Raw CSS di scoped <style> (design.md §66.5: tanpa build:css baru). */
+      .kul-filter-scroll {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        white-space: nowrap;
+        scroll-behavior: smooth;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .kul-filter-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      @media (min-width: 640px) {
+        .kul-filter-scroll {
+          flex-wrap: wrap;
+          overflow-x: visible;
+          white-space: normal;
+        }
+      }
+
+      /* ── Mirror wisata (input.css §E/§F/§G/§H/§I) untuk halaman kuliner.
+         Aturan wisata dibatasi ke body[data-page-active="wisata"], jadi
+         di-cermin ke "kuliner" dengan aksen biru. Kelas struktural
+         (div[class*="z-20"] / div[class*="bg-gradient-to-t"]) identik
+         dengan markup hero bersama (listing-hero.js). ── */
+
+      /* (E) Override gradient hero kuliner (per-breakpoint) — mirror wisata. */
+      body[data-page-active="kuliner"]
+        #hero-section
+        > div[class*="bg-gradient-to-t"] {
+        background-image: linear-gradient(
+          to bottom,
+          rgba(0, 0, 0, 0) 0%,
+          rgba(0, 0, 0, 0) 38%,
+          rgba(0, 0, 0, 0.2) 50%,
+          rgba(0, 0, 0, 0.32) 62%,
+          rgba(0, 0, 0, 0.48) 74%,
+          rgba(0, 0, 0, 0.62) 86%,
+          rgba(0, 0, 0, 0.75) 100%
+        ) !important;
+      }
+      @media (min-width: 768px) {
+        body[data-page-active="kuliner"]
+          #hero-section
+          > div[class*="bg-gradient-to-t"] {
+          background-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0.22) 0%,
+            rgba(0, 0, 0, 0.26) 12%,
+            rgba(0, 0, 0, 0.34) 28%,
+            rgba(0, 0, 0, 0.44) 46%,
+            rgba(0, 0, 0, 0.56) 64%,
+            rgba(0, 0, 0, 0.66) 82%,
+            rgba(0, 0, 0, 0.75) 100%
+          ) !important;
+        }
+      }
+      @media (min-width: 1024px) {
+        body[data-page-active="kuliner"]
+          #hero-section
+          > div[class*="bg-gradient-to-t"] {
+          background-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0) 26%,
+            rgba(0, 0, 0, 0.16) 38%,
+            rgba(0, 0, 0, 0.28) 50%,
+            rgba(0, 0, 0, 0.4) 62%,
+            rgba(0, 0, 0, 0.56) 76%,
+            rgba(0, 0, 0, 0.68) 88%,
+            rgba(0, 0, 0, 0.75) 100%
+          ) !important;
+        }
+      }
+
+      /* (F) Desktop: judul/deskripsi rata-kiri tapi di tengah vertikal — mirror wisata. */
+      @media (min-width: 1024px) {
+        body[data-page-active="kuliner"] #hero-section > div[class*="z-20"] {
+          align-self: stretch;
+        }
+        body[data-page-active="kuliner"] #hero-section #content-container {
+          align-self: center;
+        }
+      }
+
+      /* (G) Tablet 768–1023: teks hero di tengah vertikal + ukuran — mirror wisata. */
+      @media (min-width: 768px) and (max-width: 1023px) {
+        body[data-page-active="kuliner"] #hero-section {
+          align-items: stretch;
+        }
+        body[data-page-active="kuliner"] #hero-section > div[class*="z-20"] {
+          align-self: stretch;
+        }
+        body[data-page-active="kuliner"] #hero-section #content-container {
+          margin-top: auto;
+          margin-bottom: auto;
+          max-width: 42rem;
+        }
+        body[data-page-active="kuliner"] #hero-section #badge-text {
+          font-size: 1rem;
+          padding: 0.4rem 0.95rem;
+        }
+        body[data-page-active="kuliner"] #hero-section #hero-location {
+          font-size: 0.85rem;
+        }
+        body[data-page-active="kuliner"] #hero-section #hero-desc {
+          font-size: 1.125rem;
+          line-height: 1.65;
+          max-width: 34rem;
+        }
+      }
+
+      /* (H) Teks "Pasuruan Raya" di samping badge hero — biru + stroke putih
+         (mirror wisata §H; wisata memakai merah #ef4444, kuliner biru #2563eb). */
+      body[data-page-active="kuliner"] #hero-section #hero-location {
+        color: #2563eb !important;
+        text-shadow:
+          -1px -1px 0 #ffffff,
+          1px -1px 0 #ffffff,
+          -1px 1px 0 #ffffff,
+          1px 1px 0 #ffffff,
+          -2px 0 0 #ffffff,
+          2px 0 0 #ffffff,
+          0 -2px 0 #ffffff,
+          0 2px 0 #ffffff !important;
+      }
+
+      /* (I) Header transparan di atas hero kuliner — search putih + ikon/teks
+         gelap + logo gelap (mirror wisata §I) agar tampil sama dengan wisata
+         saat header belum solid (masih di area hero). */
+      body[data-page-active="kuliner"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-search {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+        border-color: #e5e7eb !important;
+      }
+      body[data-page-active="kuliner"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-search::placeholder {
+        color: #6b7280 !important;
+      }
+      body[data-page-active="kuliner"][data-header-overlay]
+        header:not(.header-solid)
+        [data-search-form]
+        svg {
+        color: #1f2937 !important;
+        stroke: #1f2937 !important;
+      }
+      body[data-page-active="kuliner"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-logo-dark {
+        display: block !important;
+      }
+      body[data-page-active="kuliner"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-logo-light {
+        display: none !important;
+      }
+
+      /* (J) Peta: hilangkan kotak fokus hitam bawaan browser pada poligon
+         wilayah yang dipilih (mirror wisata: #wisata-map
+         path.leaflet-interactive:focus { outline: none }). Marker tetap
+         punya indikator fokus biru (aksesibilitas, mirror wisata). */
+      #kuliner-map path.leaflet-interactive:focus {
+        outline: none;
+      }
+      #kuliner-map .leaflet-marker-icon:focus {
+        outline: 2px solid #1d4ed8;
+        outline-offset: 2px;
+      }
+
+      /* Tablet 768-1023px (Owner 2026-10-17, paritas wisata): peta + card
+         detail disandingkan 60/40 agar card detail tidak full-width (terlalu
+         besar/gepeng saat menumpuk). align-items:start → tinggi card
+         mengikuti konten. Mobile tetap menumpuk; desktop (lg+) layout 2/3-1/3. */
+      @media (min-width: 768px) and (max-width: 1023.98px) {
+        #map-detail-grid {
+          grid-template-columns: 3fr 2fr;
+          align-items: start;
+        }
+        #kul-detail > div {
+          padding: 1.25rem;
+        }
+      }
+    

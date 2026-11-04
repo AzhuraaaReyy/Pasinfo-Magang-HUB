@@ -1,0 +1,545 @@
+﻿[
+    {
+        "id":  "KUL-08",
+        "question":  "Berapa harga makanan dan apakah tempatnya buka malam ini?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_k":  5,
+        "sources":  [
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  1,
+                            "source_label":  "Nasi Punel Bu Hj. Lin",
+                            "source_type":  "culinary"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  2,
+                            "source_label":  "Depot Nasi Punel Setia Budi Bangil",
+                            "source_type":  "culinary"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  3,
+                            "source_label":  "Warung Pojok Nasi Punel Bangil",
+                            "source_type":  "culinary"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  4,
+                            "source_label":  "Waroeng Sambel",
+                            "source_type":  "culinary"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  5,
+                            "source_label":  "Warung Teko Beji",
+                            "source_type":  "culinary"
+                        }
+                    ],
+        "answer":  "Berikut adalah daftar harga makanan dari tempat-tempat yang Anda sebutkan:\n\n*   **Nasi Punel Bu Hj. Lin:**\n    *   Mie Goreng Jawa: Rp 31.000\n    *   Lontong Sayur: Rp 31.000\n    *   Pecel: Rp 31.000\n    *   Empal Gentong: Rp 25.000\n    *   Nasi Uduk: Rp 22.000\n    *   Gado-Gado: Rp 21.000\n    *   Tahu Telur: Rp 26.000\n    *   Air Mineral: Rp 9.000\n    *   Es Cincau: Rp 7.000\n    *   Susu Jahe: Rp 9.000\n    *   Soda Gembira: Rp 7.000\n    *   Pisang Goreng: Rp 6.000\n    *   Bakwan Sayur: Rp 5.000\n    *   Perkedel Kentang: Rp 7.000\n    *   Kerupuk Udang: Rp 8.000\n\n*   **Depot Nasi Punel Setia Budi Bangil:**\n    *   Nasi Uduk: Rp 26.000\n    *   Gado-Gado: Rp 21.000\n    *   Tahu Telur: Rp 18.000\n    *   Nasi Rawon: Rp 23.000\n    *   Nasi Goreng Spesial: Rp 25.000\n    *   Soto Ayam: Rp 26.000\n    *   Ayam Goreng Kampung: Rp 27.000\n    *   Kopi Hitam: Rp 11.000\n    *   Kopi Susu: Rp 11.000\n    *   Es Kelapa Muda: Rp 11.000\n    *   Es Campur: Rp 8.000\n    *   Tahu Isi: Rp 6.000\n    *   Lumpia Semarang: Rp 8.000\n    *   ",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "BUD-01",
+        "question":  "Tradisi dan kesenian apa saja yang tersedia dalam data budaya Pasuruan?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_k":  5,
+        "sources":  [
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  1,
+                            "source_label":  "Candi Jawi",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  2,
+                            "source_label":  "Candi Belahan",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  3,
+                            "source_label":  "Candi Gunung Gangsir",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  4,
+                            "source_label":  "Candi Keboireng",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  5,
+                            "source_label":  "Candi Sepilar",
+                            "source_type":  "culture"
+                        }
+                    ],
+        "answer":  "Data yang saya miliki tidak mencantumkan informasi mengenai tradisi dan kesenian yang tersedia di Pasuruan. Informasi tersebut hanya berisi deskripsi mengenai lokasi dan karakteristik dari beberapa candi di wilayah tersebut: Candi Jawi, Candi Belahan, Candi Gunung Gangsir, Candi Keboireng, dan Candi Sepilar.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "BUD-02",
+        "question":  "Apa yang kamu ketahui tentang Candi Jawi?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_k":  2,
+        "sources":  [
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "lexical_exact",
+                            "similarity":  1,
+                            "source_id":  46,
+                            "source_label":  "Candi Jawi",
+                            "source_type":  "destination"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "lexical_exact",
+                            "similarity":  1,
+                            "source_id":  1,
+                            "source_label":  "Candi Jawi",
+                            "source_type":  "culture"
+                        }
+                    ],
+        "answer":  "Candi Jawi adalah candi peninggalan masa Kerajaan Singasari yang berada di Desa Candiwates, Prigen. Candi ini bercorak perpaduan Hindu dan Buddha serta dikenal dengan bentuknya yang ramping dan menjulang, berlatar pegunungan di sekitarnya. Halaman candi yang asri membuatnya nyaman untuk dikunjungi sambil belajar tentang sejarah Jawa Timur. Pengunjung diharapkan tidak memanjat atau merusak bagian candi agar peninggalan bersejarah ini tetap lestari. Candi Jawi terletak di kawasan yang mudah dipadukan dengan Taman Candra Wilwatikta, Masjid Cheng Hoo, dan destinasi lain di Pandaan dan Prigen.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "BUD-03",
+        "question":  "Kalau mau belajar sejarah Pasuruan, situs apa yang bisa saya lihat?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_k":  5,
+        "sources":  [
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  1,
+                            "source_label":  "Candi Jawi",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  2,
+                            "source_label":  "Candi Belahan",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  3,
+                            "source_label":  "Candi Gunung Gangsir",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  4,
+                            "source_label":  "Candi Keboireng",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  5,
+                            "source_label":  "Candi Sepilar",
+                            "source_type":  "culture"
+                        }
+                    ],
+        "answer":  "Anda dapat melihat Candi Jawi, Candi Belahan, Candi Gunung Gangsir, dan Candi Keboireng untuk belajar sejarah Pasuruan.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "BUD-04",
+        "question":  "Saya hanya punya waktu singkat dan ingin mengunjungi tempat yang punya rumah informasi. Apa pilihannya?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_k":  5,
+        "sources":  [
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  1,
+                            "source_label":  "Penanjakan Bromo (Penanjakan 1)",
+                            "source_type":  "destination"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  2,
+                            "source_label":  "Bukit Cinta (Bromo Tengger Semeru)",
+                            "source_type":  "destination"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  3,
+                            "source_label":  "Taman Edelweiss Desa Wonokitri",
+                            "source_type":  "destination"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  4,
+                            "source_label":  "Air Terjun Coban Binangun",
+                            "source_type":  "destination"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  5,
+                            "source_label":  "Air Terjun Coban Segraya",
+                            "source_type":  "destination"
+                        }
+                    ],
+        "answer":  "Berdasarkan informasi yang tersedia, Taman Edelweiss Desa Wonokitri memiliki rumah informasi.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "BUD-05",
+        "question":  "Jelaskan perbedaan informasi antara dua situs sejarah Pasuruan yang kamu temukan.",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_k":  5,
+        "sources":  [
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  1,
+                            "source_label":  "Candi Jawi",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  2,
+                            "source_label":  "Candi Belahan",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  3,
+                            "source_label":  "Candi Gunung Gangsir",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  4,
+                            "source_label":  "Candi Keboireng",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  5,
+                            "source_label":  "Candi Sepilar",
+                            "source_type":  "culture"
+                        }
+                    ],
+        "answer":  "Berdasarkan informasi yang saya temukan, berikut adalah perbedaan informasi mengenai dua situs sejarah Pasuruan: Candi Jawi dan Candi Keboireng:\n\n*   **Candi Jawi:** Candi Jawi merupakan candi bercorak Hindu-Buddha dari era Singasari-Majapahit. Lokasinya di Candi Wates, Kec. Prigen. Di lokasi terdapat rumah informasi untuk membantu pengunjung memahami latar belakang candi.\n*   **Candi Keboireng:** Candi Keboireng adalah situs bersejarah yang terletak di tengah lahan pertanian. Lokasinya di Ngerong, Kec. Gempol. Situs ini ditemukan pada tahun 1983 dan sebagian temuannya disimpan di Museum Trowulan.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "BUD-06",
+        "question":  "Apakah tempat tadi termasuk tradisi, kesenian, museum, atau situs sejarah?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_k":  5,
+        "sources":  [
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  1,
+                            "source_label":  "Candi Jawi",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  2,
+                            "source_label":  "Candi Belahan",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  3,
+                            "source_label":  "Candi Gunung Gangsir",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  4,
+                            "source_label":  "Candi Keboireng",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  5,
+                            "source_label":  "Candi Sepilar",
+                            "source_type":  "culture"
+                        }
+                    ],
+        "answer":  "Berikut adalah informasi mengenai tempat-tempat tersebut berdasarkan konteks yang diberikan:\n\n*   **Candi Jawi:** Situs sejarah\n*   **Candi Belahan:** Situs sejarah\n*   **Candi Gunung Gangsir:** Situs sejarah\n*   **Candi Keboireng:** Situs sejarah\n*   **Candi Sepilar:** Situs sejarah",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "BUD-07",
+        "question":  "Siapa tokoh sejarah yang mendirikan situs tersebut?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_k":  5,
+        "sources":  [
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  1,
+                            "source_label":  "Candi Jawi",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  2,
+                            "source_label":  "Candi Belahan",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  3,
+                            "source_label":  "Candi Gunung Gangsir",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  4,
+                            "source_label":  "Candi Keboireng",
+                            "source_type":  "culture"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  5,
+                            "source_label":  "Candi Sepilar",
+                            "source_type":  "culture"
+                        }
+                    ],
+        "answer":  "Saya tidak mengetahui tokoh sejarah yang mendirikan situs-situs tersebut. Informasi yang tersedia hanya mengenai asal-usul, lokasi, dan pengelolaan masing-masing situs.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "EVT-01",
+        "question":  "Acara apa saja yang tersedia dalam database Pasuruan?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_k":  5,
+        "sources":  [
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  1,
+                            "source_label":  "Festival Seni Mock",
+                            "source_type":  "event"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  2,
+                            "source_label":  "Konser Komunitas Mock",
+                            "source_type":  "event"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  3,
+                            "source_label":  "Kirab Tradisi Mock",
+                            "source_type":  "event"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  4,
+                            "source_label":  "Ritual Panen Mock",
+                            "source_type":  "event"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  5,
+                            "source_label":  "Pawai Sejarah Mock",
+                            "source_type":  "event"
+                        }
+                    ],
+        "answer":  "Berdasarkan data yang tersedia, berikut adalah daftar acara yang tersedia di Pasuruan:\n\n*   Festival Seni Mock (jadwal: 2026-10-24T09:00:00+07:00)\n*   Konser Komunitas Mock (jadwal: 2026-11-15T19:00:00+07:00)\n*   Kirab Tradisi Mock (jadwal: 2026-11-22T07:00:00+07:00)\n*   Ritual Panen Mock (jadwal: 2026-11-29T08:00:00+07:00)\n*   Pawai Sejarah Mock (jadwal: 2026-12-06T07:30:00+07:00)",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "EVT-02",
+        "question":  "Kegiatan seni apa yang tercatat di data acara?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_k":  5,
+        "sources":  [
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  1,
+                            "source_label":  "Festival Seni Mock",
+                            "source_type":  "event"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  2,
+                            "source_label":  "Konser Komunitas Mock",
+                            "source_type":  "event"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  3,
+                            "source_label":  "Kirab Tradisi Mock",
+                            "source_type":  "event"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  4,
+                            "source_label":  "Ritual Panen Mock",
+                            "source_type":  "event"
+                        },
+                        {
+                            "distance":  0,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "intent_category",
+                            "similarity":  1,
+                            "source_id":  5,
+                            "source_label":  "Pawai Sejarah Mock",
+                            "source_type":  "event"
+                        }
+                    ],
+        "answer":  "Berikut adalah kegiatan seni yang tercatat dalam data acara:\n\n*   Festival Seni Mock\n*   Konser Komunitas Mock\n*   Kirab Tradisi Mock\n*   Ritual Panen Mock\n*   Pawai Sejarah Mock",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    }
+]

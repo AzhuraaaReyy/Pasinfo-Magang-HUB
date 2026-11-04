@@ -11,30 +11,7 @@
          unduhan sejak awal parse <head>. Peta foto adalah mirror dari
          data-wisata.js (PHOTO_FALLBACK + photoIndex); untuk semua destinasi
          id === slug (terverifikasi 64/64), jadi cukup pakai ?slug. -->
-    <script>
-      (function () {
-        try {
-          var slug = new URLSearchParams(location.search).get("slug");
-          if (!slug) return;
-          var F = [
-            "../../public/assets/images/wisata/optimized/bromo2.webp",
-            "../../public/assets/images/wisata/optimized/bromo3.webp",
-            "../../public/assets/images/wisata/optimized/bromo_banner.webp",
-            "../../public/assets/images/wisata/optimized/purwodadi-botanic-garden.webp",
-            "../../public/assets/images/wisata/optimized/taman_safari_indonesia_2.webp",
-            "../../public/assets/images/wisata/optimized/air-terjun-kakek-bodo.webp",
-          ];
-          var h = 0;
-          for (var i = 0; i < slug.length; i++) h = (h + slug.charCodeAt(i)) % F.length;
-          var link = document.createElement("link");
-          link.rel = "preload";
-          link.as = "image";
-          link.fetchPriority = "high";
-          link.href = F[h];
-          document.head.appendChild(link);
-        } catch (e) {}
-      })();
-    </script>
+        <script src="../../public/js/pages/detail_wisata-inline-1.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Detail Wisata Bromo - Pasuruan Info</title>
 
@@ -50,38 +27,7 @@
          (Serupa/Lainnya/Sekitar) dibuat sama tinggi; judul & deskripsi memakai
          line-height tetap + min-height 2 baris agar tinggi kartu tidak berubah
          oleh panjang teks. -->
-    <style>
-      #reco-serupa,
-      #reco-lainnya,
-      #reco-sekitar {
-        grid-auto-rows: minmax(0, 1fr);
-      }
-      #reco-serupa > a,
-      #reco-lainnya > a,
-      #reco-sekitar > a,
-      #reco-serupa article,
-      #reco-lainnya article,
-      #reco-sekitar article {
-        height: 100%;
-      }
-      #reco-serupa article h3,
-      #reco-lainnya article h3,
-      #reco-sekitar article h3 {
-        line-height: 1.4;
-        min-height: 2.8em;
-      }
-      #reco-serupa article h3 + p,
-      #reco-lainnya article h3 + p,
-      #reco-sekitar article h3 + p {
-        line-height: 1.5;
-        min-height: 3em;
-      }
-      #reco-serupa article > div:last-child > div:last-child,
-      #reco-lainnya article > div:last-child > div:last-child,
-      #reco-sekitar article > div:last-child > div:last-child {
-        margin-top: auto;
-      }
-    </style>
+        <link rel="stylesheet" href="../../public/css/detail-wisata.css" />
     <!-- GSAP Animation Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" defer></script>

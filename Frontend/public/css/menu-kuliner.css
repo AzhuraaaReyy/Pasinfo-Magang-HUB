@@ -1,0 +1,21 @@
+
+      /* Filter kategori: di mobile jadi baris yang bisa digeser horizontal
+         (scrollbar disembunyikan). Tablet ke atas tetap wrap seperti semula.
+         Scoped <style> sesuai aturan build:css (Owner) — tidak menambah
+         utility Tailwind baru dari public/js. */
+      @media (max-width: 639.98px) {
+        #menu-filter-row {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+          padding-bottom: 2px;
+        }
+        #menu-filter-row::-webkit-scrollbar {
+          display: none;
+        }
+        #menu-filter-row > button {
+          flex: 0 0 auto;
+        }
+      }
+    

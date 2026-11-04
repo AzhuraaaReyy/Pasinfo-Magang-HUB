@@ -631,7 +631,7 @@ const BUDAYA_CULTURES = [
     id: "makam-mbah-jauhari-umar",
     slug: "makam-mbah-jauhari-umar",
     name: "Makam Mbah Jauhari Umar",
-    regionId: "pasuruan-selatan",
+    regionId: "pasuruan-utara",
     place: {
       latitude: -7.711924,
       longitude: 112.866021,
@@ -646,7 +646,7 @@ const BUDAYA_CULTURES = [
     short_description:
       "Ramai saat haul; ulasan menyarankan waspada barang bawaan. Kecamatan dan desa/kelurahan mengacu pada alamat di Google Places.",
     description:
-      "Makam Mbah Jauhari Umar merupakan makam tokoh yang menjadi tujuan ziarah di wilayah selatan Kabupaten Pasuruan. Tempat ini tidak hanya menjadi lokasi berdoa, tetapi juga bagian dari tradisi keagamaan masyarakat sekitar.\n\nKawasan ini ramai pada saat haul, yaitu peringatan wafatnya tokoh yang dimakamkan. Menurut ulasan, pengunjung disarankan untuk waspada terhadap barang bawaan, terutama ketika suasana sedang padat.\n\nMakam ini berada di Tanggulangin, Kec. Kejayan. Kecamatan dan desa/kelurahan mengacu pada alamat di Google Places.",
+      "Makam Mbah Jauhari Umar merupakan makam tokoh yang menjadi tujuan ziarah di Kecamatan Kejayan, Kabupaten Pasuruan. Tempat ini tidak hanya menjadi lokasi berdoa, tetapi juga bagian dari tradisi keagamaan masyarakat sekitar.\n\nKawasan ini ramai pada saat haul, yaitu peringatan wafatnya tokoh yang dimakamkan. Menurut ulasan, pengunjung disarankan untuk waspada terhadap barang bawaan, terutama ketika suasana sedang padat.\n\nMakam ini berada di Tanggulangin, Kec. Kejayan. Kecamatan dan desa/kelurahan mengacu pada alamat di Google Places.",
     rating: null,
     reviews_label: null,
     address: "Tanggulangin, Kec. Kejayan",

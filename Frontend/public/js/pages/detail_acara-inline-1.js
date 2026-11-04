@@ -1,0 +1,51 @@
+
+      // Preload foto hero detail (first-load): slug → foto sudah diketahui
+      // dari data, sehingga gambar ASLI mulai diunduh sedini mungkin dan
+      // halaman tidak menampilkan placeholder dulu baru bertukar.
+      // Mapping fallback 3 foto mirror detail-acara.js; bila tak cocok,
+      // preload dilewati (tidak merusak apa pun).
+      (function () {
+        try {
+          var slug = new URLSearchParams(window.location.search).get("slug");
+          var DATA = window.PASINFO_ACARA;
+          if (!slug || !DATA || !DATA.events) return;
+          var found = null;
+          for (var i = 0; i < DATA.events.length; i++) {
+            if (DATA.events[i].slug === slug) {
+              found = DATA.events[i];
+              break;
+            }
+          }
+          if (!found) {
+            for (var j = 0; j < DATA.events.length; j++) {
+              if (DATA.events[j].featured) {
+                found = DATA.events[j];
+                break;
+              }
+            }
+          }
+          if (!found) return;
+          var url =
+            found.media && found.media[0] && found.media[0].url
+              ? found.media[0].url
+              : (function () {
+                  var photos = [
+                    "../../public/assets/images/acara/optimized/bromo-marathon.webp",
+                    "../../public/assets/images/acara/optimized/Hari-Jadi-Kota-Pasuruan.webp",
+                    "../../public/assets/images/acara/optimized/Pekan-Raya-Pasuruan-(PRP).webp",
+                  ];
+                  var key = String(found.id || slug);
+                  var sum = 0;
+                  for (var k = 0; k < key.length; k++) sum += key.charCodeAt(k);
+                  return photos[sum % photos.length];
+                })();
+          var l = document.createElement("link");
+          l.rel = "preload";
+          l.as = "image";
+          l.href = url;
+          document.head.appendChild(l);
+        } catch (e) {
+          /* abaikan: halaman tetap jalan, foto dimuat normal */
+        }
+      })();
+    

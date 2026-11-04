@@ -1,0 +1,246 @@
+
+      /* (E) Override gradient scrim hero budaya (per-breakpoint). */
+      body[data-page-active="budaya"]
+        #hero-section
+        > div[class*="bg-gradient-to-t"] {
+        background-image: linear-gradient(
+          to bottom,
+          rgba(0, 0, 0, 0) 0%,
+          rgba(0, 0, 0, 0) 38%,
+          rgba(0, 0, 0, 0.2) 50%,
+          rgba(0, 0, 0, 0.32) 62%,
+          rgba(0, 0, 0, 0.48) 74%,
+          rgba(0, 0, 0, 0.62) 86%,
+          rgba(0, 0, 0, 0.75) 100%
+        ) !important;
+      }
+      @media (min-width: 768px) {
+        body[data-page-active="budaya"]
+          #hero-section
+          > div[class*="bg-gradient-to-t"] {
+          background-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0.22) 0%,
+            rgba(0, 0, 0, 0.26) 12%,
+            rgba(0, 0, 0, 0.34) 28%,
+            rgba(0, 0, 0, 0.44) 46%,
+            rgba(0, 0, 0, 0.56) 64%,
+            rgba(0, 0, 0, 0.66) 82%,
+            rgba(0, 0, 0, 0.75) 100%
+          ) !important;
+        }
+      }
+      @media (min-width: 1024px) {
+        body[data-page-active="budaya"]
+          #hero-section
+          > div[class*="bg-gradient-to-t"] {
+          background-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0) 26%,
+            rgba(0, 0, 0, 0.16) 38%,
+            rgba(0, 0, 0, 0.28) 50%,
+            rgba(0, 0, 0, 0.4) 62%,
+            rgba(0, 0, 0, 0.56) 76%,
+            rgba(0, 0, 0, 0.68) 88%,
+            rgba(0, 0, 0, 0.75) 100%
+          ) !important;
+        }
+      }
+
+      /* (F) Desktop: judul/deskripsi rata-kiri tapi di tengah vertikal. */
+      @media (min-width: 1024px) {
+        body[data-page-active="budaya"] #hero-section > div[class*="z-20"] {
+          align-self: stretch;
+        }
+        body[data-page-active="budaya"] #hero-section #content-container {
+          align-self: center;
+        }
+      }
+
+      /* (G) Tablet 768-1023: teks hero di tengah vertikal + ukuran. */
+      @media (min-width: 768px) and (max-width: 1023px) {
+        body[data-page-active="budaya"] #hero-section {
+          align-items: stretch;
+        }
+        body[data-page-active="budaya"] #hero-section > div[class*="z-20"] {
+          align-self: stretch;
+        }
+        body[data-page-active="budaya"] #hero-section #content-container {
+          margin-top: auto;
+          margin-bottom: auto;
+          max-width: 42rem;
+        }
+        body[data-page-active="budaya"] #hero-section #badge-text {
+          font-size: 1rem;
+          padding: 0.4rem 0.95rem;
+        }
+        body[data-page-active="budaya"] #hero-section #hero-location {
+          font-size: 0.85rem;
+        }
+        body[data-page-active="budaya"] #hero-section #hero-desc {
+          font-size: 1.125rem;
+          line-height: 1.65;
+          max-width: 34rem;
+        }
+      }
+
+      /* (H) Teks "Pasuruan Raya" di samping badge hero — aksen ungu + stroke putih. */
+      body[data-page-active="budaya"] #hero-section #hero-location {
+        color: #6d28d9 !important;
+        text-shadow:
+          -1px -1px 0 #ffffff,
+          1px -1px 0 #ffffff,
+          -1px 1px 0 #ffffff,
+          1px 1px 0 #ffffff,
+          -2px 0 0 #ffffff,
+          2px 0 0 #ffffff,
+          0 -2px 0 #ffffff,
+          0 2px 0 #ffffff !important;
+      }
+
+      /* (I) Header transparan di atas hero budaya — search putih + ikon/teks
+         gelap + logo gelap (mirror wisata/kuliner §I). */
+      body[data-page-active="budaya"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-search {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+        border-color: #e5e7eb !important;
+      }
+      body[data-page-active="budaya"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-search::placeholder {
+        color: #6b7280 !important;
+      }
+      body[data-page-active="budaya"][data-header-overlay]
+        header:not(.header-solid)
+        [data-search-form]
+        svg {
+        color: #1f2937 !important;
+        stroke: #1f2937 !important;
+      }
+      body[data-page-active="budaya"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-logo-dark {
+        display: block !important;
+      }
+      body[data-page-active="budaya"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-logo-light {
+        display: none !important;
+      }
+
+      /* (J) Peta: hilangkan kotak fokus hitam bawaan browser pada poligon
+         wilayah; marker tetap punya indikator fokus biru (aksesibilitas). */
+      #budaya-map path.leaflet-interactive:focus {
+        outline: none;
+      }
+      #budaya-map .leaflet-marker-icon:focus {
+        outline: 2px solid #1d4ed8;
+        outline-offset: 2px;
+      }
+
+      /* (K) Cegah scroll horizontal: animasi GSAP #bud-featured memulai dari
+         translateX(30px) sebelum ScrollTrigger aktif. Clip sumbu-X agar tidak
+         memunculkan scrollbar di mobile/tablet (sumbu-Y tetap terlihat). */
+      body[data-page-active="budaya"] #map-section {
+        overflow-x: clip;
+      }
+
+      /* (L) Rekomendasi coverflow (mirror kuliner §(B)): latar section memakai
+         WebP budaya teroptimasi sebagai fallback; JS (budaya-reco.js) tetap
+         meng-override dinamis per kartu tengah lewat .reco-section-bg. */
+      .reco-section-bg {
+        background-image:
+          linear-gradient(
+            to bottom,
+            rgba(15, 23, 42, 0.38) 0%,
+            rgba(15, 23, 42, 0) 34%,
+            rgba(15, 23, 42, 0) 56%,
+            rgba(15, 23, 42, 0.92) 100%
+          ),
+          url("../../public/assets/images/budaya/optimized/Yadnya Karo Sodoran (Tosari).webp");
+      }
+
+      /* (M) Cegah scroll horizontal dari kartu coverflow sisi luar yang
+         menjulur keluar tepi (mirror kuliner). overflow-x: clip (bukan hidden)
+         agar tidak membuat scroll container. */
+      body[data-page-active="budaya"] main {
+        overflow-x: clip;
+      }
+
+      /* (N) Ronde 2 (item 3): rapatkan jarak Space Iklan → Kalender Budaya
+         dan Kalender Budaya → Cerita di Balik Budaya (~separuh). Memakai
+         scoped <style> karena utility pt/pb responsif (pt-12, md:pt-8,
+         md:pb-8) tidak tersedia di public/css/styles.css terkompilasi. */
+      #bud-list-section {
+        padding-bottom: 1.5rem;
+      }
+      #bud-calendar-section {
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+      }
+      #bud-gallery-section {
+        padding-top: 1.5rem;
+      }
+      @media (min-width: 768px) {
+        #bud-list-section {
+          padding-bottom: 2rem;
+        }
+        #bud-calendar-section {
+          padding-top: 2rem;
+          padding-bottom: 2rem;
+        }
+        #bud-gallery-section {
+          padding-top: 2rem;
+        }
+      }
+
+      /* (O) Ronde 3 (item 6): warna milik Budaya = UNGU (violet).
+         Utility Tailwind solid (bg-violet-x / bg-purple-x) TIDAK ada di
+         public/css/styles.css terkompilasi, dan build:css tidak dijalankan
+         (disiplin para 66.5) -> aksen didefinisikan sebagai class sendiri di sini.
+         Berlaku untuk hero badge, filter/pager aktif, teks aksen ("Baca
+         Selengkapnya", "Detail") dan tombol aksen ("Jelajah Sekarang").
+         Status badge kalender TIDAK ikut (Owner 2026-10-16): tetap hijau/biru/abu. */
+      :root {
+        --bud-accent: #6d28d9;
+        --bud-accent-dark: #5b21b6;
+        --bud-accent-soft: #ede9fe;
+      }
+      .bud-accent {
+        background-color: var(--bud-accent);
+        color: #fff;
+      }
+      .bud-accent:hover {
+        background-color: var(--bud-accent-dark);
+      }
+      .bud-accent-soft {
+        background-color: var(--bud-accent-soft);
+        color: var(--bud-accent);
+      }
+      .bud-accent-text {
+        color: var(--bud-accent);
+      }
+      .bud-accent-text:hover {
+        color: var(--bud-accent-dark);
+      }
+      .bud-accent-ring {
+        box-shadow: 0 0 0 2px var(--bud-accent);
+      }
+
+      /* Tablet 768-1023px (Owner 2026-10-17, paritas wisata/kuliner): peta +
+         card detail disandingkan 60/40 agar card detail tidak full-width
+         (terlalu besar/gepeng saat menumpuk). align-items:start → tinggi card
+         mengikuti konten. Mobile tetap menumpuk; desktop (lg+) layout 2/3-1/3. */
+      @media (min-width: 768px) and (max-width: 1023.98px) {
+        #map-detail-grid {
+          grid-template-columns: 3fr 2fr;
+          align-items: start;
+        }
+        #bud-featured > div {
+          padding: 1.25rem;
+        }
+      }
+    

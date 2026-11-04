@@ -1,23 +1,49 @@
-# DATABASE SCHEMA & ELOQUENT ARCHITECTURE
+# DATABASE SCHEMA & DATA MODEL ARCHITECTURE (GOLANG · GORM · POSTGRESQL)
 
 **Project:** Pasuruan Info — News & Travel Tech Platform
-**Schema Version:** 2.2
-**Status:** DESIGN COMPLETE · IMPLEMENTATION NOT READY
-**Current Phase:** FRONTEND COMPLETE (mock data only; Owner declared "selesai" 2026-10-16; ronde pasca-final 2026-10-17/18 + Chatbot Stage 1 sinkron 2026-10-18 — belum commit) — backend/data masih NOT STARTED
-**Backend:** Laravel 12 — Planned, NOT STARTED
-**ORM:** Eloquent — Planned
-**Database:** MySQL — Planned
-**API:** REST API — Planned
-**Target Architecture:** Frontend → REST API → Laravel → Eloquent → MySQL
+**Schema Version:** 2.3 (revisi 2026-10-26 — sinkronisasi teknologi & status backend; 2026-10-28 — sinkronisasi as-built dengan kode dan database, §61.7; MENUNGGU REVIEW OWNER)
+**Status:** DESIGN COMPLETE · IMPLEMENTATION IN PROGRESS (staging di backend aktif `Backend/`; `Backend/devbackend` referensi) — deviasi implementasi (drift No. 1–17) belum disahkan (§61.7)
+**Current Phase:** FRONTEND COMPLETE (mock data; Owner declared "selesai" 2026-10-16) · BACKEND IN PROGRESS (plan implementasi tertua 2026-10-20; fokus 2026-10-28: AI Travel Assistant; prd.md §72); frontend belum terhubung ke API
+**Backend:** Golang (Fiber v2) — IN PROGRESS (v2.2: Laravel 12)
+**ORM:** GORM — IN PROGRESS (v2.2: Eloquent)
+**Database:** PostgreSQL 16 + pgvector — IN PROGRESS (v2.2: MySQL)
+**API:** REST API (`/api/v1`) — IN PROGRESS
+**Target Architecture:** Frontend → REST API → Golang (Fiber) → GORM → PostgreSQL
 
-> ⚠ Dokumen ini adalah blueprint arsitektur data, **bukan izin implementasi backend**.
-> Fase sekarang adalah frontend dengan mock data. Lihat §69 — Final Schema Status.
+> ⚠ Dokumen ini adalah blueprint arsitektur data. Perubahan struktur data tetap harus dicek
+> terhadap `prd.md` dan diperbarui di sini sebelum dianggap kontrak resmi (§69).
+> Status implementasi backend: §61.7 dan prd.md §72.
+
+## Catatan Teknologi v2.3
+
+Schema v2.2 ditulis untuk Laravel 12 · Eloquent · MySQL. Mulai v2.3 backend memakai
+Golang · GORM · PostgreSQL (arahan mentor; prd.md §72.1). **Aturan data, tabel, kolom, dan
+relasi konseptual pada dokumen ini tidak diubah**; yang diperbarui hanya penyebutan
+teknologi. Padanan istilah:
+
+| v2.2 (Laravel/MySQL) | v2.3 (Golang/PostgreSQL) |
+|---|---|
+| Eloquent Model | Model data (struct GORM) |
+| Eloquent relationship (`belongsTo`, `hasMany`, `morphMany`, `morphOne`, `morphToMany`) | Relasi GORM; notasi pada dokumen ini dipertahankan sebagai **notasi relasi konseptual** |
+| API Resource | Response DTO (struktur respons JSON yang ditentukan eksplisit) |
+| Laravel Controller | Handler (Fiber) |
+| Laravel migration | Backend aktif `Backend/`: GORM AutoMigrate (semua tabel, termasuk AI) + SQL idempotent (ekstensi `vector`, indeks HNSW). `devbackend`: AutoMigrate + goose (tabel AI) — as-built |
+| Seeder / Factory | Command seed Go |
+| `LONGTEXT` | `TEXT` |
+| `DATETIME` / `TIMESTAMP` | `TIMESTAMPTZ` |
+| `TINYINT` | `SMALLINT` (usulan padanan; belum diverifikasi di DB) |
+| `ST_Distance_Sphere()` (MySQL) | belum diputuskan — haversine (sudah dipakai frontend dan fallback rute) atau PostGIS (tidak tercatat di plan) |
+
+Blok kode relasi bergaya PHP pada v2.2 dipertahankan sebagai notasi konseptual (fence
+`text`), **bukan** kode implementasi. Implementasi Go berada di `internal/models/models.go`.
+Tipe kolom pada tabel di dokumen ini adalah padanan PostgreSQL; tipe aktual hasil
+GORM AutoMigrate belum dibandingkan kolom per kolom (§61.7).
 
 ---
 
 # 1. Document Purpose
 
-Dokumen ini mendefinisikan struktur data, relasi database, migration order, Eloquent model, API data contract, dan aturan data untuk platform **Pasuruan Info — News & Travel Tech**.
+Dokumen ini mendefinisikan struktur data, relasi database, migration order, model data (GORM), API data contract, dan aturan data untuk platform **Pasuruan Info — News & Travel Tech**.
 
 Schema ini harus menjadi turunan teknis dari `prd.md`.
 
@@ -32,9 +58,9 @@ schema.md
   ↓
 Database Migration
   ↓
-Eloquent Model
+Model Data (GORM)
   ↓
-API Resource
+Response DTO
   ↓
 REST API
   ↓
@@ -122,7 +148,7 @@ Schema mengikuti prinsip berikut:
 10. Publication status dipisahkan secara konsep dari operational status.
 11. Ticket information tidak sama dengan booking/payment.
 12. Gallery menggunakan `media`, bukan tabel gallery terpisah.
-13. API Resource harus mengekspos data yang memang dibutuhkan frontend.
+13. Response DTO harus mengekspos data yang memang dibutuhkan frontend.
 14. Advanced/future features tidak boleh memaksa implementasi penuh pada current stage.
 15. Mock data harus mengikuti bentuk data yang nantinya dikonsumsi API.
 
@@ -184,10 +210,10 @@ Purpose:
 | `name`              | VARCHAR   | required            |
 | `email`             | VARCHAR   | unique              |
 | `password`          | VARCHAR   | nullable jika OAuth |
-| `email_verified_at` | TIMESTAMP | nullable            |
+| `email_verified_at` | TIMESTAMPTZ | nullable            |
 | `remember_token`    | VARCHAR   | nullable            |
-| `created_at`        | TIMESTAMP |                     |
-| `updated_at`        | TIMESTAMP |                     |
+| `created_at`        | TIMESTAMPTZ |                     |
+| `updated_at`        | TIMESTAMPTZ |                     |
 
 Authentication detail bukan bagian dari schema travel content.
 
@@ -216,8 +242,8 @@ Location tidak diulang pada setiap domain content.
 | `latitude`    | DECIMAL(10,7) | nullable                          |
 | `longitude`   | DECIMAL(10,7) | nullable                          |
 | `map_url`     | TEXT          | nullable                          |
-| `created_at`  | TIMESTAMP     |                                   |
-| `updated_at`  | TIMESTAMP     |                                   |
+| `created_at`  | TIMESTAMPTZ     |                                   |
+| `updated_at`  | TIMESTAMPTZ     |                                   |
 
 ### Coordinate Contract
 
@@ -242,7 +268,7 @@ Ini merupakan perubahan penting dari schema sebelumnya.
 
 ## Jangan menggunakan:
 
-```php
+```text
 Place -> hasOne(Destination::class)
 Place -> hasOne(Culinary::class)
 Place -> hasOne(Culture::class)
@@ -262,7 +288,7 @@ Hal tersebut terlalu ketat.
 
 ### Destination
 
-```php
+```text
 public function place()
 {
     return $this->belongsTo(Place::class);
@@ -271,7 +297,7 @@ public function place()
 
 ### Culinary
 
-```php
+```text
 public function place()
 {
     return $this->belongsTo(Place::class);
@@ -280,7 +306,7 @@ public function place()
 
 ### Culture
 
-```php
+```text
 public function place()
 {
     return $this->belongsTo(Place::class);
@@ -289,7 +315,7 @@ public function place()
 
 ### Event
 
-```php
+```text
 public function place()
 {
     return $this->belongsTo(Place::class);
@@ -298,7 +324,7 @@ public function place()
 
 Pada sisi `Place`, relasi boleh menggunakan:
 
-```php
+```text
 public function destinations()
 {
     return $this->hasMany(Destination::class);
@@ -381,11 +407,11 @@ find Culinary/Event/Culture/Destination
 within radius
 ```
 
-Dengan MySQL, perhitungan jarak dapat menggunakan:
-
-```sql
-ST_Distance_Sphere()
-```
+Dengan PostgreSQL (v2.2: MySQL `ST_Distance_Sphere()`), metode perhitungan jarak
+**belum diputuskan**. Laporan Analisis Kebutuhan Backend §4.5 mengusulkan PostGIS atau
+rumus haversine. Plan hanya mencatat ekstensi `pgvector`; PostGIS tidak tercatat.
+Haversine sudah dipakai pada frontend (Explore Around) dan pada fallback endpoint rute
+backend (`haversineM`). Endpoint nearby backend **belum** diimplementasikan.
 
 Distance dikembalikan dalam meter.
 
@@ -417,7 +443,7 @@ Radius sebaiknya disimpan sebagai configuration, bukan sebagai data destination.
 Contoh:
 
 ```text
-config/travel.php
+konfigurasi backend (usulan: variabel environment NEARBY_RADIUS_KM — Laporan §5.4) — v2.2: config/travel.php
 ```
 
 ---
@@ -518,16 +544,16 @@ Jangan menggunakan `content_relations` untuk menyimpan seluruh hasil nearby.
 | `name`               | VARCHAR      | required           |
 | `slug`               | VARCHAR      | unique             |
 | `short_description`  | TEXT         | nullable           |
-| `description`        | LONGTEXT     | nullable           |
+| `description`        | TEXT     | nullable           |
 | `destination_type`   | VARCHAR      | nullable           |
 | `status`             | VARCHAR/ENUM | publication status |
 | `operational_status` | VARCHAR/ENUM | nullable           |
 | `website_url`        | TEXT         | nullable           |
 | `contact_phone`      | VARCHAR      | nullable           |
 | `featured`           | BOOLEAN      | default false      |
-| `published_at`       | TIMESTAMP    | nullable           |
-| `created_at`         | TIMESTAMP    |                    |
-| `updated_at`         | TIMESTAMP    |                    |
+| `published_at`       | TIMESTAMPTZ    | nullable           |
+| `created_at`         | TIMESTAMPTZ    |                    |
+| `updated_at`         | TIMESTAMPTZ    |                    |
 
 ### Important
 
@@ -551,10 +577,11 @@ Jangan menggunakan satu field `status` untuk dua konsep berbeda.
 
 ## Table: `destination_prices`
 
-Table ini memiliki Eloquent Model khusus:
+Table ini memiliki model data khusus:
 
 ```text
-app/Models/DestinationPrice.php
+struct GORM DestinationPrice — internal/models/models.go (as-built devbackend)
+v2.2: app/Models/DestinationPrice.php
 ```
 
 ### Columns
@@ -569,14 +596,14 @@ app/Models/DestinationPrice.php
 | `max_price`      | DECIMAL(12,2) | nullable             |
 | `description`    | TEXT          | nullable             |
 | `external_url`   | TEXT          | nullable             |
-| `created_at`     | TIMESTAMP     |                      |
-| `updated_at`     | TIMESTAMP     |                      |
+| `created_at`     | TIMESTAMPTZ     |                      |
+| `updated_at`     | TIMESTAMPTZ     |                      |
 
 ### Relationship
 
 Destination:
 
-```php
+```text
 public function prices()
 {
     return $this->hasMany(DestinationPrice::class);
@@ -585,7 +612,7 @@ public function prices()
 
 DestinationPrice:
 
-```php
+```text
 public function destination()
 {
     return $this->belongsTo(Destination::class);
@@ -623,7 +650,7 @@ Tidak digunakan untuk internal payment.
 | `name`               | VARCHAR      | required           |
 | `slug`               | VARCHAR      | unique             |
 | `short_description`  | TEXT         | nullable           |
-| `description`        | LONGTEXT     | nullable           |
+| `description`        | TEXT     | nullable           |
 | `culinary_type`      | VARCHAR      | nullable           |
 | `price_range`        | VARCHAR      | nullable           |
 | `status`             | VARCHAR/ENUM | publication status |
@@ -631,13 +658,13 @@ Tidak digunakan untuk internal payment.
 | `featured`           | BOOLEAN      | default false      |
 | `website_url`        | TEXT         | nullable           |
 | `contact_phone`      | VARCHAR      | nullable           |
-| `published_at`       | TIMESTAMP    | nullable           |
-| `created_at`         | TIMESTAMP    |                    |
-| `updated_at`         | TIMESTAMP    |                    |
+| `published_at`       | TIMESTAMPTZ    | nullable           |
+| `created_at`         | TIMESTAMPTZ    |                    |
+| `updated_at`         | TIMESTAMPTZ    |                    |
 
 ### Relationship
 
-```php
+```text
 public function place()
 {
     return $this->belongsTo(Place::class);
@@ -668,8 +695,8 @@ public function menus()
 | `image_media_id` | BIGINT        | nullable      |
 | `is_featured`    | BOOLEAN       | default false |
 | `sort_order`     | INT           | default 0     |
-| `created_at`     | TIMESTAMP     |               |
-| `updated_at`     | TIMESTAMP     |               |
+| `created_at`     | TIMESTAMPTZ     |               |
+| `updated_at`     | TIMESTAMPTZ     |               |
 
 ### Category Rule
 
@@ -679,7 +706,7 @@ Selaras dengan tombol filter pada `menu_kuliner.html`.
 
 ### Relationship
 
-```php
+```text
 public function culinary()
 {
     return $this->belongsTo(Culinary::class);
@@ -712,18 +739,18 @@ Tidak semua budaya/tradisi memiliki satu lokasi fisik permanen.
 | `name`              | VARCHAR      | required           |
 | `slug`              | VARCHAR      | unique             |
 | `short_description` | TEXT         | nullable           |
-| `description`       | LONGTEXT     | nullable           |
+| `description`       | TEXT     | nullable           |
 | `culture_type`      | VARCHAR      | nullable           |
 | `historical_period` | VARCHAR      | nullable           |
 | `status`            | VARCHAR/ENUM | publication status |
 | `featured`          | BOOLEAN      | default false      |
-| `published_at`      | TIMESTAMP    | nullable           |
-| `created_at`        | TIMESTAMP    |                    |
-| `updated_at`        | TIMESTAMP    |                    |
+| `published_at`      | TIMESTAMPTZ    | nullable           |
+| `created_at`        | TIMESTAMPTZ    |                    |
+| `updated_at`        | TIMESTAMPTZ    |                    |
 
 ### Relationship
 
-```php
+```text
 public function place()
 {
     return $this->belongsTo(Place::class);
@@ -747,7 +774,7 @@ Jika `place_id = null`, content tetap valid.
 | `name`              | VARCHAR      | required           |
 | `slug`              | VARCHAR      | unique             |
 | `short_description` | TEXT         | nullable           |
-| `description`       | LONGTEXT     | nullable           |
+| `description`       | TEXT     | nullable           |
 | `event_type`        | VARCHAR      | nullable           |
 | `status`            | VARCHAR/ENUM | publication status |
 | `organizer_name`    | VARCHAR      | nullable           |
@@ -755,13 +782,13 @@ Jika `place_id = null`, content tetap valid.
 | `website_url`       | TEXT         | nullable           |
 | `featured`          | BOOLEAN      | default false      |
 | `capacity`          | INTEGER      | nullable           |
-| `published_at`      | TIMESTAMP    | nullable           |
-| `created_at`        | TIMESTAMP    |                    |
-| `updated_at`        | TIMESTAMP    |                    |
+| `published_at`      | TIMESTAMPTZ    | nullable           |
+| `created_at`        | TIMESTAMPTZ    |                    |
+| `updated_at`        | TIMESTAMPTZ    |                    |
 
 ### Relationship
 
-```php
+```text
 public function place()
 {
     return $this->belongsTo(Place::class);
@@ -809,16 +836,16 @@ Digunakan untuk calendar dan event yang memiliki lebih dari satu jadwal.
 | ------------ | ------------ | -------- |
 | `id`         | BIGINT       | PK       |
 | `event_id`   | BIGINT       | FK       |
-| `starts_at`  | DATETIME     | required |
-| `ends_at`    | DATETIME     | nullable |
+| `starts_at`  | TIMESTAMPTZ     | required |
+| `ends_at`    | TIMESTAMPTZ     | nullable |
 | `status`     | VARCHAR/ENUM | nullable |
 | `notes`      | TEXT         | nullable |
-| `created_at` | TIMESTAMP    |          |
-| `updated_at` | TIMESTAMP    |          |
+| `created_at` | TIMESTAMPTZ    |          |
+| `updated_at` | TIMESTAMPTZ    |          |
 
 ### Relationship
 
-```php
+```text
 public function event()
 {
     return $this->belongsTo(Event::class);
@@ -885,8 +912,8 @@ Digunakan untuk informasi tiket/registrasi.
 | `ticket_url`       | TEXT          | nullable     |
 | `registration_url` | TEXT          | nullable     |
 | `available`        | BOOLEAN       | default true |
-| `created_at`       | TIMESTAMP     |              |
-| `updated_at`       | TIMESTAMP     |              |
+| `created_at`       | TIMESTAMPTZ     |              |
+| `updated_at`       | TIMESTAMPTZ     |              |
 
 ### Important Scope Rule
 
@@ -928,12 +955,12 @@ Booking dan payment tetap future feature.
 | `title`        | VARCHAR      | required                   |
 | `slug`         | VARCHAR      | unique                     |
 | `excerpt`      | TEXT         | nullable                   |
-| `content`      | LONGTEXT     | required                   |
+| `content`      | TEXT     | required                   |
 | `status`       | VARCHAR/ENUM | publication status         |
 | `featured`     | BOOLEAN      | default false              |
-| `published_at` | TIMESTAMP    | nullable                   |
-| `created_at`   | TIMESTAMP    |                            |
-| `updated_at`   | TIMESTAMP    |                            |
+| `published_at` | TIMESTAMPTZ    | nullable                   |
+| `created_at`   | TIMESTAMPTZ    |                            |
+| `updated_at`   | TIMESTAMPTZ    |                            |
 
 ### Category Rule
 
@@ -964,8 +991,8 @@ one primary category
 | `id`         | BIGINT         |
 | `name`       | VARCHAR        |
 | `slug`       | VARCHAR UNIQUE |
-| `created_at` | TIMESTAMP      |
-| `updated_at` | TIMESTAMP      |
+| `created_at` | TIMESTAMPTZ      |
+| `updated_at` | TIMESTAMPTZ      |
 
 Contoh:
 
@@ -1012,8 +1039,8 @@ Media bersifat polymorphic.
 | `caption`       | TEXT         | nullable      |
 | `sort_order`    | INT          | default 0     |
 | `is_featured`   | BOOLEAN      | default false |
-| `created_at`    | TIMESTAMP    |               |
-| `updated_at`    | TIMESTAMP    |               |
+| `created_at`    | TIMESTAMPTZ    |               |
+| `updated_at`    | TIMESTAMPTZ    |               |
 
 ### Supported Content
 
@@ -1029,7 +1056,7 @@ Article
 
 Content:
 
-```php
+```text
 public function media()
 {
     return $this->morphMany(Media::class, 'mediable');
@@ -1038,7 +1065,7 @@ public function media()
 
 Media:
 
-```php
+```text
 public function mediable()
 {
     return $this->morphTo();
@@ -1093,14 +1120,14 @@ Polymorphic relationship.
 | `id`            | BIGINT    |
 | `openable_type` | VARCHAR   |
 | `openable_id`   | BIGINT    |
-| `day_of_week`   | TINYINT   |
+| `day_of_week`   | SMALLINT   |
 | `opens_at`      | TIME      |
 | `closes_at`     | TIME      |
 | `is_closed`     | BOOLEAN   |
 | `is_24_hours`   | BOOLEAN   |
 | `sort_order`    | INT       |
-| `created_at`    | TIMESTAMP |
-| `updated_at`    | TIMESTAMP |
+| `created_at`    | TIMESTAMPTZ |
+| `updated_at`    | TIMESTAMPTZ |
 
 ### Supported
 
@@ -1182,8 +1209,8 @@ bukan disimpan sebagai data statis jika tidak diperlukan.
 | `url`         | TEXT      |
 | `source_type` | VARCHAR   |
 | `description` | TEXT      |
-| `created_at`  | TIMESTAMP |
-| `updated_at`  | TIMESTAMP |
+| `created_at`  | TIMESTAMPTZ |
+| `updated_at`  | TIMESTAMPTZ |
 
 Contoh source:
 
@@ -1211,8 +1238,8 @@ Polymorphic many-to-many style relation.
 | `source_id`       | BIGINT    |
 | `sourceable_type` | VARCHAR   |
 | `sourceable_id`   | BIGINT    |
-| `created_at`      | TIMESTAMP |
-| `updated_at`      | TIMESTAMP |
+| `created_at`      | TIMESTAMPTZ |
+| `updated_at`      | TIMESTAMPTZ |
 
 Unique:
 
@@ -1249,10 +1276,10 @@ Digunakan untuk status verifikasi content.
 | `verifiable_id`   | BIGINT             |
 | `status`          | VARCHAR/ENUM       |
 | `verified_by`     | BIGINT nullable    |
-| `verified_at`     | TIMESTAMP nullable |
+| `verified_at`     | TIMESTAMPTZ nullable |
 | `notes`           | TEXT nullable      |
-| `created_at`      | TIMESTAMP          |
-| `updated_at`      | TIMESTAMP          |
+| `created_at`      | TIMESTAMPTZ          |
+| `updated_at`      | TIMESTAMPTZ          |
 
 ### Verification Status
 
@@ -1269,7 +1296,7 @@ expired
 
 Untuk current scope:
 
-```php
+```text
 public function verification()
 {
     return $this->morphOne(Verification::class, 'verifiable');
@@ -1278,7 +1305,7 @@ public function verification()
 
 Jika di masa depan membutuhkan history/audit:
 
-```php
+```text
 morphMany()
 ```
 
@@ -1297,20 +1324,20 @@ Architecture:
 ```text
 Database
    ↓
-Eloquent Model
+Model Data (GORM)
    ↓
 Relationship
    ↓
-API Resource
+Response DTO
    ↓
 REST API
    ↓
 Frontend
 ```
 
-Contoh Eloquent:
+Contoh notasi relasi (konseptual):
 
-```php
+```text
 public function sources()
 {
     return $this->morphToMany(
@@ -1328,7 +1355,7 @@ public function verification()
 }
 ```
 
-API Resource harus mengekspos informasi yang relevan.
+Response DTO harus mengekspos informasi yang relevan.
 
 Contoh contract:
 
@@ -1367,9 +1394,9 @@ Untuk content yang mendukung source dan verification:
 ```text
 Schema
    ↓
-Eloquent relationship
+relasi model (GORM)
    ↓
-API Resource
+Response DTO
    ↓
 Frontend UI
 ```
@@ -1377,24 +1404,25 @@ Frontend UI
 Tidak boleh berhenti hanya pada:
 
 ```text
-Database → Eloquent
+Database → Model GORM
 ```
 
 ---
 
-# 28. API Resource Contract
+# 28. Response DTO Contract
 
-API Resource bertanggung jawab menentukan data yang dikirim ke frontend.
+Response DTO bertanggung jawab menentukan data yang dikirim ke frontend.
 
 Jangan mengandalkan:
 
-```php
-$model->toArray()
+```text
+serialisasi langsung struct model GORM ke JSON
+(v2.2: $model->toArray())
 ```
 
 sebagai kontrak API utama untuk seluruh aplikasi.
 
-Gunakan API Resource untuk struktur response yang stabil.
+Gunakan Response DTO untuk struktur response yang stabil.
 
 Contoh:
 
@@ -1453,8 +1481,8 @@ Contoh struktur Destination:
 | `id`         | BIGINT         |
 | `name`       | VARCHAR        |
 | `slug`       | VARCHAR UNIQUE |
-| `created_at` | TIMESTAMP      |
-| `updated_at` | TIMESTAMP      |
+| `created_at` | TIMESTAMPTZ      |
+| `updated_at` | TIMESTAMPTZ      |
 
 ---
 
@@ -1515,12 +1543,12 @@ Tidak perlu membuat tabel khusus untuk setiap jenis metadata tersebut.
 | `user_id`         | BIGINT           |
 | `reviewable_type` | VARCHAR          |
 | `reviewable_id`   | BIGINT           |
-| `rating`          | TINYINT          |
+| `rating`          | SMALLINT          |
 | `title`           | VARCHAR nullable |
 | `body`            | TEXT             |
 | `status`          | VARCHAR/ENUM     |
-| `created_at`      | TIMESTAMP        |
-| `updated_at`      | TIMESTAMP        |
+| `created_at`      | TIMESTAMPTZ        |
+| `updated_at`      | TIMESTAMPTZ        |
 
 Rating:
 
@@ -1530,7 +1558,7 @@ Rating:
 
 ### Relationship
 
-```php
+```text
 public function reviewable()
 {
     return $this->morphTo();
@@ -1553,8 +1581,8 @@ Review bersifat advanced feature.
 | `user_id`           | BIGINT    |
 | `bookmarkable_type` | VARCHAR   |
 | `bookmarkable_id`   | BIGINT    |
-| `created_at`        | TIMESTAMP |
-| `updated_at`        | TIMESTAMP |
+| `created_at`        | TIMESTAMPTZ |
+| `updated_at`        | TIMESTAMPTZ |
 
 Unique:
 
@@ -1581,8 +1609,8 @@ bookmarkable_id
 | `start_date`  | DATE nullable |
 | `end_date`    | DATE nullable |
 | `status`      | VARCHAR/ENUM  |
-| `created_at`  | TIMESTAMP     |
-| `updated_at`  | TIMESTAMP     |
+| `created_at`  | TIMESTAMPTZ     |
+| `updated_at`  | TIMESTAMPTZ     |
 
 Trip Plan merupakan advanced feature.
 
@@ -1605,8 +1633,8 @@ Polymorphic item.
 | `planned_date`  | DATE nullable |
 | `sort_order`    | INT           |
 | `notes`         | TEXT nullable |
-| `created_at`    | TIMESTAMP     |
-| `updated_at`    | TIMESTAMP     |
+| `created_at`    | TIMESTAMPTZ     |
+| `updated_at`    | TIMESTAMPTZ     |
 
 Contoh:
 
@@ -1631,10 +1659,10 @@ Trip Plan
 | `id`                  | BIGINT       |
 | `user_id`             | BIGINT       |
 | `event_occurrence_id` | BIGINT       |
-| `remind_at`           | DATETIME     |
+| `remind_at`           | TIMESTAMPTZ     |
 | `status`              | VARCHAR/ENUM |
-| `created_at`          | TIMESTAMP    |
-| `updated_at`          | TIMESTAMP    |
+| `created_at`          | TIMESTAMPTZ    |
+| `updated_at`          | TIMESTAMPTZ    |
 
 Unique:
 
@@ -1664,8 +1692,8 @@ Digunakan untuk hubungan editorial eksplisit.
 | `target_id`     | BIGINT    |
 | `relation_type` | VARCHAR   |
 | `sort_order`    | INT       |
-| `created_at`    | TIMESTAMP |
-| `updated_at`    | TIMESTAMP |
+| `created_at`    | TIMESTAMPTZ |
+| `updated_at`    | TIMESTAMPTZ |
 
 Contoh:
 
@@ -1716,10 +1744,10 @@ Nearby dihitung berdasarkan location.
 | `target_url` | TEXT              |
 | `placement`  | VARCHAR           |
 | `status`     | VARCHAR/ENUM      |
-| `starts_at`  | DATETIME nullable |
-| `ends_at`    | DATETIME nullable |
-| `created_at` | TIMESTAMP         |
-| `updated_at` | TIMESTAMP         |
+| `starts_at`  | TIMESTAMPTZ nullable |
+| `ends_at`    | TIMESTAMPTZ nullable |
+| `created_at` | TIMESTAMPTZ         |
+| `updated_at` | TIMESTAMPTZ         |
 
 Placement dapat berupa:
 
@@ -1785,7 +1813,7 @@ Architecture:
 ```text
 Frontend
    ↓
-Laravel API
+Backend API (Golang)
    ↓
 Weather Service
    ↓
@@ -1799,6 +1827,11 @@ weather_destinations
 ```
 
 untuk current architecture.
+
+> **Catatan as-built v2.3 (DRIFT — menunggu review Owner, §61.7):** atas instruksi Owner
+> (2026-10-13 dan 2026-10-20) backend membuat tabel `destination_weather` yang dipakai
+> sebagai cache respons OpenWeatherMap (TTL 30 menit via `expires_at`) dan baris seed mock.
+> Aturan di atas tidak dihapus; deviasi ini dicatat untuk disahkan atau disesuaikan.
 
 Weather dapat menggunakan:
 
@@ -1864,7 +1897,7 @@ event date
 price
 ```
 
-Filter dilakukan melalui query Eloquent/API.
+Filter dilakukan melalui query GORM/API (v2.2: Eloquent).
 
 ---
 
@@ -2044,57 +2077,63 @@ Jangan membuat satu global status table untuk semua kebutuhan tersebut.
 
 ---
 
-# 46. Eloquent Model Directory
+# 46. Model Directory (GORM)
 
-Struktur model minimal:
+Model minimal (nama model). As-built: seluruh struct berada dalam satu file
+`internal/models/models.go`, mengikuti pola backend referensi (v2.2: satu file
+`.php` per model di `app/Models/`).
 
 ```text
-app/
-└── Models/
-    ├── User.php
-    ├── Place.php
-    │
-    ├── Destination.php
-    ├── DestinationPrice.php
-    │
-    ├── Culinary.php
-    ├── CulinaryMenu.php
-    │
-    ├── Culture.php
-    │
-    ├── Event.php
-    ├── EventOccurrence.php
-    ├── EventTicket.php
-    │
-    ├── Article.php
-    ├── ArticleCategory.php
-    │
-    ├── Media.php
-    ├── OpeningHour.php
-    ├── Source.php
-    ├── Verification.php
-    │
-    ├── Tag.php
-    ├── Review.php
-    ├── Bookmark.php
-    │
-    ├── TripPlan.php
-    ├── TripPlanItem.php
-    ├── EventReminder.php
-    │
-    ├── ContentRelation.php
-    └── Advertisement.php
+User
+Place
+
+Destination
+DestinationPrice
+
+Culinary
+CulinaryMenu
+
+Culture
+
+Event
+EventOccurrence
+EventTicket
+
+Article
+ArticleCategory
+
+Media
+OpeningHour
+Source
+Verification
+
+Tag
+Review
+Bookmark
+
+TripPlan
+TripPlanItem
+EventReminder
+
+ContentRelation
+Advertisement
 ```
 
-`DestinationPrice.php` wajib ada dan tidak boleh hanya dianggap sebagai child table tanpa model.
+`DestinationPrice` wajib ada dan tidak boleh hanya dianggap sebagai child table tanpa model.
+
+Status tabel yang sudah dibuat dan yang belum: §61.7.
 
 ---
 
-# 47. Core Eloquent Relationships
+# 47. Core Model Relationships
+
+> Notasi di bawah adalah notasi relasi konseptual dari v2.2 (gaya Eloquent), dipertahankan
+> sebagai kontrak relasi. Implementasi memakai relasi GORM (`belongs to`, `has many`,
+> polymorphic dengan `polymorphicValue` PascalCase — lihat §61.7).
 
 ## User
 
-```php
+```text
 public function reviews()
 {
     return $this->hasMany(Review::class);
@@ -2120,7 +2159,7 @@ public function eventReminders()
 
 ## Place
 
-```php
+```text
 public function destinations()
 {
     return $this->hasMany(Destination::class);
@@ -2148,7 +2187,7 @@ Tidak ada `hasOne()` untuk domain content.
 
 ## Destination
 
-```php
+```text
 public function place()
 {
     return $this->belongsTo(Place::class);
@@ -2214,7 +2253,7 @@ public function bookmarks()
 
 ## DestinationPrice
 
-```php
+```text
 public function destination()
 {
     return $this->belongsTo(Destination::class);
@@ -2225,7 +2264,7 @@ public function destination()
 
 ## Culinary
 
-```php
+```text
 public function place()
 {
     return $this->belongsTo(Place::class);
@@ -2283,7 +2322,7 @@ public function reviews()
 
 ## CulinaryMenu
 
-```php
+```text
 public function culinary()
 {
     return $this->belongsTo(Culinary::class);
@@ -2302,7 +2341,7 @@ public function image()
 
 ## Culture
 
-```php
+```text
 public function place()
 {
     return $this->belongsTo(
@@ -2347,7 +2386,7 @@ public function tags()
 
 ## Event
 
-```php
+```text
 public function place()
 {
     return $this->belongsTo(
@@ -2406,7 +2445,7 @@ public function tags()
 
 ## EventOccurrence
 
-```php
+```text
 public function event()
 {
     return $this->belongsTo(
@@ -2426,7 +2465,7 @@ public function reminders()
 
 ## Article
 
-```php
+```text
 public function author()
 {
     return $this->belongsTo(
@@ -2520,6 +2559,10 @@ Polymorphic/supporting table
 ```
 
 Foreign key harus dibuat setelah referenced table tersedia.
+
+> **As-built v2.3:** tabel domain dibuat dengan GORM AutoMigrate (aturan delete FK
+> diterapkan dengan SQL fix-up setelah AutoMigrate), sedangkan 3 tabel AI Assistant dibuat
+> dengan migrasi berversi goose. Urutan dependency di atas tetap menjadi aturan.
 
 ---
 
@@ -2693,7 +2736,7 @@ culinary_menus
 
 mengikuti lifecycle parent.
 
-Jangan menambahkan SoftDeletes hanya karena tersedia.
+Jangan menambahkan soft delete (kolom `deleted_at`; v2.2: trait SoftDeletes) hanya karena tersedia.
 
 ---
 
@@ -2706,16 +2749,16 @@ Frontend
    ↓
 REST API
    ↓
-Laravel Controller
+Handler (Fiber)
    ↓
 Service / Query Logic
    ↓
-Eloquent
+GORM
    ↓
-MySQL
+PostgreSQL
 ```
 
-API Resource:
+Response DTO:
 
 ```text
 DestinationResource
@@ -2739,11 +2782,13 @@ Destination
  └── verification
 ```
 
-Gunakan eager loading agar tidak menimbulkan N+1 query.
+Gunakan eager loading (GORM `Preload`) atau query join agar tidak menimbulkan N+1 query.
+Pada join tabel pivot polymorphic, kolom wajib dipilih eksplisit (pelajaran Tahap 1:
+`SELECT *` menyebabkan kolom `id` pivot bentrok dengan `id` tabel induk).
 
-Contoh konseptual:
+Contoh konseptual (v2.2, gaya Eloquent):
 
-```php
+```text
 Destination::with([
     'place',
     'media',
@@ -2767,7 +2812,7 @@ Source Model
      ↓
 Destination/Culinary/Culture/Event
      ↓
-API Resource
+Response DTO
      ↓
 Frontend
 ```
@@ -2781,7 +2826,7 @@ Verification Model
      ↓
 Destination/Culinary/Culture/Event
      ↓
-API Resource
+Response DTO
      ↓
 Frontend
 ```
@@ -2948,6 +2993,12 @@ Chatbot riwayat & rekomendasi (Stage 1 rule-based, client-side — §61.6)
 
 Karena data tersebut dapat dihitung atau berasal dari external service.
 
+> **Catatan as-built v2.3:** daftar di atas tidak diubah. Dua hal yang kini disimpan
+> berdasarkan keputusan Owner: (1) cache cuaca di `destination_weather` (DRIFT, §39,
+> §61.7); (2) riwayat percakapan **AI Assistant backend** di `chat_sessions` /
+> `chat_messages` (ERD AI disetujui Owner 2026-10-21, purge 90 hari). Riwayat Chatbot
+> Stage 1 di frontend tetap tidak disimpan.
+
 ---
 
 # 57. Data That MUST Be Persisted
@@ -3085,11 +3136,10 @@ event_occurrences.starts_at
 
 # 60. Backend Scope Boundary
 
-Status keseluruhan: **backend belum dimulai**. Fokus sekarang adalah frontend.
+Status keseluruhan: **backend IN PROGRESS** (plan implementasi tertua 2026-10-20; development dan staging;
+production cutover belum). (v2.2: backend belum dimulai; fokus frontend.)
 
-Dokumen ini tetap written sebagai blueprint arsitektur data (sudah selesai dan
-diverifikasi secara internal), tetapi status implementasinya `NOT READY` sampai
-user mengesahkan dimulainya fase backend.
+Dokumen ini tetap menjadi blueprint arsitektur data. Status implementasi per tabel: §61.7.
 
 ## Current/Core Schema
 
@@ -3113,19 +3163,23 @@ Advertisement
 Relations
 ```
 
-Status: **DESIGNED — NOT IMPLEMENTED**. Belum ada tabel, migration, atau model.
+Status: sebagian sudah diimplementasikan (Content, Location, Media, Price, Opening Hours,
+Source, Verification, Event Calendar). Tags, Reviews, Bookmarks, Trip Plan, Reminder,
+dan Relations belum dibuat di devbackend maupun backend aktif `Backend/`. Advertisement:
+backend aktif memakai tabel legacy `ads` (kesetaraan dengan §37 belum diaudit). Rincian: §61.7.
 ## Planned Backend
 
 ```text
-Laravel 12
-Eloquent
-MySQL
+Golang (Fiber v2)
+GORM
+PostgreSQL 16 + pgvector
 REST API
-API Resource
+Response DTO
 Query Layer
 ```
 
-Status: **PLANNED — NOT STARTED**. Belum ada satu baris kode backend pun di repository.
+Status: **IN PROGRESS** — development (`Backend/devbackend`) dan staging (backend lama
+`Backend/`). (v2.2: Laravel 12 · Eloquent · MySQL — PLANNED, NOT STARTED.)
 
 ## Tidak termasuk current implementation
 
@@ -3140,6 +3194,11 @@ Dynamic Travel Planning
 Full CMS
 Advanced User Generated Content
 ```
+
+> **Catatan v2.3 — [OWNER_OVERRIDE] AI Travel Assistant:** daftar di atas tidak diubah.
+> Owner menyetujui ERD AI Assistant (2026-10-21) sehingga tabel `faq_knowledge_bases`,
+> `chat_sessions`, `chat_messages` dan endpoint chat/semantic search sudah dibuat di
+> development/staging (prd.md §22, §72). Item lain pada daftar tetap tidak dikerjakan.
 
 ---
 
@@ -3370,6 +3429,114 @@ belum diotorisasi; lihat §69).
 
 ---
 
+## 61.7 Backend As-Built — Data Contract Status (sync 2026-10-26, sinkronisasi as-built 2026-10-28, diperbarui 2026-11-03)
+
+Backend dikerjakan (plan implementasi tertua 2026-10-20; setup awal sudah ada sebelumnya,
+tanggalnya tidak tercatat) dengan Golang (Fiber v2) + GORM + PostgreSQL 16 + pgvector 0.8.7
+(prd.md §72). Bagian ini mencatat tabel yang sudah dibuat dan deviasi terhadap kontrak schema
+ini. Deviasi dicatat sebagai **DRIFT — MENUNGGU REVIEW OWNER** dan belum menjadi kontrak resmi
+sebelum disahkan (aturan §69).
+
+> **Sinkronisasi 2026-10-28 (instruksi Owner):** isi bagian ini dicocokkan langsung dengan
+> proyek. Label bukti: **[KODE]** = source code/file · **[DB]** = query read-only (staging
+> `pasinfo_travel` dan devbackend `pasinfo_dev`) · **[DOK]** = plan/dokumen. Backend aktif
+> adalah backend lama `Backend/`; `Backend/devbackend` hanya referensi read-only. Sinkronisasi
+> ini **tidak menambah tabel atau kolom**; hanya mencatat kondisi aktual.
+
+### Tabel di database staging backend aktif (`Backend/`, DB `pasinfo_travel`) [DB; KODE `internal/database/database.go`]
+
+| Tabel | Bagian schema | Mekanisme | Baris (2026-10-28) |
+|---|---|---|---|
+| `places`, `destinations`, `destination_prices`, `media`, `opening_hours`, `sources`, `sourceables`, `verifications` | §6, §10, §11, §20, §22, §24–§26 | GORM AutoMigrate | 116 · 55 · 165 · 330 · **0** · 4 · 137 · 137 |
+| `regions`, `travel_categories`, `facilities`, `destination_weather` | tidak ada di schema (DRIFT No. 1, No. 12) | GORM AutoMigrate | 5 · 4 · 220 · 55 |
+| `culinaries`, `culinary_menus`, `cultures`, `events`, `event_occurrences`, `event_tickets` | §12–§17 | GORM AutoMigrate (hanya di PostgreSQL + pgvector) | 25 · 375 · 25 · **32** · 40 · 21 (2026-11-01 setelah event mock dihapus: events 16 · occurrences 24 · tickets 5) |
+| `articles`, `article_categories` | §18, §19 | GORM AutoMigrate | **0** · **0** |
+| `faq_knowledge_bases`, `chat_sessions`, `chat_messages` | tidak ada di schema; ERD AI terpisah | GORM AutoMigrate + SQL idempotent (`CREATE EXTENSION vector`, kolom tambahan FAQ, indeks HNSW) | 258 (242 aktif) · 228 · 1.905 (sinkron 2026-10-31) |
+| Tabel legacy: `users`, `news`, `categories`, `news_images`, `notifications`, `histories`, `ads`, `verify_otps`, `provinces`, `regencies`, `districts`, `villages` | `users` §5; `ads` setara konsep `advertisements` §37 (belum diaudit); lainnya tidak ada di schema | GORM AutoMigrate (backend lama) | `users` 5 · `news` 116 · `categories` 10 · `ads` 0 · `villages` 83.762 |
+
+### Tabel di database development (`Backend/devbackend`, DB `pasinfo_dev`) — referensi
+
+| Tabel | Bagian schema | Mekanisme | Keterangan |
+|---|---|---|---|
+| `places`, `destinations`, `destination_prices`, `media`, `opening_hours`, `sources`, `sourceables`, `verifications` | §6, §10, §11, §20, §22, §24–§26 | GORM AutoMigrate | Tahap 1 Wisata (2026-10-20/21) |
+| `regions`, `categories`, `facilities`, `destination_weather` | tidak ada di schema | GORM AutoMigrate | **DRIFT** (instruksi Owner 2026-10-13 dan 2026-10-20) |
+| `articles`, `article_categories` | §18, §19 | GORM AutoMigrate | 33 · 9 baris [DB] |
+| `culinaries`, `culinary_menus`, `cultures`, `events`, `event_occurrences`, `event_tickets` | §12–§17 | GORM AutoMigrate | events 16 baris [DB] |
+| `faq_knowledge_bases`, `chat_sessions`, `chat_messages` | tidak ada di schema; ERD AI terpisah | goose (5 migrasi termasuk ekstensi dan indeks) | APPROVED Owner 2026-10-21 (`plans/2026-10-21-erd-ai-assistant.md`); FAQ 88 baris [DB] |
+
+Belum dibuat di kedua database: `tags`, `taggables`, `reviews`, `bookmarks`, `trip_plans`,
+`trip_plan_items`, `event_reminders`, `content_relations`. Tabel `advertisements` tidak ada;
+backend lama memakai tabel `ads` (0 baris). Kesetaraan `users`/`ads` legacy dengan kontrak
+§5/§37 belum diaudit.
+
+### Deviasi (DRIFT)
+
+| No | Deviasi | Sumber |
+|---|---|---|
+| 1 | Tabel baru `regions`, `categories`, `facilities`, `destination_weather` (definisi kolom belum ada di schema) | Tahap 1 — Drift Register |
+| 2 | Kolom baru `destinations`: `region_id`, `category_id`, `rating`, `reviews_label`, `keyakinan`, `source` | Tahap 1 — Drift Register |
+| 3 | Kolom baru `places.google_place_id` | Tahap 1 — Drift Register |
+| 4 | `destinations.destination_type` (§10) tidak dibuat; perannya digantikan `category_id` | Tahap 1 — Drift Register |
+| 5 | `tags` / `taggables` tidak dibuat (mock frontend tidak memakai tags) | Tahap 1 — Drift Register |
+| 6 | `articles.author_name` dan `articles.source` ditambahkan; `author_id` nullable (tabel users belum ada); `content` = TEXT paragraf dipisah `\n\n`; FK kategori `ON DELETE RESTRICT` | Tahap 1 — Domain Berita |
+| 7 | Cache cuaca disimpan di `destination_weather` (bertentangan dengan §39/§56) | Tahap 1 — Integrasi API key |
+| 8 | Riwayat chat AI disimpan (`chat_sessions`/`chat_messages`); purge 90 hari disetujui di ERD. **Diimplementasikan 2026-10-28** (backend aktif): aktivitas sesi = `COALESCE(last_message_at, MAX(chat_messages.created_at), chat_sessions.created_at)`; `last_message_at` kini diisi setiap pesan pengguna (sebelumnya selalu NULL); retensi via env `CHAT_RETENTION_DAYS` (default 90) | ERD AI (APPROVED) + keputusan Owner 2026-10-28 |
+| 9 | `place_id` kuliner/budaya/acara hanya diisi bila cocok dengan `places` existing, selain itu NULL (§12 `culinaries.place_id` tertulis FK tanpa keterangan nullable). Di staging per 2026-10-28 tidak ada `place_id` NULL pada ketiga tabel [DB] | Domain Data Migration & Seed |
+| 10 | Respons API Wisata dan Berita mengikuti bentuk mock frontend (Wisata: field turunan `prices[]`, `fasilitas[]`, label `opening_hours`), bukan bentuk contoh §28. Bentuk respons Kuliner/Budaya/Acara tidak dirinci di plan | Tahap 1 |
+| 11 | **Sebagian teratasi 2026-11-01 (instruksi Owner, opsi A).** ERD AI §6.3 menetapkan `chat_sessions → chat_messages` **ON DELETE CASCADE**. Kini FK `fk_chat_sessions_messages` (`chat_messages.session_id → chat_sessions.id`) ada di `pasinfo_travel`, dibuat GORM AutoMigrate (relasi `ChatSession.Messages`, `OnDelete: NO ACTION`). Sisa deviasi: tanpa CASCADE, sesuai keputusan Owner 2026-10-28; purge menghapus pesan secara eksplisit sebelum sesinya dalam transaksi yang sama | [DB; KODE `internal/models/models.go`, `internal/services/chat_retention.go`] |
+| 12 | Backend aktif memakai nama tabel `travel_categories` untuk kategori wisata (di devbackend: `categories`), karena `categories` sudah dipakai kategori berita legacy | [DB; KODE `models.TravelCategory`] |
+| 13 | Berita di backend aktif disimpan di tabel legacy `news` (116 baris) + `categories` (10), bukan kontrak `articles`/`article_categories` (§18–§19). Tabel `articles` ada tetapi kosong; seed mengizinkan `berita.json` namun file tidak ada di `Backend/cmd/seed/data`. Korpus AI memakai `news` (`source_type='news'`) | [DB; KODE] |
+| 14 | **Teratasi di `pasinfo_travel` 2026-11-01 (instruksi Owner).** Sebelumnya: 32 event (16 mock lama slug `*-mock` dari 2026-10-24 + 16 seed editorial 2026-10-27), semua berlabel sumber `acara` / `source_type=mock`. Kini: 16 event mock beserta tiket, jadwal, sourceables, verifications, dokumen FAQ nonaktif, dan 5 places tanpa nama dihapus (satu transaksi); 16 event editorial (id 17–32) bersumber `data-acara.json` / `source_type=seed` (nilai yang sudah dipakai sumber wisata); sumber `acara`/`mock` dihapus; seed diperbaiki. DB uji `pasinfo_travel_gemini` belum dibersihkan | [DB; KODE `Backend/cmd/seed/main.go`] + keputusan Owner 2026-10-28 dan 2026-11-01 |
+| 15 | Nilai status di luar daftar §26/§45: verifikasi event `terverifikasi` (7), `jadwal-resmi` (2), `jadwal-terdaftar` (7) — schema: `pending`/`verified`/`rejected`/`expired`; status occurrence `expected` (1), `ongoing` (1), `past_unconfirmed` (13) — schema: `scheduled`/`cancelled`/`completed` | [DB] |
+| 16 | `faq_knowledge_bases.source_type` di staging bernilai `destination`, `culinary`, `culture`, `event`, `news`, `region` — ERD AI §3 hanya `manual`/`article`/`destination`. **Sebagian teratasi 2026-11-03:** indeks `idx_faq_knowledge_source (source_type, source_id)` dibuat, lalu dijadikan UNIQUE parsial (`WHERE source_type IS NOT NULL AND source_id IS NOT NULL`, satu dokumen korpus per sumber) — lebih ketat dari ERD; indeks tunggal `idx_chat_sessions_visitor_id` dan `idx_chat_messages_session_id` dihapus (tercakup indeks komposit ERD) | [DB; KODE `models.go`, `database.go`] |
+| 17 | FK tabel anak di staging **tanpa `ON DELETE CASCADE`** (default NO ACTION): `destination_prices`, `facilities`, `destination_weather`, `culinary_menus`, `event_occurrences`, `event_tickets`; `sourceables` tidak memiliki FK ke `sources`. Di devbackend, `destination_prices`, `facilities`, `destination_weather`, dan `sourceables.source_id` memakai CASCADE sesuai §49 | [DB, kedua database] |
+| 18 | `events` (§15): `organizer_name` **diimplementasikan 2026-10-29** (keputusan Owner KR-08; VARCHAR(255) nullable lewat GORM AutoMigrate; terisi 9 dari 16 event asli dari seed). Kolom §15 lain belum ada di staging: `organizer_phone`, `website_url`, `capacity`, `published_at` | [DB `information_schema.columns` 2026-10-29; KODE `models.Event`] |
+| 19 | Backfill 2026-10-29 (keputusan Owner KR-06, `go run ./cmd/seed -backfill`, hanya mengisi kolom kosong dari file seed, tanpa baris baru): `short_description` destinasi 55 · kuliner 25 · budaya 25 · acara 16; `culinary_type` 25; `culture_type` 25; `event_type` 16; `places.address` 55. Alamat `places` id 104 (dipakai `pekan-raya-pasuruan` dan `dream-desire-fest` dengan alamat sumber berbeda) sengaja tidak diisi. `places.village`/`district` kosong di 116/116 baris; jam buka, rating, `price_range` tidak diisi (data dummy) | [DB pra/pasca-cek 2026-10-29] |
+| 20 | `faq_knowledge_bases.metadata` (jsonb, kolom sudah ada; ERD AI tidak mendefinisikan isinya) kini diisi saat upsert korpus (2026-11-03: juga penanda `"source_unpublished": true` pada dokumen yang dinonaktifkan karena sumbernya tidak lagi published/terhapus; hilang saat sumber terbit lagi): `{"region": "<nama zona>"}` untuk destinasi 55, kuliner 25, budaya 25, acara aktif 16, wilayah 5; `{"news_category": "<categories.slug>"}` untuk berita 116. Dipakai filter pencarian (OVERRIDE-RAG-003). Teks korpus berita kini memuat baris Kategori berita / Sumber / Ditambahkan ke database. **DRIFT — MENUNGGU REVIEW OWNER** | [DB 2026-10-31; KODE `retrieval.go`, `knowledge_text.go`] |
+
+| 21 | Kolom `keyakinan` varchar(30) nullable di `culinaries` dan `cultures` (pola `destinations.keyakinan`, No. 2), diisi dari seed lewat `cmd/seed -backfill` (wisata 55, kuliner 25, budaya 25); tidak ada di §12/§13. **DRIFT — MENUNGGU REVIEW OWNER** (disetujui untuk dibuat 2026-11-03, OVERRIDE-RECO-001) | [DB; KODE `models.go`, `cmd/seed`] |
+| 22 | Kolom `views` bigint NOT NULL DEFAULT 0 (tidak tampil di respons) di `destinations`, `culinaries`, `cultures`, `events`; bertambah 1 tiap GET detail; sinyal popularitas rekomendasi (bobot 0 sampai ada data nyata); tidak ada di §10–§15. **DRIFT — MENUNGGU REVIEW OWNER** (OVERRIDE-RECO-001) | [DB; KODE `domain_handler.go`, `wisata_handler.go`] |
+| 23 | `places.district`/`village` (kolom §6 yang sudah ada) kini terisi dari alamat (109/111, 106/111) dan `places.regency` bernilai `Kota Pasuruan`/`Kabupaten Pasuruan` (sebelumnya `Pasuruan` untuk semua); zona peta kuliner/budaya/acara diturunkan dari kecamatan (bukan kolom). Bukan kolom baru — dicatat karena nilai `regency` berubah (Owner opsi A, 2026-11-03) | [DB; KODE `location.go`, `cmd/seed/backfill.go`] |
+
+Migrasi backend aktif tetap GORM AutoMigrate + SQL idempoten (keputusan Owner 2026-11-03); riwayat versi skema:
+`Backend/docs/3 November 2026/MIGRASI_SKEMA_VERSI.md`.
+
+### Aturan schema yang tercatat dipatuhi pada implementasi
+
+* Konten domain Wisata merujuk ke `places` (seed Tahap 1: satu baris `places` per destinasi).
+* Tidak ada indeks UNIQUE pada `place_id` di staging [DB].
+* Source dan Verification tetap tabel polimorfik terpisah; nilai type polymorphic
+  PascalCase. Di staging: `Destination`, `Culinary`, `Culture`, `Event` [DB].
+* Child dependen memakai `ON DELETE CASCADE` (§49) — **hanya di devbackend**; di staging
+  backend aktif tidak (drift No. 17).
+* Tabel AI (`faq_knowledge_bases`, `chat_sessions`, `chat_messages`) — **2026-11-01 (instruksi Owner, opsi B)**:
+  NOT NULL, CHECK, dan indeks dari ERD AI diterapkan lewat tag GORM AutoMigrate + SQL idempotent
+  `SET NOT NULL` (AutoMigrate tidak mengubah kolom nullable yang sudah ada). CHECK: kategori FAQ
+  (`wisata`,`berita`,`kuliner`,`budaya`,`acara`,`umum`,`layanan`), `source_type` FAQ mengikuti korpus aktif
+  (drift No. 16), status sesi, role dan status pesan. Indeks: `idx_chat_messages_session_created`,
+  `idx_chat_sessions_visitor_last`, `idx_faq_knowledge_category` [DB; KODE `internal/models/models.go`,
+  `internal/database/database.go`]. FK `chat_messages.session_id` NO ACTION ada sejak 2026-11-01 (drift No. 11).
+* Tidak ada tabel booking/registration/payment (Ticket ≠ Booking).
+* `events.culture_id` tidak dibuat (relasi masih pending).
+* Tidak ada tabel nearby yang dibuat.
+* Data kuliner, budaya, dan destinasi berstatus verifikasi `pending` di staging [DB]. Status
+  data event: drift No. 14–15.
+
+### Yang masih terbuka
+
+* Pengesahan drift No. 1–23 oleh Owner.
+* Pembersihan 16 event mock lama: **selesai** di `pasinfo_travel` (2026-11-01) dan DB uji `pasinfo_travel_gemini`
+  (2026-11-03) (drift No. 14).
+* Tipe kolom aktual hasil GORM AutoMigrate belum dibandingkan kolom per kolom dengan
+  dokumen ini; verifikasi via `\d <tabel>` diperlukan sebelum kontrak final.
+* Kolom aktual tabel kuliner/budaya/acara belum disinkronkan ke §12–§17.
+* Definisi kolom tabel AI mengacu pada `plans/2026-10-21-erd-ai-assistant.md`; belum
+  disalin ke dokumen ini.
+* `opening_hours` kosong (0 baris).
+* Frontend masih memakai mock data; §61.1–§61.6 tetap berlaku sebagai kontrak bentuk data.
+
+---
+
 # 62. Migration Definition of Done
 
 Migration dianggap selesai jika:
@@ -3389,7 +3556,7 @@ Migration dianggap selesai jika:
 
 ---
 
-# 63. Eloquent Definition of Done
+# 63. Model (GORM) Definition of Done
 
 Model dianggap selesai jika:
 
@@ -3403,18 +3570,18 @@ Model dianggap selesai jika:
 * [ ] Cast tanggal/waktu sesuai kebutuhan.
 * [ ] Query tidak menghasilkan N+1.
 * [ ] Eager loading digunakan pada API.
-* [ ] API Resource tersedia untuk public content.
+* [ ] Response DTO tersedia untuk public content.
 
 ---
 
-# 64. API Resource Definition of Done
+# 64. Response DTO Definition of Done
 
 Untuk content yang memiliki source/verification:
 
-* [ ] Source tersedia pada Eloquent.
-* [ ] Verification tersedia pada Eloquent.
-* [ ] API Resource mengekspos source.
-* [ ] API Resource mengekspos verification.
+* [ ] Source tersedia pada model/relasi GORM.
+* [ ] Verification tersedia pada model/relasi GORM.
+* [ ] Response DTO mengekspos source.
+* [ ] Response DTO mengekspos verification.
 * [ ] Verification status dapat dibaca frontend.
 * [ ] `verified_at` dapat ditampilkan frontend.
 * [ ] Source URL dapat diakses frontend.
@@ -3426,9 +3593,9 @@ Target:
 ```text
 Database
    ↓
-Eloquent
+Model GORM
    ↓
-Resource
+Response DTO
    ↓
 JSON
    ↓
@@ -3568,7 +3735,7 @@ Source dan verification tidak digabung menjadi satu table.
 Backend data ≠ automatically frontend contract
 ```
 
-API Resource harus secara eksplisit menentukan data public.
+Response DTO harus secara eksplisit menentukan data public.
 
 ### Rule 8 — Status
 
@@ -3718,7 +3885,7 @@ ARTICLE
         │
         └───────────────────────────────────────┐
                                                 │
-                                          API Resource
+                                          Response DTO
                                                 │
                                               REST API
                                                 │
@@ -3749,9 +3916,9 @@ Schema
  ↓
 Migration
  ↓
-Eloquent
+Model GORM
  ↓
-API Resource
+Response DTO
  ↓
 Frontend
 ```
@@ -3832,41 +3999,41 @@ telah memiliki alur yang konsisten.
 ✓ Source ≠ Verification
 ✓ Publication Status ≠ Operational Status
 ✓ Ticket ≠ Booking
-✓ API Resource wajib mengekspos verification/source
+✓ Response DTO wajib mengekspos verification/source
 ✓ Article memiliki satu primary category
 ✓ Migration order mengikuti dependency
 ```
 
-**Status dokumen: NOT READY — FRONTEND PHASE**
+**Status dokumen: IMPLEMENTATION IN PROGRESS — BACKEND PHASE (v2.3, menunggu review Owner)**
+
+(v2.2: NOT READY — FRONTEND PHASE)
 
 ```text
 ┌────────────────────────────────────────────────────────────┐
-│ SCHEMA DOCUMENT                                              │
+│ SCHEMA DOCUMENT                                            │
 │                                                            │
 │ Design completeness   : COMPLETE (blueprint architecture)  │
-│ Implementation status : NOT READY                          │
+│ Implementation status : IN PROGRESS (dev + staging)        │
 │                                                            │
-│ Reason : Project sedang berada pada FRONTEND PHASE.        │
-│          User menetapkan fokus pada pembangunan halaman     │
-│          frontend sebelum backend.                         │
+│ YANG SUDAH DIJALANKAN (prd.md §72, schema §61.7) :         │
+│   Frontend HTML5 + Tailwind + Vanilla JS (mock data)       │
+│   Golang · Fiber v2 · GORM · PostgreSQL 16 + pgvector      │
+│   AutoMigrate + goose · Seed · REST API GET · AI chat      │
 │                                                            │
-│ YANG DIJALANKAN :                                           │
-│   Frontend HTML5 + Tailwind + Vanilla JavaScript            │
-│   Mock / placeholder data lokal                             │
+│ YANG BELUM :                                               │
+│   Integrasi frontend → API · Production cutover            │
+│   Pengesahan drift schema (§61.7) · API Contract final     │
 │                                                            │
-│ YANG TIDAK DIJALANKAN :                                     │
-│   Laravel · Migration · Eloquent · MySQL · REST API         │
-│   · API Resource · Seeder · Factory                         │
-│                                                            │
-│ ⚠ Dokumen ini HANYA acuan arsitektur data.                 │
-│ ⚠ Dokumen ini BUKAN izin implementasi backend.             │
+│ ⚠ Perubahan struktur data tetap wajib dicek ke prd.md     │
+│   dan disahkan di dokumen ini.                             │
 │                                                            │
 │ Lihat : AGENTS.md §6 (Out of Scope), §31 (Schema Rule)     │
 └────────────────────────────────────────────────────────────┘
 ```
 
-Schema ini menjadi acuan database dan Eloquent **ketika** backend Laravel mulai
-dikerjakan. Saat ini belum diimplementasikan.
+Schema ini menjadi acuan database dan model data (GORM) untuk backend Golang yang
+sudah dikerjakan (plan implementasi tertua 2026-10-20) (v2.2: "acuan Eloquent ketika backend Laravel
+mulai dikerjakan").
 
 Setiap perubahan terhadap struktur data harus terlebih dahulu dicek terhadap
 `prd.md` dan diperbarui di `schema.md` sebelum migration/model diimplementasikan.
@@ -3889,7 +4056,7 @@ Setiap perubahan terhadap struktur data harus terlebih dahulu dicek terhadap
 
 ```text
 Mengambil bentuk field untuk mock data
-Mengikuti struktur API Resource (§28) sebagai pola mock data
+Mengikuti struktur Response DTO (§28) sebagai pola mock data
 Menentukan nesting: place, media, prices, opening_hours, sources, verification
 Menjaga mock data tetap konsisten dengan bentuk schema
 ```
@@ -3898,26 +4065,36 @@ Menjaga mock data tetap konsisten dengan bentuk schema
 
 ```text
 Menulis migration
-Menulis model Eloquent
-Menulis controller
+Menulis model data (v2.2: model Eloquent)
+Menulis controller / handler
 Menulis endpoint API
 Membuat tabel di database
 Menjalankan query
 ```
 
+> Catatan v2.3: daftar `KNOWN`/`UNKNOWN` di atas adalah aturan **fase frontend**. Fase
+> backend sudah berjalan (plan implementasi tertua 2026-10-20, keputusan Owner tercatat di plan Tahap 1); item `UNKNOWN`
+> sudah dikerjakan pada fase backend (§61.7).
+
 ## Urutan aktivasi
 
 ```text
-SEKARANG      → Frontend + mock data          (Phase 1)
-NANTI         → Backend Laravel               (Phase 7 / §48 prd.md)
+SELESAI       → Frontend + mock data          (Phase 1–6, 2026-10-16)
+SEKARANG      → Backend Golang                (prd.md §54, §72 — plan tertua 2026-10-20)
                     ↓
-                  Migration (§48)
+                  Migration (§48)             → AutoMigrate + goose  ✓ (dev)
+                                                AutoMigrate + SQL idempotent ✓ (staging, backend aktif)
                     ↓
-                  Eloquent model (§46, §47)
+                  Model GORM (§46, §47)       → ✓ sebagian (§61.7)
                     ↓
-                  Seeder / Factory
+                  Seeder                      → ✓ (dev + staging)
                     ↓
-                  REST API + API Resource (§52, §28)
+                  REST API + Response DTO     → ✓ GET publik + AI (dev + staging)
+                    (§52, §28)
+                    ↓
+                  AI Travel Assistant         → SEDANG BERJALAN (fokus Owner 2026-10-28;
+                                                prd.md §72.3–§72.4)
+NANTI         → Integrasi frontend → API, cutover produksi
 ```
 
 Status `NOT READY` pada dokumen ini berubah menjadi `READY FOR IMPLEMENTATION`
@@ -3974,9 +4151,17 @@ hanya setelah:
     field baru). Presentasi/UX + 1 kolom mock acara → TIDAK ada tabel/endpoint
     baru; 121 items tetap. Seluruh ronde **BELUM commit** (working tree).
     Lihat §61.6. Status dokumen tetap `NOT READY`.
-[ ] User mengesahkan dimulainya fase backend
+[x] User mengesahkan dimulainya fase backend
+    → Fase backend sudah berjalan; plan tertua 2026-10-20 (keputusan Product Owner tercatat di
+      plan Tahap 1: "backend dulu, frontend menyusul"); dikonfirmasi Owner
+      pada sinkronisasi 2026-10-26
 [ ] prd.md disetujui final
+    → prd.md v2.2 (sinkronisasi teknologi & status backend) MENUNGGU REVIEW Owner
 ```
+
+> **Update v2.3 (2026-10-26):** syarat 3 kini TERPENUHI; syarat 4 menunggu review Owner
+> atas prd.md v2.2. Implementasi backend sudah berjalan (§61.7). Paragraf di bawah adalah
+> catatan historis per 2026-10-18.
 
 Saat ini **2 dari 4 syarat terpenuhi (final 2026-10-16; audit terakhir 2026-10-18)**.
 Syarat 1 & 2 TERPENUHI final (frontend dinyatakan selesai Owner 2026-10-16;

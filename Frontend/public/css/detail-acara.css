@@ -1,0 +1,11 @@
+
+      body[data-page-active="acara"] .evt-btn-green:hover {
+        background-color: #15803d !important;
+      }
+      body[data-page-active="acara"] .evt-btn-green-soft:hover {
+        background-color: #f0fdf4 !important;
+      }
+      body[data-page-active="acara"] .evt-link-green:hover {
+        color: #15803d !important;
+      }
+    

@@ -1,0 +1,247 @@
+
+      /* Aksen hijau hero acara: badge kartu + ring fokus (mirip pola
+         .bud-accent-ring; Tailwind belum membangkitkan text-green-300 /
+         ring-green-400 sehingga didefinisikan di sini, bukan via rebuild). */
+      body[data-page-active="acara"] .evt-badge-text {
+        color: #86efac;
+      }
+      body[data-page-active="acara"] .evt-focus-ring:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px #16a34a;
+      }
+
+      /* (E) Override gradient hero acara (per-breakpoint) — mirror wisata. */
+      body[data-page-active="acara"]
+        #hero-section
+        > div[class*="bg-gradient-to-t"] {
+        background-image: linear-gradient(
+          to bottom,
+          rgba(0, 0, 0, 0) 0%,
+          rgba(0, 0, 0, 0) 38%,
+          rgba(0, 0, 0, 0.2) 50%,
+          rgba(0, 0, 0, 0.32) 62%,
+          rgba(0, 0, 0, 0.48) 74%,
+          rgba(0, 0, 0, 0.62) 86%,
+          rgba(0, 0, 0, 0.75) 100%
+        ) !important;
+      }
+      @media (min-width: 768px) {
+        body[data-page-active="acara"]
+          #hero-section
+          > div[class*="bg-gradient-to-t"] {
+          background-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0.22) 0%,
+            rgba(0, 0, 0, 0.26) 12%,
+            rgba(0, 0, 0, 0.34) 28%,
+            rgba(0, 0, 0, 0.44) 46%,
+            rgba(0, 0, 0, 0.56) 64%,
+            rgba(0, 0, 0, 0.66) 82%,
+            rgba(0, 0, 0, 0.75) 100%
+          ) !important;
+        }
+      }
+      @media (min-width: 1024px) {
+        body[data-page-active="acara"]
+          #hero-section
+          > div[class*="bg-gradient-to-t"] {
+          background-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0) 26%,
+            rgba(0, 0, 0, 0.16) 38%,
+            rgba(0, 0, 0, 0.28) 50%,
+            rgba(0, 0, 0, 0.4) 62%,
+            rgba(0, 0, 0, 0.56) 76%,
+            rgba(0, 0, 0, 0.68) 88%,
+            rgba(0, 0, 0, 0.75) 100%
+          ) !important;
+        }
+      }
+
+      /* (F) Desktop: judul/deskripsi rata-kiri tapi di tengah vertikal — mirror wisata. */
+      @media (min-width: 1024px) {
+        body[data-page-active="acara"] #hero-section > div[class*="z-20"] {
+          align-self: stretch;
+        }
+        body[data-page-active="acara"] #hero-section #content-container {
+          align-self: center;
+        }
+      }
+
+      /* (G) Tablet 768–1023: teks hero di tengah vertikal + ukuran — mirror wisata. */
+      @media (min-width: 768px) and (max-width: 1023px) {
+        body[data-page-active="acara"] #hero-section {
+          align-items: stretch;
+        }
+        body[data-page-active="acara"] #hero-section > div[class*="z-20"] {
+          align-self: stretch;
+        }
+        body[data-page-active="acara"] #hero-section #content-container {
+          margin-top: auto;
+          margin-bottom: auto;
+          max-width: 42rem;
+        }
+        body[data-page-active="acara"] #hero-section #badge-text {
+          font-size: 1rem;
+          padding: 0.4rem 0.95rem;
+        }
+        body[data-page-active="acara"] #hero-section #hero-location {
+          font-size: 0.85rem;
+        }
+        body[data-page-active="acara"] #hero-section #hero-desc {
+          font-size: 1.125rem;
+          line-height: 1.65;
+          max-width: 34rem;
+        }
+      }
+
+      /* (H) Teks "Pasuruan Raya" di samping badge hero — aksen HIJAU acara
+         #16a34a + stroke putih (mirror wisata §H; wisata merah, kuliner biru). */
+      body[data-page-active="acara"] #hero-section #hero-location {
+        color: #16a34a !important;
+        text-shadow:
+          -1px -1px 0 #ffffff,
+          1px -1px 0 #ffffff,
+          -1px 1px 0 #ffffff,
+          1px 1px 0 #ffffff,
+          -2px 0 0 #ffffff,
+          2px 0 0 #ffffff,
+          0 -2px 0 #ffffff,
+          0 2px 0 #ffffff !important;
+      }
+
+      /* (I) Header transparan di atas hero acara — search putih + ikon/teks
+         gelap + logo gelap (mirror wisata §I) agar tampil sama saat header
+         belum solid (masih di area hero). */
+      body[data-page-active="acara"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-search {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+        border-color: #e5e7eb !important;
+      }
+      body[data-page-active="acara"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-search::placeholder {
+        color: #6b7280 !important;
+      }
+      body[data-page-active="acara"][data-header-overlay]
+        header:not(.header-solid)
+        [data-search-form]
+        svg {
+        color: #1f2937 !important;
+        stroke: #1f2937 !important;
+      }
+      body[data-page-active="acara"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-logo-dark {
+        display: block !important;
+      }
+      body[data-page-active="acara"][data-header-overlay]
+        header:not(.header-solid)
+        .ph-logo-light {
+        display: none !important;
+      }
+
+      /* (J) Peta: hilangkan kotak fokus hitam bawaan browser pada poligon
+         wilayah yang dipilih (mirror kuliner). Marker tetap punya
+         indikator fokus biru (aksesibilitas, aturan global input.css). */
+      #acara-map path.leaflet-interactive:focus {
+        outline: none;
+      }
+
+      /* (K) Filter daftar acara: mobile satu baris scroll horizontal,
+         kembali wrap di >=640px (mirror .kul-filter-scroll kuliner).
+         Tombol filter dirender JS; wrap-nya milik section daftar. */
+      .evt-filter-scroll {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        white-space: nowrap;
+        scroll-behavior: smooth;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .evt-filter-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      @media (min-width: 640px) {
+        .evt-filter-scroll {
+          flex-wrap: wrap;
+          overflow-x: visible;
+          white-space: normal;
+        }
+      }
+
+      /* (M) Latar section rekomendasi coverflow (mirror budaya): WebP acara
+         teroptimasi sebagai fallback; JS (acara-reco.js) meng-override
+         dinamis per kartu tengah lewat .reco-section-bg. */
+      .reco-section-bg {
+        background-image:
+          linear-gradient(
+            to bottom,
+            rgba(15, 23, 42, 0.38) 0%,
+            rgba(15, 23, 42, 0) 34%,
+            rgba(15, 23, 42, 0) 56%,
+            rgba(15, 23, 42, 0.92) 100%
+          ),
+          url("../../public/assets/images/acara/optimized/bromo-marathon.webp");
+      }
+
+      /* (N) Cegah scroll horizontal dari kartu coverflow sisi luar yang
+         menjulur keluar tepi (mirror budaya/kuliner). overflow-x: clip
+         (bukan hidden) agar tidak membuat scroll container. */
+      body[data-page-active="acara"] main {
+        overflow-x: clip;
+      }
+
+      /* (O) Tombol aksi hijau (Owner: aksi = hijau; class hover Tailwind
+         hijau belum dibangkitkan di styles.css, jadi didefinisikan di sini
+         tanpa rebuild. Nilai hex = token Tailwind green-700/green-50.) */
+      body[data-page-active="acara"] .evt-btn-green:hover {
+        background-color: #15803d !important;
+      }
+      body[data-page-active="acara"] .evt-btn-green-soft:hover {
+        background-color: #f0fdf4 !important;
+      }
+      body[data-page-active="acara"] .evt-link-green:hover {
+        color: #15803d !important;
+      }
+
+      /* Tablet 768-1023px (Owner 2026-10-17, paritas wisata/kuliner/budaya):
+         peta + card detail disandingkan 60/40 agar card detail tidak
+         full-width (terlalu besar/gepeng saat menumpuk). align-items:start →
+         tinggi card mengikuti konten. Mobile tetap menumpuk; desktop (lg+)
+         layout 2/3-1/3. Grid "Event Hari Ini" TIDAK tersentuh. */
+      @media (min-width: 768px) and (max-width: 1023.98px) {
+        #map-detail-grid {
+          grid-template-columns: 3fr 2fr;
+          align-items: start;
+        }
+        #evt-detail > div {
+          padding: 1.25rem;
+        }
+      }
+
+      /* (P) Sorotan "Event Pasuruan Hari Ini": geser horizontal dengan jari
+         di mobile/tablet (desktop tetap memakai tombol panah). pan-y menjaga
+         gestur vertikal tetap men-scroll halaman. */
+      .evt-today-swipe {
+        touch-action: pan-y;
+      }
+
+      /* (Q) Panah sorotan "Event Pasuruan Hari Ini": disembunyikan HANYA di
+         mobile (<640px); tablet & desktop tetap tampil. Ditulis manual karena
+         utilitas sm:flex tidak ter-generate di styles.css (tanpa build:css). */
+      #evt-today-prev,
+      #evt-today-next {
+        display: none;
+      }
+      @media (min-width: 640px) {
+        #evt-today-prev,
+        #evt-today-next {
+          display: flex;
+        }
+      }
+    

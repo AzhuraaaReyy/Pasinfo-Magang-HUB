@@ -1,0 +1,180 @@
+﻿[
+    {
+        "id":  "WIS-01",
+        "question":  "Sebutkan satu destinasi wisata di Pasuruan.",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  3775,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "WIS-02",
+        "question":  "Di mana lokasi Candi Jawi?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "relevant",
+        "retrieval_k":  5,
+        "context_k":  1,
+        "context_similarity_min":  0.6042898074233229,
+        "llm_latency_ms":  3178,
+        "sources":  [
+                        {
+                            "distance":  0.39571019257667706,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "semantic",
+                            "similarity":  0.6042898074233229,
+                            "source_id":  1,
+                            "source_label":  "Candi Jawi",
+                            "source_type":  "culture"
+                        }
+                    ],
+        "answer":  "Candi Jawi beralamat di Candi Wates, Kec. Prigen.\n\nSumber: Candi Jawi",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "WIS-03",
+        "question":  "Apa daya tarik Candi Jawi bagi wisatawan?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  5832,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "WIS-04",
+        "question":  "Saya membawa pelajar yang tertarik sejarah. Destinasi Pasuruan apa yang relevan untuk dikunjungi?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  12962,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "WIS-05",
+        "question":  "Saya ingin wisata keluarga di wilayah Kota Pasuruan. Tempat apa yang tersedia di basis data?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  12100,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "WIS-06",
+        "question":  "Fasilitas apa saja yang tersedia di destinasi wisata tersebut?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  3626,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "WIS-07",
+        "question":  "Dari tempat yang kamu sebutkan tadi, mana yang punya informasi lokasi paling lengkap?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  2927,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "WIS-08",
+        "question":  "Kalau saya ingin mengetahui jam buka dan harga tiketnya, apakah datanya tersedia?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  4371,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "KUL-01",
+        "question":  "Apa saja tempat makan yang tersedia di Pasuruan?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  3900,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "KUL-02",
+        "question":  "Saya ingin mencoba makanan khas Bangil. Apa yang bisa saya cari?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  3079,
+        "sources":  [
+
+                    ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    }
+]

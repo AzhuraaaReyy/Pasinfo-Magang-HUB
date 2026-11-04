@@ -1,0 +1,606 @@
+﻿[
+    {
+        "id":  "WIS-01",
+        "question":  "Sebutkan satu destinasi wisata di Pasuruan.",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  3750,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.4646735266660058,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.5353264733339942,
+                                         "source_id":  35,
+                                         "source_label":  "Taman Kota Pasuruan",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.4877413205946197,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.5122586794053803,
+                                         "source_id":  7,
+                                         "source_label":  "Museum Kabupaten Pasuruan",
+                                         "source_type":  "culture"
+                                     },
+                                     {
+                                         "distance":  0.4915885905238606,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.5084114094761394,
+                                         "source_id":  38,
+                                         "source_label":  "Masjid Agung Al-Anwar",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.491869431564284,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.508130568435716,
+                                         "source_id":  18,
+                                         "source_label":  "Hutan Mangrove Kota Pasuruan",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.4940721974544996,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.5059278025455004,
+                                         "source_id":  52,
+                                         "source_label":  "Prasasti Pendirian Pasuruan (De Inscriptie van de Oprichting van Pasoeroean)",
+                                         "source_type":  "destination"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "WIS-02",
+        "question":  "Di mana lokasi Candi Jawi?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "relevant",
+        "retrieval_k":  5,
+        "context_k":  1,
+        "context_similarity_min":  0.6042898074233229,
+        "llm_latency_ms":  3693,
+        "sources":  [
+                        {
+                            "distance":  0.39571019257667706,
+                            "embedding_model":  "embeddinggemma",
+                            "retrieval_method":  "semantic",
+                            "similarity":  0.6042898074233229,
+                            "source_id":  1,
+                            "source_label":  "Candi Jawi",
+                            "source_type":  "culture"
+                        }
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.39571019257667706,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.6042898074233229,
+                                         "source_id":  1,
+                                         "source_label":  "Candi Jawi",
+                                         "source_type":  "culture"
+                                     },
+                                     {
+                                         "distance":  0.4416787957144491,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.5583212042855509,
+                                         "source_id":  46,
+                                         "source_label":  "Candi Jawi",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.5519169795389394,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.44808302046106063,
+                                         "source_id":  2,
+                                         "source_label":  "Candi Belahan",
+                                         "source_type":  "culture"
+                                     },
+                                     {
+                                         "distance":  0.590288930263124,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.409711069736876,
+                                         "source_id":  9,
+                                         "source_label":  "Klenteng Tjoe Tik Kiong",
+                                         "source_type":  "culture"
+                                     },
+                                     {
+                                         "distance":  0.5983897564875761,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4016102435124239,
+                                         "source_id":  5,
+                                         "source_label":  "Candi Sepilar",
+                                         "source_type":  "culture"
+                                     }
+                                 ],
+        "answer":  "Candi Jawi beralamat di Candi Wates, Kec. Prigen.\n\nSumber: Candi Jawi",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "WIS-03",
+        "question":  "Apa daya tarik Candi Jawi bagi wisatawan?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  4011,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.5021013026478446,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4978986973521554,
+                                         "source_id":  1,
+                                         "source_label":  "Candi Jawi",
+                                         "source_type":  "culture"
+                                     },
+                                     {
+                                         "distance":  0.5099458080627061,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.49005419193729394,
+                                         "source_id":  46,
+                                         "source_label":  "Candi Jawi",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.6594539487687325,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.34054605123126747,
+                                         "source_id":  32,
+                                         "source_label":  "Kedekatan Warga Jateng dan Kafilah MTQ Nasional Jadi Sorotan Positif",
+                                         "source_type":  "news"
+                                     },
+                                     {
+                                         "distance":  0.6643652219881062,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.3356347780118938,
+                                         "source_id":  2,
+                                         "source_label":  "Candi Belahan",
+                                         "source_type":  "culture"
+                                     },
+                                     {
+                                         "distance":  0.6680359437315646,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.3319640562684354,
+                                         "source_id":  24,
+                                         "source_label":  "Lembah Pendawa Bali van Java",
+                                         "source_type":  "destination"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "WIS-04",
+        "question":  "Saya membawa pelajar yang tertarik sejarah. Destinasi Pasuruan apa yang relevan untuk dikunjungi?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  15501,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.534548759460436,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.465451240539564,
+                                         "source_id":  52,
+                                         "source_label":  "Prasasti Pendirian Pasuruan (De Inscriptie van de Oprichting van Pasoeroean)",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.5705963246948131,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.42940367530518686,
+                                         "source_id":  7,
+                                         "source_label":  "Museum Kabupaten Pasuruan",
+                                         "source_type":  "culture"
+                                     },
+                                     {
+                                         "distance":  0.5710215526210267,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4289784473789733,
+                                         "source_id":  18,
+                                         "source_label":  "Pameran Tetap Museum Cunggrang: Diorama Sejarah Pasuruan",
+                                         "source_type":  "event"
+                                     },
+                                     {
+                                         "distance":  0.5936328749754067,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.40636712502459327,
+                                         "source_id":  50,
+                                         "source_label":  "Situs Raos Pacinan",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.5994316041469461,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4005683958530539,
+                                         "source_id":  38,
+                                         "source_label":  "Masjid Agung Al-Anwar",
+                                         "source_type":  "destination"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "WIS-05",
+        "question":  "Saya ingin wisata keluarga di wilayah Kota Pasuruan. Tempat apa yang tersedia di basis data?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  15634,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.49119283495136434,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.5088071650486357,
+                                         "source_id":  35,
+                                         "source_label":  "Taman Kota Pasuruan",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.5397044921625348,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4602955078374652,
+                                         "source_id":  38,
+                                         "source_label":  "Masjid Agung Al-Anwar",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.550370316174212,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.44962968382578805,
+                                         "source_id":  18,
+                                         "source_label":  "Hutan Mangrove Kota Pasuruan",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.5525355621960357,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4474644378039643,
+                                         "source_id":  1,
+                                         "source_label":  "Kota Pasuruan",
+                                         "source_type":  "region"
+                                     },
+                                     {
+                                         "distance":  0.5615721684094962,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4384278315905038,
+                                         "source_id":  39,
+                                         "source_label":  "Makam KH. Abdul Hamid (Mbah Hamid)",
+                                         "source_type":  "destination"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "WIS-06",
+        "question":  "Fasilitas apa saja yang tersedia di destinasi wisata tersebut?",
+        "http_status":  503,
+        "assistant_status":  null,
+        "retrieval_status":  null,
+        "retrieval_k":  null,
+        "context_k":  null,
+        "context_similarity_min":  null,
+        "llm_latency_ms":  null,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+
+                                 ],
+        "answer":  null,
+        "evaluation":  "EXECUTION_ERROR",
+        "error":  "The remote server returned an error: (503) Server Unavailable."
+    },
+    {
+        "id":  "WIS-07",
+        "question":  "Dari tempat yang kamu sebutkan tadi, mana yang punya informasi lokasi paling lengkap?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  22154,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.6379958442456994,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.36200415575430056,
+                                         "source_id":  6,
+                                         "source_label":  "Pertapan Indrokilo",
+                                         "source_type":  "culture"
+                                     },
+                                     {
+                                         "distance":  0.6458339132367521,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.3541660867632479,
+                                         "source_id":  21,
+                                         "source_label":  "Pura Dhang Khayangan Kerti Jaya Bhuana",
+                                         "source_type":  "culture"
+                                     },
+                                     {
+                                         "distance":  0.657154080700453,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.342845919299547,
+                                         "source_id":  20,
+                                         "source_label":  "Pura Dharma Widya Tosari",
+                                         "source_type":  "culture"
+                                     },
+                                     {
+                                         "distance":  0.6571775640883881,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.3428224359116119,
+                                         "source_id":  50,
+                                         "source_label":  "Situs Raos Pacinan",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.6666717330617693,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.3333282669382307,
+                                         "source_id":  5,
+                                         "source_label":  "Candi Sepilar",
+                                         "source_type":  "culture"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "WIS-08",
+        "question":  "Kalau saya ingin mengetahui jam buka dan harga tiketnya, apakah datanya tersedia?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  4587,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.609846410201069,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.390153589798931,
+                                         "source_id":  44,
+                                         "source_label":  "Klenteng Tjoe Tik Kiong",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.6312898617213882,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.36871013827861177,
+                                         "source_id":  16,
+                                         "source_label":  "Jelajah Museum Malam Mock",
+                                         "source_type":  "event"
+                                     },
+                                     {
+                                         "distance":  0.6470855667183055,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.3529144332816945,
+                                         "source_id":  24,
+                                         "source_label":  "Lembah Pendawa Bali van Java",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.6476890461722742,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.3523109538277258,
+                                         "source_id":  35,
+                                         "source_label":  "Taman Kota Pasuruan",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.647721779618041,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.352278220381959,
+                                         "source_id":  18,
+                                         "source_label":  "Pameran Tetap Museum Cunggrang: Diorama Sejarah Pasuruan",
+                                         "source_type":  "event"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "KUL-01",
+        "question":  "Apa saja tempat makan yang tersedia di Pasuruan?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  5562,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.5116323960374933,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.48836760396250667,
+                                         "source_id":  35,
+                                         "source_label":  "Taman Kota Pasuruan",
+                                         "source_type":  "destination"
+                                     },
+                                     {
+                                         "distance":  0.5229456017276756,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.47705439827232443,
+                                         "source_id":  11,
+                                         "source_label":  "Alun-Alun Pasuruan",
+                                         "source_type":  "culture"
+                                     },
+                                     {
+                                         "distance":  0.5340555408513981,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.46594445914860194,
+                                         "source_id":  18,
+                                         "source_label":  "Bakso Cak\u0027Eb Pasuruan",
+                                         "source_type":  "culinary"
+                                     },
+                                     {
+                                         "distance":  0.559124888598972,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.440875111401028,
+                                         "source_id":  16,
+                                         "source_label":  "Rawon Sakinah",
+                                         "source_type":  "culinary"
+                                     },
+                                     {
+                                         "distance":  0.5721337667742945,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4278662332257055,
+                                         "source_id":  18,
+                                         "source_label":  "Hutan Mangrove Kota Pasuruan",
+                                         "source_type":  "destination"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "KUL-02",
+        "question":  "Saya ingin mencoba makanan khas Bangil. Apa yang bisa saya cari?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "low_confidence",
+        "retrieval_k":  5,
+        "context_k":  0,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  13431,
+        "sources":  [
+
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.48858910935054545,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.5114108906494546,
+                                         "source_id":  3,
+                                         "source_label":  "Warung Pojok Nasi Punel Bangil",
+                                         "source_type":  "culinary"
+                                     },
+                                     {
+                                         "distance":  0.4986695194256636,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.5013304805743364,
+                                         "source_id":  1,
+                                         "source_label":  "Nasi Punel Bu Hj. Lin",
+                                         "source_type":  "culinary"
+                                     },
+                                     {
+                                         "distance":  0.5291458333556818,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.47085416664431823,
+                                         "source_id":  6,
+                                         "source_label":  "Cairo Restaurant Bangil",
+                                         "source_type":  "culinary"
+                                     },
+                                     {
+                                         "distance":  0.5607980344776899,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.43920196552231006,
+                                         "source_id":  2,
+                                         "source_label":  "Depot Nasi Punel Setia Budi Bangil",
+                                         "source_type":  "culinary"
+                                     },
+                                     {
+                                         "distance":  0.5891275895681841,
+                                         "embedding_model":  "embeddinggemma",
+                                         "retrieval_method":  "semantic",
+                                         "similarity":  0.4108724104318159,
+                                         "source_id":  4,
+                                         "source_label":  "Waroeng Sambel",
+                                         "source_type":  "culinary"
+                                     }
+                                 ],
+        "answer":  "Saya menemukan beberapa kemungkinan referensi, tetapi kecocokan pertanyaan belum cukup kuat untuk memberikan fakta yang dapat dipercaya. Mohon sebutkan nama tempat, wilayah, atau event yang lebih spesifik.",
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    }
+]

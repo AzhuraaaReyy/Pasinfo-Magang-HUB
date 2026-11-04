@@ -284,10 +284,19 @@
 
           if (verificationEl && current.verification) {
             var status = current.verification.status || "unknown";
-            var statusLabel = status === "verified" ? "Terverifikasi" : status === "pending" ? "Menunggu Verifikasi" : "Status Tidak Diketahui";
+            // Status data asli (seed/DB, Owner K6-04 X1 2026-11-02): terverifikasi, jadwal-resmi, jadwal-terdaftar.
+            var STATUS_BADGE = {
+              verified: ["Terverifikasi", "bg-green-100 text-green-700"],
+              terverifikasi: ["Terverifikasi", "bg-green-100 text-green-700"],
+              pending: ["Menunggu Verifikasi", "bg-yellow-100 text-yellow-700"],
+              "jadwal-resmi": ["Jadwal Resmi", "bg-yellow-100 text-yellow-700"],
+              "jadwal-terdaftar": ["Jadwal Terdaftar", "bg-yellow-100 text-yellow-700"]
+            };
+            var badge = STATUS_BADGE[status] || ["Status Tidak Diketahui", "bg-gray-200 text-gray-700"];
+            var statusLabel = badge[0];
             var html = '<div class="text-sm">';
             html += '<div class="flex items-center gap-2 mb-2">';
-            html += '<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ' + (status === "verified" ? "bg-green-100 text-green-700" : status === "pending" ? "bg-yellow-100 text-yellow-700" : "bg-gray-200 text-gray-700") + '">' + statusLabel + '</span>';
+            html += '<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ' + badge[1] + '">' + statusLabel + '</span>';
             html += '</div>';
             if (current.verification.verified_at) {
               var verifiedDate = new Date(current.verification.verified_at);

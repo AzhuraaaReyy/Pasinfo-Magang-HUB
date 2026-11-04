@@ -1,0 +1,32 @@
+
+      #reco-serupa,
+      #reco-lainnya,
+      #reco-sekitar {
+        grid-auto-rows: minmax(0, 1fr);
+      }
+      #reco-serupa > a,
+      #reco-lainnya > a,
+      #reco-sekitar > a,
+      #reco-serupa article,
+      #reco-lainnya article,
+      #reco-sekitar article {
+        height: 100%;
+      }
+      #reco-serupa article h3,
+      #reco-lainnya article h3,
+      #reco-sekitar article h3 {
+        line-height: 1.4;
+        min-height: 2.8em;
+      }
+      #reco-serupa article h3 + p,
+      #reco-lainnya article h3 + p,
+      #reco-sekitar article h3 + p {
+        line-height: 1.5;
+        min-height: 3em;
+      }
+      #reco-serupa article > div:last-child > div:last-child,
+      #reco-lainnya article > div:last-child > div:last-child,
+      #reco-sekitar article > div:last-child > div:last-child {
+        margin-top: auto;
+      }
+    

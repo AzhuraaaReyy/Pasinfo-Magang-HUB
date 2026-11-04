@@ -1,0 +1,774 @@
+{
+  "nasi-punel-bu-hj-lin": {
+    "is_dummy": true,
+    "rating": 4.6,
+    "reviews_count": 1250,
+    "price_range": 1,
+    "price_min": 15000,
+    "price_max": 30000,
+    "prices": [
+      {
+        "item": "Nasi punel + empal",
+        "price": 22000
+      },
+      {
+        "item": "Nasi punel + lidah",
+        "price": 25000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "06:00",
+        "close": "14:00"
+      }
+    ]
+  },
+  "depot-nasi-punel-setia-budi-bangil": {
+    "is_dummy": true,
+    "rating": 4.4,
+    "reviews_count": 860,
+    "price_range": 1,
+    "price_min": 15000,
+    "price_max": 32000,
+    "prices": [
+      {
+        "item": "Nasi punel ayam",
+        "price": 20000
+      },
+      {
+        "item": "Nasi punel babat",
+        "price": 24000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "06:30",
+        "close": "15:00"
+      }
+    ]
+  },
+  "warung-pojok-nasi-punel-bangil": {
+    "is_dummy": true,
+    "rating": 4.7,
+    "reviews_count": 640,
+    "price_range": 1,
+    "price_min": 12000,
+    "price_max": 28000,
+    "prices": [
+      {
+        "item": "Nasi punel campur",
+        "price": 18000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "05:30",
+        "close": "11:00"
+      }
+    ]
+  },
+  "waroeng-sambel-bangil": {
+    "is_dummy": true,
+    "rating": 4.3,
+    "reviews_count": 970,
+    "price_range": 2,
+    "price_min": 25000,
+    "price_max": 55000,
+    "prices": [
+      {
+        "item": "Paket ayam sambal",
+        "price": 32000
+      },
+      {
+        "item": "Paket lele sambal",
+        "price": 28000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "10:00",
+        "close": "21:30"
+      }
+    ]
+  },
+  "warung-teko-beji": {
+    "is_dummy": true,
+    "rating": 4.4,
+    "reviews_count": 1100,
+    "price_range": 2,
+    "price_min": 25000,
+    "price_max": 60000,
+    "prices": [
+      {
+        "item": "Ayam bakar",
+        "price": 35000
+      },
+      {
+        "item": "Sayur asem",
+        "price": 12000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "09:00",
+        "close": "21:00"
+      }
+    ]
+  },
+  "cairo-restaurant-bangil": {
+    "is_dummy": true,
+    "rating": 4.5,
+    "reviews_count": 720,
+    "price_range": 2,
+    "price_min": 30000,
+    "price_max": 70000,
+    "prices": [
+      {
+        "item": "Sate kambing",
+        "price": 45000
+      },
+      {
+        "item": "Nasi kebuli",
+        "price": 42000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "10:00",
+        "close": "22:00"
+      }
+    ]
+  },
+  "sri-sultan-prigen": {
+    "is_dummy": true,
+    "rating": 4.5,
+    "reviews_count": 1900,
+    "price_range": 3,
+    "price_min": 40000,
+    "price_max": 100000,
+    "prices": [
+      {
+        "item": "Ayam goreng madu",
+        "price": 48000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "09:00",
+        "close": "21:00"
+      }
+    ]
+  },
+  "cimory-restaurant-prigen": {
+    "is_dummy": true,
+    "rating": 4.6,
+    "reviews_count": 5200,
+    "price_range": 3,
+    "price_min": 45000,
+    "price_max": 120000,
+    "prices": [
+      {
+        "item": "Steak ayam",
+        "price": 65000
+      },
+      {
+        "item": "Nasi goreng Cimory",
+        "price": 48000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "09:00",
+        "close": "21:00"
+      }
+    ]
+  },
+  "foodcourt-sawah-view": {
+    "is_dummy": true,
+    "rating": 4.2,
+    "reviews_count": 680,
+    "price_range": 2,
+    "price_min": 15000,
+    "price_max": 45000,
+    "prices": [
+      {
+        "item": "Menu food court",
+        "price": 25000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "10:00",
+        "close": "21:00"
+      }
+    ]
+  },
+  "warung-kepulan-asap": {
+    "is_dummy": true,
+    "rating": 4.3,
+    "reviews_count": 540,
+    "price_range": 2,
+    "price_min": 25000,
+    "price_max": 55000,
+    "prices": [
+      {
+        "item": "Prasmanan (per orang)",
+        "price": 40000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "08:00",
+        "close": "20:00"
+      }
+    ]
+  },
+  "warung-lesehan-pak-majid": {
+    "is_dummy": true,
+    "rating": 4.4,
+    "reviews_count": 830,
+    "price_range": 2,
+    "price_min": 25000,
+    "price_max": 70000,
+    "prices": [
+      {
+        "item": "Ayam bakar madu",
+        "price": 32000
+      },
+      {
+        "item": "Gurami goreng",
+        "price": 65000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "10:00",
+        "close": "21:00"
+      }
+    ]
+  },
+  "gubug-makan-mang-engking-pandaan": {
+    "is_dummy": true,
+    "rating": 4.4,
+    "reviews_count": 3400,
+    "price_range": 3,
+    "price_min": 45000,
+    "price_max": 130000,
+    "prices": [
+      {
+        "item": "Udang bakar madu",
+        "price": 75000
+      },
+      {
+        "item": "Paket keluarga",
+        "price": 250000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "10:00",
+        "close": "21:30"
+      }
+    ]
+  },
+  "rawon-jetak-bu-sudar": {
+    "is_dummy": true,
+    "rating": 4.6,
+    "reviews_count": 410,
+    "price_range": 1,
+    "price_min": 15000,
+    "price_max": 30000,
+    "prices": [
+      {
+        "item": "Rawon daging",
+        "price": 22000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "06:00",
+        "close": "14:00"
+      }
+    ]
+  },
+  "warung-artomoro": {
+    "is_dummy": true,
+    "rating": 4.1,
+    "reviews_count": 320,
+    "price_range": 1,
+    "price_min": 10000,
+    "price_max": 25000,
+    "prices": [
+      {
+        "item": "Nasi goreng mawut",
+        "price": 15000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "17:00",
+        "close": "01:00"
+      }
+    ]
+  },
+  "ayam-kirana-purwodadi": {
+    "is_dummy": true,
+    "rating": 4.5,
+    "reviews_count": 760,
+    "price_range": 2,
+    "price_min": 20000,
+    "price_max": 45000,
+    "prices": [
+      {
+        "item": "Ayam goreng + nasi",
+        "price": 28000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "09:00",
+        "close": "20:00"
+      }
+    ]
+  },
+  "kedai-kikil-haekal": {
+    "is_dummy": true,
+    "rating": 4.7,
+    "reviews_count": 980,
+    "price_range": 1,
+    "price_min": 12000,
+    "price_max": 25000,
+    "prices": [
+      {
+        "item": "Lontong kikil",
+        "price": 18000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "05:00",
+        "close": "10:30"
+      }
+    ]
+  },
+  "rawon-sakinah": {
+    "is_dummy": true,
+    "rating": 4.5,
+    "reviews_count": 1280,
+    "price_range": 1,
+    "price_min": 15000,
+    "price_max": 30000,
+    "prices": [
+      {
+        "item": "Rawon",
+        "price": 20000
+      },
+      {
+        "item": "Sate komoh",
+        "price": 25000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "06:00",
+        "close": "15:00"
+      }
+    ]
+  },
+  "rawon-sederhana": {
+    "is_dummy": true,
+    "rating": 4.3,
+    "reviews_count": 520,
+    "price_range": 1,
+    "price_min": 15000,
+    "price_max": 35000,
+    "prices": [
+      {
+        "item": "Rawon lidah",
+        "price": 28000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "06:00",
+        "close": "14:00"
+      }
+    ]
+  },
+  "bakso-cak-eb-pasuruan": {
+    "is_dummy": true,
+    "rating": 4.4,
+    "reviews_count": 890,
+    "price_range": 1,
+    "price_min": 12000,
+    "price_max": 28000,
+    "prices": [
+      {
+        "item": "Bakso keju",
+        "price": 20000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "10:00",
+        "close": "21:00"
+      }
+    ]
+  },
+  "rumah-makan-budja": {
+    "is_dummy": true,
+    "rating": 4.3,
+    "reviews_count": 610,
+    "price_range": 2,
+    "price_min": 25000,
+    "price_max": 65000,
+    "prices": [
+      {
+        "item": "Menu rumahan (paket)",
+        "price": 35000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "09:00",
+        "close": "21:00"
+      }
+    ]
+  },
+  "rm-nikmat-rasa-2": {
+    "is_dummy": true,
+    "rating": 4.2,
+    "reviews_count": 450,
+    "price_range": 2,
+    "price_min": 20000,
+    "price_max": 50000,
+    "prices": [
+      {
+        "item": "Ayam goreng",
+        "price": 25000
+      },
+      {
+        "item": "Capcay",
+        "price": 28000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "09:00",
+        "close": "21:00"
+      }
+    ]
+  },
+  "kebon-pring-rumah-makan-lesehan": {
+    "is_dummy": true,
+    "rating": 4.4,
+    "reviews_count": 1750,
+    "price_range": 2,
+    "price_min": 25000,
+    "price_max": 65000,
+    "prices": [
+      {
+        "item": "Ayam Kebon Pring",
+        "price": 35000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "09:00",
+        "close": "21:30"
+      }
+    ]
+  },
+  "d-jadul-ayam-bebek-bakar": {
+    "is_dummy": true,
+    "rating": 4.3,
+    "reviews_count": 380,
+    "price_range": 2,
+    "price_min": 20000,
+    "price_max": 50000,
+    "prices": [
+      {
+        "item": "Bebek bakar",
+        "price": 38000
+      },
+      {
+        "item": "Cwie mie",
+        "price": 18000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "10:00",
+        "close": "21:00"
+      }
+    ]
+  },
+  "warung-wakro": {
+    "is_dummy": true,
+    "rating": 4.4,
+    "reviews_count": 560,
+    "price_range": 2,
+    "price_min": 18000,
+    "price_max": 55000,
+    "prices": [
+      {
+        "item": "Sop buntut",
+        "price": 45000
+      },
+      {
+        "item": "Rawon",
+        "price": 22000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "10:00",
+        "close": "21:00"
+      }
+    ]
+  },
+  "warung-rawon-sate-komo-nguling": {
+    "is_dummy": true,
+    "rating": 4.6,
+    "reviews_count": 300,
+    "price_range": 1,
+    "price_min": 15000,
+    "price_max": 30000,
+    "prices": [
+      {
+        "item": "Paket rawon + sate komo",
+        "price": 28000
+      }
+    ],
+    "hours": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "open": "05:30",
+        "close": "11:30"
+      }
+    ]
+  }
+}

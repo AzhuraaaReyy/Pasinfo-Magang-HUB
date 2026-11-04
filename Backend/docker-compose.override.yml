@@ -1,0 +1,30 @@
+# Local development override (Owner decision 2026-10-31): Docker Compose merges this file into
+# docker-compose.yml automatically, so `docker compose up -d` starts PostgreSQL and the API together and
+# both restart with Docker (restart: unless-stopped). docker-compose.yml stays the production setup.
+#
+# First start or after a code change:  docker compose up -d --build backend
+# Ollama runs on Windows; the base file already points the container at host.docker.internal:11434.
+services:
+  backend:
+    # A local tag, so the image is not mistaken for the registry image.
+    image: pasinfo-backend:local
+    build:
+      args:
+        TARGETARCH: amd64
+    environment:
+      # Same mode as the host runtime: plain-HTTP cookie on http://localhost, /search/semantic enabled.
+      APP_ENV: development
+      HTTPS: "false"
+      # This laptop only (RTX 3050, 4 GB VRAM; H1 measurement 2026-10-31): 30 of 34 gemma3:4b layers on the
+      # GPU, about 3x faster than Ollama auto, with room left for embeddinggemma. Production does not set it.
+      LLM_OLLAMA_NUM_GPU: "30"
+      # Chat fallback when Ollama chat fails (E5, Owner 2026-11-03). Embeddings stay on Ollama: the corpus
+      # vectors come from embeddinggemma, so a Gemini query vector would not match them.
+      LLM_FALLBACK_PROVIDER: gemini
+    # Local only (Owner 2026-11-03): the project default network instead of the external shared-network, so the
+    # laptop needs no `docker network create` and no other stack can answer for this database.
+    networks: !override
+      - default
+  postgres:
+    networks: !override
+      - default

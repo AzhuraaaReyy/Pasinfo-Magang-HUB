@@ -20,44 +20,7 @@
          dijalankan -> class aksen didefinisikan di sini. Identik dengan
          budaya.html / detail_budaya.html / galeri_budaya.html.
          Owner 2026-10-16: aksen ungu berlaku untuk seluruh domain Budaya. -->
-    <style>
-      :root {
-        --bud-accent: #6d28d9;
-        --bud-accent-dark: #5b21b6;
-        --bud-accent-soft: #ede9fe;
-      }
-      .bud-accent {
-        background-color: var(--bud-accent);
-        color: #fff;
-      }
-      .bud-accent:hover {
-        background-color: var(--bud-accent-dark);
-      }
-      .bud-accent-soft {
-        background-color: var(--bud-accent-soft);
-        color: var(--bud-accent);
-      }
-      .bud-accent-text {
-        color: var(--bud-accent);
-      }
-      .bud-accent-text:hover {
-        color: var(--bud-accent-dark);
-      }
-      .bud-accent-ring {
-        box-shadow: 0 0 0 2px var(--bud-accent);
-      }
-      /* Owner 2026-10-18: equal height kartu cerita & Situs Terkait di SEMUA
-         tampilan (mobile/tablet/desktop) + tablet (md) sudah 2 kolom
-         berdampingan seperti desktop (putusan Owner — berbeda sengaja dari
-         halaman detail wisata/kuliner yang di tablet menumpuk).
-         Utility md:auto-rows-fr belum ada di styles.css terkompilasi
-         (build:css tidak dijalankan) -> didefinisikan scoped di sini. */
-      @media (min-width: 768px) {
-        #cerita-layout-grid {
-          grid-auto-rows: minmax(0, 1fr);
-        }
-      }
-    </style>
+        <link rel="stylesheet" href="../../public/css/cerita-budaya.css" />
   </head>
   <body
     class="bg-white text-gray-800 font-sans antialiased min-h-screen flex flex-col justify-between"

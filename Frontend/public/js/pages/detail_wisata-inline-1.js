@@ -1,0 +1,24 @@
+
+      (function () {
+        try {
+          var slug = new URLSearchParams(location.search).get("slug");
+          if (!slug) return;
+          var F = [
+            "../../public/assets/images/wisata/optimized/bromo2.webp",
+            "../../public/assets/images/wisata/optimized/bromo3.webp",
+            "../../public/assets/images/wisata/optimized/bromo_banner.webp",
+            "../../public/assets/images/wisata/optimized/purwodadi-botanic-garden.webp",
+            "../../public/assets/images/wisata/optimized/taman_safari_indonesia_2.webp",
+            "../../public/assets/images/wisata/optimized/air-terjun-kakek-bodo.webp",
+          ];
+          var h = 0;
+          for (var i = 0; i < slug.length; i++) h = (h + slug.charCodeAt(i)) % F.length;
+          var link = document.createElement("link");
+          link.rel = "preload";
+          link.as = "image";
+          link.fetchPriority = "high";
+          link.href = F[h];
+          document.head.appendChild(link);
+        } catch (e) {}
+      })();
+    
