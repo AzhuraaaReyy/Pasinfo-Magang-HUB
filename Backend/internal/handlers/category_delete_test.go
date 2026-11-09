@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -39,5 +40,30 @@ func TestDeleteCategoryRefusesWhenNewsExist(t *testing.T) {
 
 	if code := del(empty.ID); code != fiber.StatusOK {
 		t.Fatalf("delete empty category status = %d, want 200", code)
+	}
+}
+
+// jobdesk 6 Nov p1: renaming a category changes the corpus text and metadata of its news, so the AI corpus job is asked
+// for an early refresh; a failed update asks for nothing.
+func TestUpdateCategoryRequestsCorpusRefresh(t *testing.T) {
+	env := setupNewsTest(t)
+	env.app.Put("/categories/:id", UpdateCategory)
+	calls := 0
+	previous := requestCorpusRefresh
+	requestCorpusRefresh = func() { calls++ }
+	t.Cleanup(func() { requestCorpusRefresh = previous })
+	for _, c := range []struct {
+		path string
+		want int
+	}{{"/categories/1", 200}, {"/categories/999", 404}} {
+		req := httptest.NewRequest("PUT", c.path, strings.NewReader(`{"name":"Lokal Pasuruan"}`))
+		req.Header.Set("Content-Type", "application/json")
+		res, err := env.app.Test(req)
+		if err != nil || res.StatusCode != c.want {
+			t.Fatalf("%s: status=%v err=%v", c.path, res.StatusCode, err)
+		}
+	}
+	if calls != 1 {
+		t.Fatalf("refresh requests = %d, want 1 (only the successful update)", calls)
 	}
 }

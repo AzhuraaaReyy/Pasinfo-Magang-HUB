@@ -63,6 +63,8 @@ func UpdateCategory(c *fiber.Ctx) error {
 	if err := database.DB.Save(&cat).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Failed to update category"})
 	}
+	// The category name and slug are part of the AI corpus text and metadata of its news (jobdesk 6 Nov p1).
+	requestCorpusRefresh()
 	return c.JSON(fiber.Map{"success": true, "data": cat})
 }
 

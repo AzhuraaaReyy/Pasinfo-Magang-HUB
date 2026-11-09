@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strings"
 )
 
@@ -18,27 +17,10 @@ type RegionOverviewRetriever interface {
 	RegionDocuments(ctx context.Context) ([]SemanticResult, error)
 }
 
-var (
-	// cityAndRegencyPattern names both the city and the regency ("Kota … Kabupaten …", "masuk kota atau kabupaten").
-	cityAndRegencyPattern = regexp.MustCompile(`(?i)\bkota\b.*\bkabupaten\b|\bkabupaten\b.*\bkota\b`)
-	// areaCoveragePattern asks which areas exist ("Wilayah Pasuruan apa saja yang tersedia", "area yang didukung").
-	areaCoveragePattern = regexp.MustCompile(`(?i)\b(?:wilayah|area|zona|daerah|kawasan)\b[^.?!]*\b(?:tersedia|didukung|dicakup|tercakup|apa saja|mana saja)\b`)
-)
-
-// isRegionOverview reports whether the user's own question asks about the areas as a whole. A question
-// that names one zone keeps the zone filter, one that names a domain ("wisata di Kabupaten Pasuruan")
-// keeps its search, and a follow-up ("wilayah yang kamu sebutkan") keeps the previous sources.
-func isRegionOverview(question string, intent ChatIntent) bool {
-	if intent.Region != "" || intent.Domain != "" || backReferencePattern.MatchString(question) {
-		return false
-	}
-	return cityAndRegencyPattern.MatchString(question) || areaCoveragePattern.MatchString(question)
-}
-
 // regionOverviewOutcome returns every zone document as the context of a region overview question.
-func (s *ChatService) regionOverviewOutcome(ctx context.Context, question string, intent ChatIntent) (relevanceOutcome, bool, error) {
+func (s *ChatService) regionOverviewOutcome(ctx context.Context) (relevanceOutcome, bool, error) {
 	retriever, ok := s.Retriever.(RegionOverviewRetriever)
-	if !ok || !isRegionOverview(question, intent) {
+	if !ok {
 		return relevanceOutcome{}, false, nil
 	}
 	regions, err := retriever.RegionDocuments(ctx)

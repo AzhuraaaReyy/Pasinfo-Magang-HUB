@@ -12,10 +12,18 @@ import (
 	"wildan-news-backend/internal/services"
 )
 
-// backfillItem holds the real (non-dummy) seed fields that the original seed did not store
-// (audit D-01). Dummy fields such as opening hours, rating and price range are not read.
+// backfillItem holds the seed fields that the original seed did not store (audit D-01). Owner 2026-11-09: the sample
+// values of the seed files (price range, reviews label, map link, Google place id) are used during development and
+// replaced by the Owner later; rating stays unread.
 type backfillItem struct {
-	Slug             string  `json:"slug"`
+	Slug          string `json:"slug"`
+	ReviewsLabel  string `json:"reviews_label"`
+	PriceRange    string `json:"price_range"`
+	PlaceID       string `json:"place_id"`
+	GoogleMapsURL string `json:"googleMapsUrl"`
+	Place         struct {
+		MapURL string `json:"map_url"`
+	} `json:"place"`
 	ShortDescription string  `json:"short_description"`
 	CulinaryType     string  `json:"culinary_type"`
 	CultureType      string  `json:"culture_type"`
@@ -57,10 +65,10 @@ func backfillTargets(src backfillSource) []backfillTarget {
 	}
 	return []backfillTarget{
 		{"destinations", src.Destinations, func(x backfillItem) map[string]string {
-			return map[string]string{"short_description": x.ShortDescription, "keyakinan": x.Keyakinan}
+			return map[string]string{"short_description": x.ShortDescription, "keyakinan": x.Keyakinan, "reviews_label": x.ReviewsLabel}
 		}, nil},
 		{"culinaries", src.Culinaries, func(x backfillItem) map[string]string {
-			return map[string]string{"short_description": x.ShortDescription, "culinary_type": x.CulinaryType, "keyakinan": x.Keyakinan}
+			return map[string]string{"short_description": x.ShortDescription, "culinary_type": x.CulinaryType, "keyakinan": x.Keyakinan, "price_range": x.PriceRange}
 		}, func(x backfillItem) string { return x.Address }},
 		{"cultures", src.Cultures, func(x backfillItem) map[string]string {
 			return map[string]string{"short_description": x.ShortDescription, "culture_type": x.CultureType, "keyakinan": x.Keyakinan}
@@ -89,6 +97,7 @@ func applyBackfill(tx *gorm.DB, src backfillSource) (backfillReport, error) {
 	var addresses []pending
 	placeAddresses := make(map[uint]map[string]bool)
 	placeRegencies := make(map[uint]map[string]bool)
+	placeLinks := make(map[uint]map[string]map[string]bool) // place → column → seed values
 	now := time.Now()
 
 	for _, target := range targets {
@@ -119,6 +128,12 @@ func applyBackfill(tx *gorm.DB, src backfillSource) (backfillReport, error) {
 				report[target.table+"."+column] += int(res.RowsAffected)
 			}
 			if row.PlaceID != nil {
+				addPlaceLink(placeLinks, *row.PlaceID, "google_place_id", item.PlaceID)
+				mapURL := item.Place.MapURL
+				if mapURL == "" {
+					mapURL = item.GoogleMapsURL
+				}
+				addPlaceLink(placeLinks, *row.PlaceID, "map_url", mapURL)
 				if placeRegencies[*row.PlaceID] == nil {
 					placeRegencies[*row.PlaceID] = make(map[string]bool)
 				}
@@ -153,7 +168,56 @@ func applyBackfill(tx *gorm.DB, src backfillSource) (backfillReport, error) {
 		}
 		report["places.address"] += int(res.RowsAffected)
 	}
+	if err := backfillPlaceLinks(tx, placeLinks, report, now); err != nil {
+		return nil, err
+	}
 	return report, backfillPlaceLocations(tx, placeRegencies, placeAddresses, report, now)
+}
+
+func addPlaceLink(links map[uint]map[string]map[string]bool, placeID uint, column, value string) {
+	if value = strings.TrimSpace(value); value == "" {
+		return
+	}
+	if links[placeID] == nil {
+		links[placeID] = make(map[string]map[string]bool)
+	}
+	if links[placeID][column] == nil {
+		links[placeID][column] = make(map[string]bool)
+	}
+	links[placeID][column][value] = true
+}
+
+// backfillPlaceLinks writes the Google place id and map link of the seed into places that have none (Owner 2026-11-09):
+// the seed read neither field, so every place had both empty. A place used by contents whose seed values differ is
+// skipped, like a shared address.
+func backfillPlaceLinks(tx *gorm.DB, links map[uint]map[string]map[string]bool, report backfillReport, now time.Time) error {
+	ids := make([]uint, 0, len(links))
+	for id := range links {
+		ids = append(ids, id)
+	}
+	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	for _, id := range ids {
+		for _, column := range []string{"google_place_id", "map_url"} {
+			values := links[id][column]
+			if len(values) == 0 {
+				continue
+			}
+			if len(values) > 1 {
+				report["skip:shared_place_"+column]++
+				continue
+			}
+			for value := range values {
+				res := tx.Table("places").Where("id = ?", id).
+					Where(gorm.Expr("COALESCE(?, '') = ''", clause.Column{Name: column})).
+					Updates(map[string]any{column: value, "updated_at": now})
+				if res.Error != nil {
+					return res.Error
+				}
+				report["places."+column] += int(res.RowsAffected)
+			}
+		}
+	}
+	return nil
 }
 
 // regencyOfRegionID returns Kota or Kabupaten Pasuruan for a seed regionId (zone slug), or "".

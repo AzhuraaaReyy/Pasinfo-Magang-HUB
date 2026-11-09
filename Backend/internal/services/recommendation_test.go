@@ -132,6 +132,37 @@ func TestRecommendAcrossDomainsAndOnlyRunningEvents(t *testing.T) {
 	}
 }
 
+// F12, jobdesk 9 Nov point 6: a destination's culture recommendations leave out the culture item on the same place (the
+// same site); a culinary business on that place is still recommended.
+func TestRecommendLeavesOutTheSameSiteInTheOtherDomain(t *testing.T) {
+	db := newRecommendationTestDB(t)
+	var place uint
+	db.Raw(`SELECT place_id FROM destinations WHERE slug = 'asal'`).Scan(&place)
+	for _, c := range []models.Culture{{Name: "Situs Asal", Slug: "situs-asal", PlaceID: &place, CultureType: "situs-sejarah", Status: "published"}, {Name: "Situs Lain", Slug: "situs-lain", CultureType: "situs-sejarah", Status: "published"}} {
+		if err := db.Create(&c).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := db.Create(&models.Culinary{Name: "Warung Asal", Slug: "warung-asal", PlaceID: &place, CulinaryType: "tradisional", Status: "published"}).Error; err != nil {
+		t.Fatal(err)
+	}
+	r := &Recommender{DB: db, Now: func() time.Time { return recNow }, Similar: stubSimilar(map[string]map[int64]float64{"culture": {1: 0.9, 2: 0.5}, "culinary": {3: 0.9}})}
+	got, err := r.Recommend(context.Background(), "wisata", "asal", "budaya", 6)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].Name != "Situs Lain" {
+		t.Fatalf("budaya = %+v, want only Situs Lain", got)
+	}
+	food, err := r.Recommend(context.Background(), "wisata", "asal", "kuliner", 6)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(food) == 0 || food[0].Name != "Warung Asal" {
+		t.Fatalf("kuliner = %+v, want Warung Asal first", food)
+	}
+}
+
 func TestRecommendNewsUsesCategoryAndRecency(t *testing.T) {
 	db := newRecommendationTestDB(t)
 	r := &Recommender{DB: db, Now: func() time.Time { return recNow }, Similar: stubSimilar(map[string]map[int64]float64{"news": {1: 1, 2: 0.7}})}
@@ -154,5 +185,155 @@ func TestRecommendUnknownOrUnpublishedSource(t *testing.T) {
 		if _, err := r.Recommend(context.Background(), c[0], c[1], c[0], 6); !errors.Is(err, ErrRecommendSourceNotFound) {
 			t.Errorf("%v: err = %v", c, err)
 		}
+	}
+}
+
+// searchHit is one semantic search result of source type st and id with the given similarity.
+func searchHit(st string, id int64, sim float64) SemanticResult {
+	return SemanticResult{SourceType: &st, SourceID: &id, Similarity: sim}
+}
+
+// Jobdesk 9 Nov point 3: semantic search results become cards of the four domains, ordered by similarity only (equal
+// similarity by name); a draft and a finished event are not shown, whatever their similarity.
+func TestRecommendByTextOrdersCardsBySimilarity(t *testing.T) {
+	db := newRecommendationTestDB(t)
+	r := &Recommender{DB: db, Now: func() time.Time { return recNow }}
+	results := []SemanticResult{
+		searchHit("event", 1, 0.95),       // Sudah Lewat: finished
+		searchHit("destination", 5, 0.90), // Draf: not published
+		searchHit("culinary", 1, 0.70),    // Nasi Punel
+		searchHit("event", 2, 0.65),       // Akan Datang
+		searchHit("destination", 2, 0.62), // Sekecamatan
+		searchHit("destination", 4, 0.62), // Jauh Pilihan (featured: no bonus here)
+		searchHit("destination", 2, 0.10), // repeated source: the first hit counts
+	}
+	got, err := r.RecommendByText(context.Background(), results, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var order []string
+	for _, g := range got {
+		order = append(order, g.Type+":"+g.Name)
+	}
+	if strings.Join(order, ",") != "kuliner:Nasi Punel,acara:Akan Datang,wisata:Jauh Pilihan,wisata:Sekecamatan" {
+		t.Fatalf("order = %v", order)
+	}
+	for _, g := range got {
+		if g.Score != g.Similarity || g.Slug == nil || g.Location == nil || g.Reasons == nil {
+			t.Fatalf("card %+v", g)
+		}
+	}
+	if got[1].VerificationStatus != "terverifikasi" || got[3].Source == nil || *got[3].Source != "wisata.json" || got[3].Location.District != "Bangil" || got[3].Similarity != 0.62 {
+		t.Fatalf("card fields = %+v / %+v", got[1], got[3])
+	}
+	if top, _ := r.RecommendByText(context.Background(), results, 2); len(top) != 2 || top[0].Name != "Nasi Punel" {
+		t.Fatalf("limit 2 = %+v", top)
+	}
+	if none, err := r.RecommendByText(context.Background(), nil, 6); err != nil || len(none) != 0 {
+		t.Fatalf("no results = %+v err %v", none, err)
+	}
+}
+
+// F2, jobdesk 9 Nov point 6: a place that is both a destination and a culture item gets one card, the most similar one;
+// a culinary business on that place stays, and two events at one venue both stay.
+func TestRecommendByTextShowsOnePlaceOnce(t *testing.T) {
+	db := newRecommendationTestDB(t)
+	var place uint
+	db.Raw(`SELECT place_id FROM destinations WHERE slug = 'jauh-pilihan'`).Scan(&place)
+	if err := db.Create(&models.Culture{Name: "Situs Jauh", Slug: "situs-jauh", PlaceID: &place, CultureType: "situs-sejarah", Status: "published"}).Error; err != nil {
+		t.Fatal(err)
+	}
+	// Both events at the fixture venue are upcoming here.
+	if err := db.Create(&models.EventOccurrence{EventID: 1, StartsAt: recNow.AddDate(0, 0, 5)}).Error; err != nil {
+		t.Fatal(err)
+	}
+	r := &Recommender{DB: db, Now: func() time.Time { return recNow }}
+	results := []SemanticResult{
+		searchHit("culture", 1, 0.80),     // Situs Jauh
+		searchHit("destination", 4, 0.75), // Jauh Pilihan: same place, less similar → no card
+		searchHit("culinary", 2, 0.70),    // Bebek Tosari: a business on that place → stays
+		searchHit("event", 1, 0.68),       // Sudah Lewat (now upcoming too)
+		searchHit("event", 2, 0.65),       // Akan Datang: same venue → stays
+		searchHit("destination", 2, 0.62), // Sekecamatan: another place
+	}
+	got, err := r.RecommendByText(context.Background(), results, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var order []string
+	for _, g := range got {
+		order = append(order, g.Type+":"+g.Name)
+	}
+	if strings.Join(order, ",") != "budaya:Situs Jauh,kuliner:Bebek Tosari,acara:Sudah Lewat,acara:Akan Datang,wisata:Sekecamatan" {
+		t.Fatalf("order = %v", order)
+	}
+	// The place filter runs before the limit, so the asked count is still filled from the next items.
+	if top, _ := r.RecommendByText(context.Background(), results, 2); len(top) != 2 || top[1].Name != "Bebek Tosari" {
+		t.Fatalf("limit 2 = %+v", top)
+	}
+}
+
+// Owner 2026-11-09: a closed or temporarily closed destination or culinary place is not recommended (text search and
+// content recommendations); open, unknown, and empty statuses are.
+func TestClosedPlacesAreNotRecommended(t *testing.T) {
+	db := newRecommendationTestDB(t)
+	db.Exec(`UPDATE culinaries SET operational_status = 'closed' WHERE slug = 'nasi-punel'`)
+	db.Exec(`UPDATE destinations SET operational_status = 'temporarily_closed' WHERE slug = 'sekecamatan'`)
+	db.Exec(`UPDATE destinations SET operational_status = 'unknown' WHERE slug = 'jauh-pilihan'`)
+	r := &Recommender{DB: db, Now: func() time.Time { return recNow }, Similar: stubSimilar(map[string]map[int64]float64{"destination": {2: 0.6, 3: 0.6, 4: 0.6}, "culinary": {1: 0.9, 2: 0.3}})}
+	got, err := r.RecommendByText(context.Background(), []SemanticResult{searchHit("culinary", 1, 0.9), searchHit("culinary", 2, 0.8), searchHit("destination", 2, 0.7), searchHit("destination", 4, 0.65)}, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, g := range got {
+		names = append(names, g.Name)
+	}
+	if strings.Join(names, ",") != "Bebek Tosari,Jauh Pilihan" {
+		t.Fatalf("text = %v", names)
+	}
+	food, err := r.Recommend(context.Background(), "wisata", "asal", "kuliner", 6)
+	if err != nil || len(food) != 1 || food[0].Name != "Bebek Tosari" {
+		t.Fatalf("content kuliner = %+v err %v", food, err)
+	}
+	places, err := r.Recommend(context.Background(), "wisata", "asal", "wisata", 6)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range places {
+		if p.Name == "Sekecamatan" {
+			t.Fatalf("temporarily closed destination recommended: %+v", places)
+		}
+	}
+}
+
+// Jobdesk 9 Nov point 4: a result below the recommendation threshold gets no card; the default is 0.61, and
+// RECOMMEND_RELEVANCE_THRESHOLD replaces it.
+func TestRecommendByTextDropsResultsBelowTheThreshold(t *testing.T) {
+	db := newRecommendationTestDB(t)
+	r := &Recommender{DB: db, Now: func() time.Time { return recNow }}
+	results := []SemanticResult{searchHit("culinary", 1, 0.70), searchHit("destination", 2, 0.61), searchHit("destination", 4, 0.609)}
+	names := func() string {
+		got, err := r.RecommendByText(context.Background(), results, 10)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var out []string
+		for _, g := range got {
+			out = append(out, g.Name)
+		}
+		return strings.Join(out, ",")
+	}
+	t.Setenv("RECOMMEND_RELEVANCE_THRESHOLD", "")
+	if got := names(); got != "Nasi Punel,Sekecamatan" {
+		t.Fatalf("default 0.61: %s", got)
+	}
+	t.Setenv("RECOMMEND_RELEVANCE_THRESHOLD", "0.65")
+	if got := names(); got != "Nasi Punel" {
+		t.Fatalf("0.65: %s", got)
+	}
+	t.Setenv("RECOMMEND_RELEVANCE_THRESHOLD", "2")
+	if got := names(); got != "Nasi Punel,Sekecamatan" {
+		t.Fatalf("invalid value must keep the default: %s", got)
 	}
 }

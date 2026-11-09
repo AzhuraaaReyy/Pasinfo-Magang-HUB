@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"time"
 
 	"github.com/joho/godotenv"
 	"wildan-news-backend/internal/config"
@@ -36,6 +37,17 @@ func main() {
 	}
 	// Only embeddings are made here, so the embedding provider (EMBED_PROVIDER, default LLM_PROVIDER) is used.
 	p := services.NewRetryProvider(services.NewEmbedProvider(c, c.Embed), c.Retries)
+	if !*dryRun {
+		// Checked first, like cmd/seed and the API worker: Gemini answers a wrong key with HTTP 400, which the corpus
+		// refresh reads as a refused document, so every new or changed document lost a retry attempt (jobdesk 7 Nov, Owner
+		// option A). A dry run makes no embedding call.
+		healthCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		err := services.ProviderHealth(healthCtx, p)
+		cancel()
+		if err != nil {
+			log.Fatalf("[FATAL] provider embedding tidak bisa dipakai (cek EMBED_PROVIDER, API key, dan nama model di .env); tidak ada dokumen yang diproses: %v", err)
+		}
+	}
 	regions, problems := services.LoadSeedRegions(filepath.Join("cmd", "seed", "data"))
 	if len(problems) > 0 {
 		// Without them culinary, culture, and event documents would lose their map zone.
@@ -51,8 +63,8 @@ func main() {
 		log.Fatalf("[FATAL] refresh corpus gagal: %v", e)
 	}
 	if *dryRun {
-		fmt.Printf("dry run: %d would be embedded, %d unchanged, %d would be deactivated\n", r.Stats.Pending, r.Stats.Skipped, r.Stats.Deactivated)
+		fmt.Printf("dry run: %d would be embedded, %d unchanged, %d would be deactivated, %d failed waiting for retry\n", r.Stats.Pending, r.Stats.Skipped, r.Stats.Deactivated, r.Stats.Deferred)
 		return
 	}
-	fmt.Printf("embeddings updated: embedded=%d unchanged=%d deactivated=%d failed=%d\n", r.Stats.Embedded, r.Stats.Skipped, r.Stats.Deactivated, r.Stats.Failed)
+	fmt.Printf("embeddings updated: embedded=%d unchanged=%d deactivated=%d failed=%d deferred=%d\n", r.Stats.Embedded, r.Stats.Skipped, r.Stats.Deactivated, r.Stats.Failed, r.Stats.Deferred)
 }

@@ -38,7 +38,7 @@ func TestGroundingAcceptsShortenedSourceName(t *testing.T) {
 		source("event", 21, "Pasuruan Creative Fest: WasikOn Festivale", "Festival.", 0.7),
 	}
 	answer := "1. Bangil Carnival - parade seni\n2. Pasuruan Creative Fest - festival kreatif"
-	if _, report := groundAnswer(answer, parseIntent("Sebutkan 2 acara di Pasuruan"), ragOf(events), events, "konteks"); report["fallback"] != false {
+	if _, report := groundAnswer(answer, listIntent(2, "acara"), ragOf(events), events, "konteks"); report["fallback"] != false {
 		t.Fatalf("shortened names rejected: %v", report)
 	}
 }

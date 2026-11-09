@@ -15,50 +15,47 @@ func wibDate(year int, month time.Month, day int) time.Time {
 	return time.Date(year, month, day, 0, 0, 0, 0, wib)
 }
 
-func TestDetectEventPeriod(t *testing.T) {
+func TestPlanEventPeriod(t *testing.T) {
 	// testToday is Friday 30 October 2026.
 	cases := []struct {
-		question string
+		period   string
 		label    string
 		from, to time.Time
 	}{
-		{"Ada acara apa akhir pekan ini di Pasuruan?", "akhir pekan ini", wibDate(2026, 10, 31), wibDate(2026, 11, 2)},
-		{"Ada event weekend depan?", "akhir pekan depan", wibDate(2026, 11, 7), wibDate(2026, 11, 9)},
-		{"Acara minggu ini apa saja?", "minggu ini", wibDate(2026, 10, 30), wibDate(2026, 11, 2)},
-		{"Festival minggu depan", "minggu depan", wibDate(2026, 11, 2), wibDate(2026, 11, 9)},
-		{"Festival apa saja bulan depan?", "bulan depan", wibDate(2026, 11, 1), wibDate(2026, 12, 1)},
-		{"Agenda bulan ini", "bulan ini", wibDate(2026, 10, 1), wibDate(2026, 11, 1)},
-		{"Ada acara bulan Februari?", "Februari 2027", wibDate(2027, 2, 1), wibDate(2027, 3, 1)},
-		{"Acara Oktober", "Oktober 2026", wibDate(2026, 10, 1), wibDate(2026, 11, 1)},
-		{"Agenda acara bulan September 2026", "September 2026", wibDate(2026, 9, 1), wibDate(2026, 10, 1)},
-		{"Kirab Pataka tahun depan tanggal berapa?", "tahun depan", wibDate(2027, 1, 1), wibDate(2028, 1, 1)},
-		{"Acara tahun 2025", "tahun 2025", wibDate(2025, 1, 1), wibDate(2026, 1, 1)},
-		{"Ada acara hari ini?", "hari ini", wibDate(2026, 10, 30), wibDate(2026, 10, 31)},
-		{"Acara besok", "besok", wibDate(2026, 10, 31), wibDate(2026, 11, 1)},
-		{"Acara apa yang sedang berlangsung sekarang?", "saat ini", wibDate(2026, 10, 30), wibDate(2026, 10, 31)},
-		{"Acara yang akan datang apa?", "yang akan datang", wibDate(2026, 10, 30), time.Time{}},
+		{"this_weekend", "akhir pekan ini", wibDate(2026, 10, 31), wibDate(2026, 11, 2)},
+		{"next_weekend", "akhir pekan depan", wibDate(2026, 11, 7), wibDate(2026, 11, 9)},
+		{"this_week", "minggu ini", wibDate(2026, 10, 30), wibDate(2026, 11, 2)},
+		{"next_week", "minggu depan", wibDate(2026, 11, 2), wibDate(2026, 11, 9)},
+		{"next_month", "bulan depan", wibDate(2026, 11, 1), wibDate(2026, 12, 1)},
+		{"this_month", "bulan ini", wibDate(2026, 10, 1), wibDate(2026, 11, 1)},
+		{"next_year", "tahun depan", wibDate(2027, 1, 1), wibDate(2028, 1, 1)},
+		{"today", "hari ini", wibDate(2026, 10, 30), wibDate(2026, 10, 31)},
+		{"tomorrow", "besok", wibDate(2026, 10, 31), wibDate(2026, 11, 1)},
+		{"now", "saat ini", wibDate(2026, 10, 30), wibDate(2026, 10, 31)},
+		{"upcoming", "yang akan datang", wibDate(2026, 10, 30), time.Time{}},
 	}
 	for _, c := range cases {
-		got := detectEventPeriod(c.question, testToday)
+		got := planPeriod(c.period, testToday)
 		if got == nil || got.Label != c.label || !got.From.Equal(c.from) || !got.To.Equal(c.to) {
-			t.Errorf("%q = %+v, want %s %v–%v", c.question, got, c.label, c.from, c.to)
+			t.Errorf("%q = %+v, want %s %v–%v", c.period, got, c.label, c.from, c.to)
 		}
 	}
-	if got := detectEventPeriod("Apa itu Candi Jawi?", testToday); got != nil {
-		t.Errorf("no period expected, got %+v", got)
-	}
 	sunday := time.Date(2026, 11, 1, 10, 0, 0, 0, wib)
-	if got := detectEventPeriod("acara akhir pekan ini", sunday); !got.From.Equal(wibDate(2026, 11, 1)) || !got.To.Equal(wibDate(2026, 11, 2)) {
+	if got := planPeriod("this_weekend", sunday); !got.From.Equal(wibDate(2026, 11, 1)) || !got.To.Equal(wibDate(2026, 11, 2)) {
 		t.Errorf("Sunday weekend = %+v", got)
 	}
 }
 
+func planPeriod(period string, today time.Time) *eventPeriod {
+	return QuestionPlan{Period: period}.eventPeriod(today)
+}
+
 func TestEventPeriodDescription(t *testing.T) {
-	weekend := detectEventPeriod("akhir pekan ini", testToday)
+	weekend := planPeriod("this_weekend", testToday)
 	if got := weekend.Description(); got != "akhir pekan ini (31 Oktober – 1 November 2026)" {
 		t.Fatalf("description = %q", got)
 	}
-	if got := detectEventPeriod("acara yang akan datang", testToday).Description(); got != "yang akan datang (mulai 30 Oktober 2026)" {
+	if got := planPeriod("upcoming", testToday).Description(); got != "yang akan datang (mulai 30 Oktober 2026)" {
 		t.Fatalf("open description = %q", got)
 	}
 }
@@ -66,22 +63,22 @@ func TestEventPeriodDescription(t *testing.T) {
 const kirabDoc = "Kirab budaya.\nJadwal: 2026-02-08T00:00:00+07:00 s.d. 2026-02-08T23:59:00+07:00 (status: completed)\nJadwal: 2027-02-08T00:00:00+07:00 s.d. 2027-02-08T23:59:00+07:00 (status: expected)\nTiket: Gratis"
 
 func TestKeepSchedulesDropsLinesOutsideThePeriod(t *testing.T) {
-	next := detectEventPeriod("tahun depan", testToday)
+	next := planPeriod("next_year", testToday)
 	got, dated := next.keepSchedules(kirabDoc)
 	if !dated || strings.Contains(got, "2026-02-08") || !strings.Contains(got, "2027-02-08") || !strings.Contains(got, "Tiket: Gratis") || !strings.Contains(got, "Kirab budaya.") {
 		t.Fatalf("filtered = %q dated=%v", got, dated)
 	}
-	if got, dated := detectEventPeriod("bulan depan", testToday).keepSchedules(kirabDoc); got != kirabDoc || dated {
+	if got, dated := planPeriod("next_month", testToday).keepSchedules(kirabDoc); got != kirabDoc || dated {
 		t.Fatalf("a document with no line in the period must stay unchanged: %q dated=%v", got, dated)
 	}
 	museum := "Pameran tetap.\nJadwal: 2025-01-09T08:00:00+07:00 (status: ongoing)"
-	if got, dated := detectEventPeriod("bulan depan", testToday).keepSchedules(museum); got != museum || dated {
+	if got, dated := planPeriod("next_month", testToday).keepSchedules(museum); got != museum || dated {
 		t.Fatalf("a continuing occurrence is kept but not dated in the period: %q dated=%v", got, dated)
 	}
 }
 
 func TestEventPeriodOverlapsOngoingWithoutEnd(t *testing.T) {
-	weekend := detectEventPeriod("akhir pekan ini", testToday)
+	weekend := planPeriod("this_weekend", testToday)
 	started := wibDate(2025, 1, 9)
 	if !weekend.overlaps(started, nil, "ongoing") || weekend.overlaps(started, nil, "completed") {
 		t.Fatal("an ongoing occurrence without an end runs on; a completed one counts on its start day only")
@@ -127,7 +124,7 @@ func eventDoc(id int64, label, answer string) SemanticResult {
 func periodService(t *testing.T, retriever *scheduleRetriever) (*ChatService, *recordingProvider, *fakeJudge) {
 	t.Helper()
 	provider := &recordingProvider{stubProvider: stubProvider{name: "ollama:chat"}}
-	service := NewChatService(newChatTestDB(t), provider, time.Second, retriever)
+	service := testChatService(newChatTestDB(t), provider, time.Second, retriever)
 	judge := &fakeJudge{}
 	service.Judge = judge
 	service.Now = func() time.Time { return testToday }
@@ -364,7 +361,7 @@ func TestRetrieverEventsInPeriod(t *testing.T) {
 		if row.region != "" {
 			metadata = regionMetadata(row.region)
 		}
-		if err := db.Exec(`INSERT INTO faq_knowledge_bases (question, answer, category, source_type, source_id, source_label, is_active, metadata) VALUES (?, ?, 'acara', 'event', ?, ?, ?, ?)`, row.label, row.label, row.id, row.label, row.active, metadata).Error; err != nil {
+		if err := db.Exec(`INSERT INTO faq_knowledge_bases (question, answer, category, source_type, source_id, source_label, is_active, metadata, embedding) VALUES (?, ?, 'acara', 'event', ?, ?, ?, ?, '[0.1]')`, row.label, row.label, row.id, row.label, row.active, metadata).Error; err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -399,7 +396,7 @@ func TestRetrieverEventsInPeriod(t *testing.T) {
 // J4-03 (2026-11-02): a period with only an ongoing event must not be told "no event"; the prompt says an
 // event is still running and asks for it first.
 func TestPeriodPromptMentionsOngoingEvents(t *testing.T) {
-	intent := parseIntent("Apakah ada acara yang berlangsung hari ini?")
+	intent := factIntent("acara")
 	ongoing := protectedSystemPrompt(intent, ragContext{Text: "x", Period: "hari ini", PeriodNearest: true, PeriodContinuing: true}, testToday)
 	if strings.Contains(ongoing, "HASIL_PERIODE: tidak ada acara terjadwal pada periode ini.") || !strings.Contains(ongoing, "ada acara yang masih berlangsung") {
 		t.Fatalf("ongoing period prompt:\n%s", ongoing)

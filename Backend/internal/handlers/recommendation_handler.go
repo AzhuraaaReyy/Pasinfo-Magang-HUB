@@ -1,8 +1,12 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"log"
+	"strings"
+	"time"
+	"unicode/utf8"
 
 	"github.com/gofiber/fiber/v2"
 	"wildan-news-backend/internal/middleware"
@@ -10,7 +14,13 @@ import (
 )
 
 // RecommendationHandler serves related content (Sprint 1 Tahap A, Owner 2026-11-03): GET only, no login.
-type RecommendationHandler struct{ Rec *services.Recommender }
+// Search and LLM, when set, also serve recommendations for a text (jobdesk 9 Nov, Owner): the search embeds the
+// text with the chat provider, so its concurrency limit (SEC-07) covers these requests too.
+type RecommendationHandler struct {
+	Rec    *services.Recommender
+	Search *services.Retriever
+	LLM    services.LLMProvider
+}
 
 func NewRecommendationHandler(rec *services.Recommender) *RecommendationHandler {
 	return &RecommendationHandler{Rec: rec}
@@ -29,6 +39,62 @@ func (h *RecommendationHandler) Register(r fiber.Router) {
 	r.Get("/budaya/:slug/rekomendasi", limiter, h.handle("budaya", "slug"))
 	r.Get("/acara/:slug/rekomendasi", limiter, h.handle("acara", "slug"))
 	r.Get("/news/:id/rekomendasi", limiter, h.handle("berita", "id"))
+	if h.Search != nil && h.LLM != nil {
+		// Every request embeds the text with the embedding provider (quota), so it is limited like the chat.
+		r.Get("/rekomendasi", middleware.RateLimiter(20, 60), h.handleText)
+	}
+}
+
+const (
+	// textQueryMaxRunes bounds the text of GET /rekomendasi: a keyword or a short description of a need.
+	textQueryMaxRunes = 300
+	// textSearchPool is the number of nearest documents read before the eligibility check (drafts, finished events)
+	// and the limit, so a filtered result still fills the asked count.
+	textSearchPool = 30
+	// textSearchTimeout bounds the embedding call and the queries of one request.
+	textSearchTimeout = 30 * time.Second
+)
+
+// handleText answers GET /rekomendasi?q=tempat+sejuk+di+pegunungan&domain=wisata,kuliner&zona=Pasuruan+Selatan&kecamatan=Tosari&kategori=Wisata+Alam&limit=6: recommendation
+// cards of the travel domains (wisata, kuliner, budaya, acara; empty = all) ordered by the meaning similarity of each
+// item to q.
+func (h *RecommendationHandler) handleText(c *fiber.Ctx) error {
+	q := strings.TrimSpace(c.Query("q"))
+	if q == "" || utf8.RuneCountInString(q) > textQueryMaxRunes {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "q wajib diisi, paling banyak 300 karakter"})
+	}
+	limit := c.QueryInt("limit", recommendationDefaultLimit)
+	if limit < 1 || limit > recommendationMaxLimit {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "limit harus 1 sampai 12"})
+	}
+	var domains []string
+	for _, d := range strings.Split(c.Query("domain"), ",") {
+		if d = strings.TrimSpace(d); d != "" {
+			domains = append(domains, d)
+		}
+	}
+	ctx, cancel := context.WithTimeout(c.UserContext(), textSearchTimeout)
+	defer cancel()
+	search := services.TravelSearch{Domains: domains, Zone: c.Query("zona"), District: c.Query("kecamatan"), Category: c.Query("kategori")}
+	results, err := h.Search.SearchTravelContent(ctx, h.LLM, q, search, textSearchPool)
+	if errors.Is(err, services.ErrUnknownTravelDomain) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "domain harus wisata, kuliner, budaya, atau acara"})
+	}
+	if errors.Is(err, services.ErrInvalidTravelFilter) {
+		// The message names the filter and the allowed values only, never the visitor's text.
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": strings.TrimPrefix(err.Error(), services.ErrInvalidTravelFilter.Error()+": ")})
+	}
+	if err != nil {
+		// The text is not logged: it is the visitor's own words.
+		log.Printf("[Recommendation] text search failed: %v", err)
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"success": false, "message": "layanan rekomendasi sedang tidak tersedia, silakan coba lagi"})
+	}
+	items, err := h.Rec.RecommendByText(ctx, results, limit)
+	if err != nil {
+		log.Printf("[Recommendation] text cards failed: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "gagal memuat rekomendasi"})
+	}
+	return c.JSON(fiber.Map{"success": true, "query": q, "recommendations": items})
 }
 
 // handle answers GET …/rekomendasi?limit=6&domain=kuliner. domain picks another travel domain for a travel item

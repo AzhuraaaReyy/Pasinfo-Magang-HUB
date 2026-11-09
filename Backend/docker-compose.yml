@@ -14,7 +14,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD wajib diisi di .env (tidak ada default)}
       POSTGRES_DB: ${DB_NAME:-pasinfo_travel}
     ports:
-      - "${LEGACY_POSTGRES_PORT:-5433}:5432"
+      - "127.0.0.1:${LEGACY_POSTGRES_PORT:-5433}:5432"
     volumes:
       - pasinfo-legacy-pgdata:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -36,7 +36,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ghcr.io/raflyherdianto/pasinfo-backend:latest
+      args:
+        TARGETARCH: ${TARGETARCH:-amd64}
+    # Local builds set BACKEND_IMAGE in .env, so the image is not mistaken for the registry image.
+    image: ${BACKEND_IMAGE:-ghcr.io/raflyherdianto/pasinfo-backend:latest}
 
     container_name: pasinfo-backend
 
@@ -56,14 +59,13 @@ services:
         condition: service_healthy
 
     environment:
-      APP_ENV: production
-      HTTPS: "true"
+      # Set in .env; without a value the safe production mode applies.
+      APP_ENV: ${APP_ENV:-production}
+      HTTPS: "${HTTPS:-true}"
       # Container name, not the service name: shared-network is external, so another stack with a service named
       # "postgres" on it makes Docker DNS return both databases (D1, jobdesk 31 Okt, 2026-11-03).
       DB_HOST: pasinfo-legacy-postgres
       DB_PORT: 5432
-      # .env holds host values (localhost); inside the container the Windows-host Ollama is reached here.
-      OLLAMA_BASE_URL: http://host.docker.internal:11434
 
     ports:
       - "8080:8080"

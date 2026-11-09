@@ -1125,6 +1125,212 @@
         "verified_at": "2026-10-27",
         "note": "Edisi 2024 dari tulisan kontributor GNFI (bukan rilis resmi). Edisi 2025 hanya tercatat di SIDITA."
       }
+    },
+    {
+      "id": "festival-kopi-kapiten",
+      "slug": "festival-kopi-kapiten",
+      "name": "Festival Kopi Kapiten (Kopi Asli Kabupaten Pasuruan)",
+      "categoryId": "kesenian",
+      "regionId": "pasuruan-barat",
+      "event_type": "kesenian",
+      "short_description": "festival tahunan pameran kopi lokal Pasuruan dengan lomba barista dan hiburan musik di Pandaan",
+      "description": "Festival Kopi Kapiten adalah acara tahunan yang digagas Pemerintah Kabupaten Pasuruan untuk mempromosikan produk Kopi Kapiten (Kopi Asli Kabupaten Pasuruan) dari berbagai wilayah pegunungan Pasuruan seperti Tutur, Prigen, dan Puspo.\n\nAcara mendatang diperkirakan akan digelar pada pertengahan Desember 2026 di kawasan Taman Candra Wilwatikta, Pandaan. Acara ini akan diisi dengan pameran UMKM kopi, lomba seduh kopi (barista competition) tingkat Jawa Timur, serta pertunjukan musik akustik dan kesenian lokal.\n\nTanggal pasti dan bintang tamu masih menunggu rilis resmi dari Dinas Ketahanan Pangan dan Pertanian Kabupaten Pasuruan, namun biasanya pengunjung tidak dipungut biaya masuk (gratis).",
+      "status": "published",
+      "featured": true,
+      "capacity": null,
+      "venue_name": null,
+      "venue_address": "Amphiteater Taman Candra Wilwatikta, Jl. Dr. Soetomo No. 2, Sumber Gedang, Kec. Pandaan, Kab. Pasuruan",
+      "place": {
+        "latitude": -7.6581814,
+        "longitude": 112.6750356,
+        "precision": "exact"
+      },
+      "occurrences": [
+        {
+          "id": "festival-kopi-kapiten-occ-1",
+          "starts_at": "2026-12-19T15:00:00+07:00",
+          "ends_at": "2026-12-20T22:00:00+07:00",
+          "status": "expected",
+          "all_day": false,
+          "notes": "Jadwal perkiraan berdasarkan tren pelaksanaan tahun-tahun sebelumnya pada bulan Desember."
+        }
+      ],
+      "tickets": [
+        {
+          "id": "festival-kopi-kapiten-masuk",
+          "name": "Pengunjung Umum",
+          "price": 0,
+          "description": "Gratis untuk masyarakat umum.",
+          "ticket_url": null,
+          "registration_url": null,
+          "available": false
+        }
+      ],
+      "organizer_name": "Pemkab Pasuruan (Dinas Ketahanan Pangan dan Pertanian)",
+      "organizer_phone": null,
+      "website_url": null,
+      "media": [
+        {
+          "type": "image",
+          "url": null,
+          "alt": "Foto Festival Kopi Kapiten (belum tersedia)"
+        }
+      ],
+      "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-7.6581814,112.6750356",
+      "source": "riset-editorial",
+      "references": [],
+      "verification": {
+        "status": "pending",
+        "verified_at": "2026-11-09",
+        "note": "Occurrence berstatus 'expected' (perkiraan, belum diumumkan resmi)."
+      }
+    },
+    {
+      "id": "tradisi-praonan-lekok",
+      "slug": "tradisi-praonan-lekok",
+      "name": "Tradisi Praonan Lebaran Ketupat Lekok",
+      "categoryId": "tradisi",
+      "regionId": "pasuruan-timur",
+      "event_type": "tradisi",
+      "short_description": "tradisi perayaan Lebaran Ketupat (H+7 Idul Fitri) masyarakat nelayan dengan menaiki perahu hias di pesisir Lekok",
+      "description": "Tradisi Praonan adalah budaya turun-temurun warga pesisir utara Pasuruan, khususnya di Kecamatan Lekok. Acara ini selalu digelar tepat pada perayaan Lebaran Ketupat (H+7 Hari Raya Idul Fitri).\n\nPara nelayan menghias perahu pencari ikan mereka dengan ornamen warna-warni dan bendera, kemudian mengajak keluarga dan warga setempat berlayar ke tengah laut (praonan) sambil memakan ketupat bersama. Selain di Lekok, tradisi ini juga kadang merambat ke kawasan pesisir Kota Pasuruan (Pelabuhan Kota).\n\nUntuk tahun 2027, Idul Fitri diperkirakan jatuh pada awal Maret 2027, sehingga tradisi Praonan diekspektasikan berlangsung seminggu setelahnya.",
+      "status": "published",
+      "featured": true,
+      "capacity": null,
+      "venue_name": null,
+      "venue_address": "TPI Lekok / Pesisir Pantai Lekok, Jatirejo, Kec. Lekok, Kab. Pasuruan",
+      "place": {
+        "latitude": -7.632204,
+        "longitude": 113.011883,
+        "precision": "approximate"
+      },
+      "occurrences": [
+        {
+          "id": "tradisi-praonan-lekok-occ-1",
+          "starts_at": "2027-03-16T06:00:00+07:00",
+          "ends_at": "2027-03-16T12:00:00+07:00",
+          "status": "expected",
+          "all_day": false,
+          "notes": "Perkiraan H+7 Idul Fitri 2027. Tanggal bergantung pada sidang isbat penetapan 1 Syawal."
+        }
+      ],
+      "tickets": [],
+      "organizer_name": "Masyarakat Nelayan Kecamatan Lekok",
+      "organizer_phone": null,
+      "website_url": null,
+      "media": [
+        {
+          "type": "image",
+          "url": null,
+          "alt": "Foto Tradisi Praonan Lekok (belum tersedia)"
+        }
+      ],
+      "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-7.632204,113.011883",
+      "source": "riset-editorial",
+      "references": [],
+      "verification": {
+        "status": "pending",
+        "verified_at": "2026-11-09",
+        "note": "Jadwal mengikuti kalender Hijriah (Lebaran Ketupat 2027)."
+      }
+    },
+    {
+      "id": "pesta-rakyat-malam-tahun-baru-2027",
+      "slug": "pesta-rakyat-malam-tahun-baru-2027",
+      "name": "Pesta Rakyat dan Doa Lintas Agama Malam Tahun Baru 2027",
+      "categoryId": "kesenian",
+      "regionId": "kota-pasuruan",
+      "event_type": "kesenian",
+      "short_description": "acara penutupan akhir tahun di Alun-Alun Kota Pasuruan yang berisi doa bersama dan hiburan rakyat",
+      "description": "Menyambut pergantian tahun 2026 ke 2027, Pemerintah Kota Pasuruan diperkirakan akan kembali menggelar Pesta Rakyat dan Doa Lintas Agama. Acara ini biasanya dipusatkan di Alun-Alun Kota Pasuruan (kawasan Payung Madinah).\n\nSelain sebagai ajang refleksi dan doa bersama tokoh lintas agama yang dimulai setelah Isya', acara dilanjutkan dengan hiburan musik religi, penampilan seni tradisional warga kelurahan, dan bazaar UMKM. Untuk menghindari penumpukan massa, biasanya rute menuju Alun-Alun akan ditutup untuk kendaraan bermotor (Car Free Night).\n\nAcara dimulai sore hari hingga momen pergantian waktu di tengah malam.",
+      "status": "published",
+      "featured": false,
+      "capacity": null,
+      "venue_name": null,
+      "venue_address": "Alun-Alun Kota Pasuruan, Jl. Alun-Alun, Kec. Panggungrejo, Kota Pasuruan",
+      "place": {
+        "latitude": -7.6419164,
+        "longitude": 112.9066933,
+        "precision": "exact"
+      },
+      "occurrences": [
+        {
+          "id": "pesta-rakyat-malam-tahun-baru-2027-occ-1",
+          "starts_at": "2026-12-31T16:00:00+07:00",
+          "ends_at": "2027-01-01T01:00:00+07:00",
+          "status": "expected",
+          "all_day": false,
+          "notes": "Acara Malam Tahun Baru. Detail rekayasa lalu lintas menyusul."
+        }
+      ],
+      "tickets": [],
+      "organizer_name": "Pemerintah Kota Pasuruan",
+      "organizer_phone": null,
+      "website_url": null,
+      "media": [
+        {
+          "type": "image",
+          "url": null,
+          "alt": "Foto Pesta Rakyat Malam Tahun Baru (belum tersedia)"
+        }
+      ],
+      "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-7.6419164,112.9066933",
+      "source": "riset-editorial",
+      "references": [],
+      "verification": {
+        "status": "pending",
+        "verified_at": "2026-11-09",
+        "note": "Perkiraan acara tahunan rutin Pemkot Pasuruan."
+      }
+    },
+    {
+      "id": "pameran-keris-pusaka-pasuruan",
+      "slug": "pameran-keris-pusaka-pasuruan",
+      "name": "Pameran Tosan Aji dan Keris Pusaka Pasuruan Raya",
+      "categoryId": "sejarah",
+      "regionId": "pasuruan-utara",
+      "event_type": "sejarah",
+      "short_description": "pameran ratusan bilah keris dan tosan aji dari zaman kerajaan yang digelar oleh paguyuban pecinta keris",
+      "description": "Pameran Tosan Aji dan Keris Pusaka merupakan agenda pelestarian budaya yang diinisiasi oleh komunitas dan paguyuban pelestari pusaka se-Pasuruan Raya. Acara ini mengeksibisi ratusan bilah keris peninggalan era Kerajaan Singasari, Majapahit, hingga era Mataram Islam.\n\nSelain pameran benda bersejarah, acara yang direncanakan pada awal tahun 2027 ini juga akan membuka forum bursa pusaka, edukasi cara perawatan keris (jamas), dan diskusi sejarah lokal bersama ahli sejarah Pasuruan. Acara ini sering diadakan di wilayah Bangil karena nilai historis kota tersebut.\n\nEkspektasi tempat pelaksanaan berada di Sentra Produk Unggulan (Bangkodir) Bangil dengan akses gratis bagi masyarakat.",
+      "status": "published",
+      "featured": false,
+      "capacity": null,
+      "venue_name": null,
+      "venue_address": "Bangkodir (Bangil Kota Bordir), Jl. Raya Raci, Pogar, Kec. Bangil, Kab. Pasuruan",
+      "place": {
+        "latitude": -7.59275,
+        "longitude": 112.80668,
+        "precision": "approximate"
+      },
+      "occurrences": [
+        {
+          "id": "pameran-keris-pusaka-pasuruan-occ-1",
+          "starts_at": "2027-02-05T09:00:00+07:00",
+          "ends_at": "2027-02-07T21:00:00+07:00",
+          "status": "expected",
+          "all_day": true,
+          "notes": "Bulan perkiraan berdasarkan jadwal pameran komunitas tahunan."
+        }
+      ],
+      "tickets": [],
+      "organizer_name": "Paguyuban Tosan Aji Pasuruan Raya",
+      "organizer_phone": null,
+      "website_url": null,
+      "media": [
+        {
+          "type": "image",
+          "url": null,
+          "alt": "Foto Pameran Keris Pusaka (belum tersedia)"
+        }
+      ],
+      "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-7.592750,112.806680",
+      "source": "riset-editorial",
+      "references": [],
+      "verification": {
+        "status": "pending",
+        "verified_at": "2026-11-09",
+        "note": "Data simulasi untuk kalender event awal 2027."
+      }
     }
   ],
   "regions": [

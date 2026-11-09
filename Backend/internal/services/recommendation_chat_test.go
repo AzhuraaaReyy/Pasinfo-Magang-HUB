@@ -76,7 +76,7 @@ func (f *fakeRanker) RankChatCandidates(_ context.Context, docs []SemanticResult
 func TestAskRanksOnlyRecommendationQuestions(t *testing.T) {
 	results := []SemanticResult{source("culinary", 1, "Rawon Pertama", "Bangil.", 0.80), source("culinary", 2, "Soto Kedua", "Bangil.", 0.75)}
 	ranker := &fakeRanker{}
-	service := NewChatService(newChatTestDB(t), &recordingProvider{stubProvider: stubProvider{name: "ollama:chat"}}, time.Second, &fakeRetriever{results: results})
+	service := testChatService(newChatTestDB(t), &recordingProvider{stubProvider: stubProvider{name: "ollama:chat"}}, time.Second, &fakeRetriever{results: results})
 	service.Recommender = ranker
 	provider := service.LLM.(*recordingProvider)
 	result, err := service.Ask(context.Background(), &models.ChatSession{ID: 60}, "Rekomendasikan kuliner di Bangil")
@@ -160,7 +160,7 @@ func TestAskOffersUpcomingEventsWhenMatchingEventsArePast(t *testing.T) {
 		byRegion:      map[string][]SemanticResult{"": {eventDoc(2, "Kirab Pataka", "Kirab.\nJadwal: 2027-02-07T00:00:00+07:00 (status: expected)")}},
 	}
 	provider := &recordingProvider{stubProvider: stubProvider{name: "ollama:chat"}}
-	service := NewChatService(newChatTestDB(t), provider, time.Second, retriever)
+	service := testChatService(newChatTestDB(t), provider, time.Second, retriever)
 	service.Recommender = dropAllRanker{}
 	service.Now = func() time.Time { return testToday }
 	result, err := service.Ask(context.Background(), &models.ChatSession{ID: 62}, "Rekomendasikan acara di Pasuruan Timur")

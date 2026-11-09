@@ -40,7 +40,7 @@ func TestChatErrorWritesContractEnvelope(t *testing.T) {
 }
 
 func TestChatErrorMessagesCoverAllContractCodes(t *testing.T) {
-	codes := []string{"INVALID_JSON", "MESSAGE_REQUIRED", "MESSAGE_TOO_LONG", "INVALID_SESSION_ID", "SESSION_NOT_FOUND", "RATE_LIMITED", "AI_UNAVAILABLE", "AI_TIMEOUT", "AI_RATE_LIMITED", "AI_BAD_RESPONSE", "INTERNAL_ERROR", "INVALID_QUERY", "INVALID_CATEGORY", "INVALID_LIMIT"}
+	codes := []string{"INVALID_JSON", "MESSAGE_REQUIRED", "MESSAGE_TOO_LONG", "INVALID_SESSION_ID", "SESSION_NOT_FOUND", "RATE_LIMITED", "AI_UNAVAILABLE", "AI_TIMEOUT", "AI_RATE_LIMITED", "AI_BAD_RESPONSE", "INTERNAL_ERROR", "INVALID_QUERY", "INVALID_CATEGORY", "INVALID_LIMIT", "INVALID_LOCATION"}
 	if len(chatErrorMessages) != len(codes) {
 		t.Fatalf("catalog size = %d, want %d", len(chatErrorMessages), len(codes))
 	}

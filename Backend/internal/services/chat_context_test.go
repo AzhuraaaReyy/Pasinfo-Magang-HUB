@@ -123,7 +123,7 @@ func TestRAGContextFitsRequestedLongDocuments(t *testing.T) {
 	if rag.Shown() != 3 || rag.Found != 6 || utf8.RuneCountInString(rag.Text) > maxContextRunes {
 		t.Fatalf("shown=%d found=%d runes=%d", rag.Shown(), rag.Found, utf8.RuneCountInString(rag.Text))
 	}
-	prompt := protectedSystemPrompt(parseIntent("Rekomendasikan 3 kuliner di Bangil"), rag, testToday)
+	prompt := protectedSystemPrompt(recommendIntent(3, "kuliner"), rag, testToday)
 	if strings.Contains(prompt, "baru menemukan") || strings.Contains(prompt, "hanya memiliki") {
 		t.Fatalf("a met request must not report a shortfall:\n%s", prompt)
 	}

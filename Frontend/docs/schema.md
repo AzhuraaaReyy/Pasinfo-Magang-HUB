@@ -166,8 +166,8 @@ Schema mengikuti prinsip berikut:
 | `culinaries`         | Kuliner                          |
 | `cultures`           | Budaya                           |
 | `events`             | Acara                            |
-| `articles`           | Berita                           |
-| `article_categories` | Kategori berita                  |
+| `news`               | Berita (as-built; §18)           |
+| `categories`         | Kategori berita (as-built; §19)  |
 | `destination_prices` | Informasi harga/tiket wisata     |
 | `culinary_menus`     | Menu dan harga kuliner           |
 | `event_occurrences`  | Jadwal pelaksanaan event         |
@@ -943,6 +943,12 @@ Booking dan payment tetap future feature.
 
 # 18. Articles
 
+> **As-built (Owner 2026-11-09): tabel `articles` tidak dipakai dan sudah dihapus.** Berita disimpan di tabel
+> `news` (kolom utama: `title`, `slug`, `excerpt`, `content`, `category_id` → `categories.id`, `status`, `published_at`,
+> `views`, `source`, `source_url` unik, `author_id`, wilayah `province_id`…`village_id`) dan dilayani route `/news`. Route
+> `/articles` dan `/article-categories`, model, dan tabelnya dihapus; backend men-drop tabel yang masih kosong saat
+> start. Kontrak di bawah adalah rancangan awal dan tidak berlaku untuk backend aktif. Lihat §61.7 DRIFT No. 13.
+
 ## Table: `articles`
 
 ### Columns
@@ -981,6 +987,9 @@ one primary category
 ---
 
 # 19. Article Categories
+
+> **As-built (Owner 2026-11-09): tabel `article_categories` tidak dipakai dan sudah dihapus.** Kategori berita disimpan
+> di tabel `categories` (`name` unik, `slug` unik). Lihat §18 dan §61.7 DRIFT No. 13.
 
 ## Table: `article_categories`
 
@@ -3429,7 +3438,14 @@ belum diotorisasi; lihat §69).
 
 ---
 
-## 61.7 Backend As-Built — Data Contract Status (sync 2026-10-26, sinkronisasi as-built 2026-10-28, diperbarui 2026-11-03)
+## 61.7 Backend As-Built — Data Contract Status (sync 2026-10-26, sinkronisasi as-built 2026-10-28, diperbarui 2026-11-03, dicek 2026-11-09)
+
+> **Pengecekan 2026-11-09 (instruksi Owner, T29):** sejak drift No. 24 (2026-11-05) tidak ada tabel, kolom, index, atau
+> constraint baru [KODE `internal/models/models.go`, `internal/database/database.go`; DB `pg_indexes`]. Fitur terdekat,
+> cache rute, dan cache jawaban (2026-11-07/08) memakai kolom `places.latitude`/`longitude` yang sudah ada dan memori
+> proses, tanpa tabel baru. Database dev aktif sejak 2026-11-07 adalah `pasinfo_travel_gemini` (OVERRIDE-RAG-007,
+> embedding `gemini-embedding-001` 768 dimensi); angka baris di bawah yang bertanggal sebelum itu berasal dari `pasinfo_travel`.
+> FAQ manual (`source_type` NULL) sengaja tanpa unique index sampai ada fitur admin FAQ (T18, Owner 2026-11-09; 0 baris).
 
 Backend dikerjakan (plan implementasi tertua 2026-10-20; setup awal sudah ada sebelumnya,
 tanggalnya tidak tercatat) dengan Golang (Fiber v2) + GORM + PostgreSQL 16 + pgvector 0.8.7
@@ -3450,7 +3466,7 @@ sebelum disahkan (aturan §69).
 | `places`, `destinations`, `destination_prices`, `media`, `opening_hours`, `sources`, `sourceables`, `verifications` | §6, §10, §11, §20, §22, §24–§26 | GORM AutoMigrate | 116 · 55 · 165 · 330 · **0** · 4 · 137 · 137 |
 | `regions`, `travel_categories`, `facilities`, `destination_weather` | tidak ada di schema (DRIFT No. 1, No. 12) | GORM AutoMigrate | 5 · 4 · 220 · 55 |
 | `culinaries`, `culinary_menus`, `cultures`, `events`, `event_occurrences`, `event_tickets` | §12–§17 | GORM AutoMigrate (hanya di PostgreSQL + pgvector) | 25 · 375 · 25 · **32** · 40 · 21 (2026-11-01 setelah event mock dihapus: events 16 · occurrences 24 · tickets 5) |
-| `articles`, `article_categories` | §18, §19 | GORM AutoMigrate | **0** · **0** |
+| `articles`, `article_categories` | §18, §19 | **Dihapus 2026-11-09 (Owner)**: model dan AutoMigrate dicabut, tabel di-drop di `pasinfo_travel` dan `pasinfo_travel_gemini`; backend men-drop tabel yang masih kosong saat start | — |
 | `faq_knowledge_bases`, `chat_sessions`, `chat_messages` | tidak ada di schema; ERD AI terpisah | GORM AutoMigrate + SQL idempotent (`CREATE EXTENSION vector`, kolom tambahan FAQ, indeks HNSW) | 258 (242 aktif) · 228 · 1.905 (sinkron 2026-10-31) |
 | Tabel legacy: `users`, `news`, `categories`, `news_images`, `notifications`, `histories`, `ads`, `verify_otps`, `provinces`, `regencies`, `districts`, `villages` | `users` §5; `ads` setara konsep `advertisements` §37 (belum diaudit); lainnya tidak ada di schema | GORM AutoMigrate (backend lama) | `users` 5 · `news` 116 · `categories` 10 · `ads` 0 · `villages` 83.762 |
 
@@ -3485,7 +3501,7 @@ backend lama memakai tabel `ads` (0 baris). Kesetaraan `users`/`ads` legacy deng
 | 10 | Respons API Wisata dan Berita mengikuti bentuk mock frontend (Wisata: field turunan `prices[]`, `fasilitas[]`, label `opening_hours`), bukan bentuk contoh §28. Bentuk respons Kuliner/Budaya/Acara tidak dirinci di plan | Tahap 1 |
 | 11 | **Sebagian teratasi 2026-11-01 (instruksi Owner, opsi A).** ERD AI §6.3 menetapkan `chat_sessions → chat_messages` **ON DELETE CASCADE**. Kini FK `fk_chat_sessions_messages` (`chat_messages.session_id → chat_sessions.id`) ada di `pasinfo_travel`, dibuat GORM AutoMigrate (relasi `ChatSession.Messages`, `OnDelete: NO ACTION`). Sisa deviasi: tanpa CASCADE, sesuai keputusan Owner 2026-10-28; purge menghapus pesan secara eksplisit sebelum sesinya dalam transaksi yang sama | [DB; KODE `internal/models/models.go`, `internal/services/chat_retention.go`] |
 | 12 | Backend aktif memakai nama tabel `travel_categories` untuk kategori wisata (di devbackend: `categories`), karena `categories` sudah dipakai kategori berita legacy | [DB; KODE `models.TravelCategory`] |
-| 13 | Berita di backend aktif disimpan di tabel legacy `news` (116 baris) + `categories` (10), bukan kontrak `articles`/`article_categories` (§18–§19). Tabel `articles` ada tetapi kosong; seed mengizinkan `berita.json` namun file tidak ada di `Backend/cmd/seed/data`. Korpus AI memakai `news` (`source_type='news'`) | [DB; KODE] |
+| 13 | **Teratasi 2026-11-09 (Owner): `news` + `categories` adalah tabel berita; `articles`/`article_categories` dihapus (route, handler, model, AutoMigrate, tabel).** Catatan lama: Berita di backend aktif disimpan di tabel legacy `news` (116 baris) + `categories` (10), bukan kontrak `articles`/`article_categories` (§18–§19). Tabel `articles` ada tetapi kosong; seed mengizinkan `berita.json` namun file tidak ada di `Backend/cmd/seed/data`. Korpus AI memakai `news` (`source_type='news'`) | [DB; KODE] |
 | 14 | **Teratasi di `pasinfo_travel` 2026-11-01 (instruksi Owner).** Sebelumnya: 32 event (16 mock lama slug `*-mock` dari 2026-10-24 + 16 seed editorial 2026-10-27), semua berlabel sumber `acara` / `source_type=mock`. Kini: 16 event mock beserta tiket, jadwal, sourceables, verifications, dokumen FAQ nonaktif, dan 5 places tanpa nama dihapus (satu transaksi); 16 event editorial (id 17–32) bersumber `data-acara.json` / `source_type=seed` (nilai yang sudah dipakai sumber wisata); sumber `acara`/`mock` dihapus; seed diperbaiki. DB uji `pasinfo_travel_gemini` belum dibersihkan | [DB; KODE `Backend/cmd/seed/main.go`] + keputusan Owner 2026-10-28 dan 2026-11-01 |
 | 15 | Nilai status di luar daftar §26/§45: verifikasi event `terverifikasi` (7), `jadwal-resmi` (2), `jadwal-terdaftar` (7) — schema: `pending`/`verified`/`rejected`/`expired`; status occurrence `expected` (1), `ongoing` (1), `past_unconfirmed` (13) — schema: `scheduled`/`cancelled`/`completed` | [DB] |
 | 16 | `faq_knowledge_bases.source_type` di staging bernilai `destination`, `culinary`, `culture`, `event`, `news`, `region` — ERD AI §3 hanya `manual`/`article`/`destination`. **Sebagian teratasi 2026-11-03:** indeks `idx_faq_knowledge_source (source_type, source_id)` dibuat, lalu dijadikan UNIQUE parsial (`WHERE source_type IS NOT NULL AND source_id IS NOT NULL`, satu dokumen korpus per sumber) — lebih ketat dari ERD; indeks tunggal `idx_chat_sessions_visitor_id` dan `idx_chat_messages_session_id` dihapus (tercakup indeks komposit ERD) | [DB; KODE `models.go`, `database.go`] |
@@ -3497,6 +3513,7 @@ backend lama memakai tabel `ads` (0 baris). Kesetaraan `users`/`ads` legacy deng
 | 21 | Kolom `keyakinan` varchar(30) nullable di `culinaries` dan `cultures` (pola `destinations.keyakinan`, No. 2), diisi dari seed lewat `cmd/seed -backfill` (wisata 55, kuliner 25, budaya 25); tidak ada di §12/§13. **DRIFT — MENUNGGU REVIEW OWNER** (disetujui untuk dibuat 2026-11-03, OVERRIDE-RECO-001) | [DB; KODE `models.go`, `cmd/seed`] |
 | 22 | Kolom `views` bigint NOT NULL DEFAULT 0 (tidak tampil di respons) di `destinations`, `culinaries`, `cultures`, `events`; bertambah 1 tiap GET detail; sinyal popularitas rekomendasi (bobot 0 sampai ada data nyata); tidak ada di §10–§15. **DRIFT — MENUNGGU REVIEW OWNER** (OVERRIDE-RECO-001) | [DB; KODE `domain_handler.go`, `wisata_handler.go`] |
 | 23 | `places.district`/`village` (kolom §6 yang sudah ada) kini terisi dari alamat (109/111, 106/111) dan `places.regency` bernilai `Kota Pasuruan`/`Kabupaten Pasuruan` (sebelumnya `Pasuruan` untuk semua); zona peta kuliner/budaya/acara diturunkan dari kecamatan (bukan kolom). Bukan kolom baru — dicatat karena nilai `regency` berubah (Owner opsi A, 2026-11-03) | [DB; KODE `location.go`, `cmd/seed/backfill.go`] |
+| 24 | Kolom status pemrosesan embedding di `faq_knowledge_bases` (jobdesk 5 Nov p4, Owner opsi B, 2026-11-05): `embedding_status` varchar(20) NOT NULL DEFAULT `completed` CHECK (`pending`,`processing`,`completed`,`failed`), `embedding_attempts` bigint NOT NULL DEFAULT 0, `embedding_error` text, `embedding_next_retry_at` timestamptz. Ditambahkan lewat tag model (AutoMigrate); 366 baris dev dan 357 baris DB uji Gemini menjadi `completed`. Worker menandai dokumen baru/berubah `pending`, lalu `processing` → `completed` atau `failed` (penyebab, maksimal 5 percobaan, jeda 15 menit–2 jam). Baris sumber baru dibuat tanpa vektor sampai selesai; pembacaan korpus non-vektor kini memakai `embedding IS NOT NULL`. ERD AI tidak mendefinisikan status ini. **DISAHKAN Owner 2026-11-09 (T30)**: keempat kolom, nilai status, dan aturan percobaan di atas kini bagian kontrak skema `faq_knowledge_bases`; dipakai worker sejak 2026-11-05, 390/390 baris `completed` di `pasinfo_travel_gemini` (2026-11-08) | [KODE `models.go`, `knowledge_refresh.go`; DB 2026-11-05, 2026-11-08] |
 
 Migrasi backend aktif tetap GORM AutoMigrate + SQL idempoten (keputusan Owner 2026-11-03); riwayat versi skema:
 `Backend/docs/3 November 2026/MIGRASI_SKEMA_VERSI.md`.

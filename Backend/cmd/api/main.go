@@ -41,7 +41,7 @@ func main() {
 	services.StartChatRetentionJob(database.DB, config.ChatRetentionDays())
 
 	// Keep the AI knowledge corpus in sync with the domain tables: embeds only new or changed documents
-	// once the embedding provider is reachable, then hourly (no manual embed-faq run needed). It has its
+	// once the embedding provider is reachable, then every 15 minutes (no manual embed-faq run needed). It has its
 	// own provider with one slot, so it adds at most one embedding call next to the chat traffic.
 	if llm, err := services.NewLLMFromEnv(); err != nil {
 		// The API still starts; chat answers 503 ai_unavailable and the corpus is not refreshed until the
@@ -157,7 +157,26 @@ func main() {
 	}
 
 	log.Printf("[Info] Pasinfo API starting on :%s (env=%s)", port, os.Getenv("APP_ENV"))
+	for _, warning := range modeWarnings(os.Getenv("APP_ENV"), os.Getenv("HTTPS")) {
+		log.Print(warning)
+	}
 	if err := app.Listen(":" + port); err != nil {
 		log.Fatalf("[FATAL] Server failed to start: %v", err)
 	}
+}
+
+// modeWarnings tells the operator at start what the current mode leaves open (T05, audit 2026-11-08): the mode comes
+// from .env, whose example is set for local development, so a server started from a copied example would run with
+// development settings without notice. Development stays allowed; nothing is refused.
+func modeWarnings(appEnv, https string) []string {
+	if appEnv != "production" {
+		return []string{"[WARN] APP_ENV=" + strconv.Quote(appEnv) + " runs in development mode: SQL log at Info level (chat text included), " +
+			"/api/v1/search/semantic open, CORS allows localhost, DB_PASSWORD and the example JWT_SECRET are not enforced. " +
+			"On a server set APP_ENV=production."}
+	}
+	if https != "true" {
+		return []string{"[WARN] APP_ENV=production with HTTPS not \"true\": the visitor cookie is sent without Secure and no HSTS header is set. " +
+			"Set HTTPS=true when the API is served over TLS."}
+	}
+	return nil
 }

@@ -17,7 +17,7 @@ Client
 AI Travel Assistant (RAG):
   request chat
   -> validasi visitor cookie, session, dan pesan
-  -> deteksi intent (domain, zona wilayah, berita, jadwal acara) dan penulisan ulang pertanyaan lanjutan
+  -> LLM membaca pertanyaan menjadi rencana JSON (domain, kategori, zona, kecamatan, periode, pertanyaan lanjutan), backend memvalidasi lalu menyusun SQL
   -> embedding query + semantic search pgvector pada faq_knowledge_bases
      (jalur khusus: zona peta, ikhtisar wilayah, jadwal acara, berita terbaru/populer)
   -> penilai relevansi LLM -> relevant / low_confidence / no_source
@@ -56,7 +56,6 @@ Backend/
 ├── scripts/                 Skrip pengujian/evaluasi RAG (Node.js, PowerShell) dan hasilnya
 ├── Dockerfile
 ├── docker-compose.yml
-├── docker-compose.override.yml
 ├── go.mod
 └── .env.example
 ```
@@ -68,8 +67,8 @@ Backend/
 - GORM untuk ORM dan AutoMigrate
 - PostgreSQL 16 dengan image `pgvector/pgvector:pg16`
 - pgvector untuk semantic search berbasis cosine distance
-- Ollama sebagai provider utama yang dikonfigurasi melalui environment
-- Gemini sebagai provider opsional/fallback; provider OpenAI-compatible (OpenAI, OpenRouter, Groq, dan sejenisnya) juga didukung lewat environment
+- Gemini sebagai provider utama untuk chat dan embedding, dikonfigurasi melalui environment
+- Provider chat dapat diganti lewat environment: OpenAI-compatible (OpenAI, OpenRouter, Groq, gateway seperti 9router, dan sejenisnya) atau Ollama lokal
 - JWT untuk autentikasi legacy
 - SQLite tersedia sebagai fallback teknis ketika konfigurasi PostgreSQL tidak dipakai; tabel travel dan AI hanya dibuat pada PostgreSQL + pgvector
 - Docker dan Docker Compose untuk menjalankan PostgreSQL dan, bila diperlukan, API
@@ -84,13 +83,13 @@ Untuk menjalankan API langsung dari source:
 1. Go `1.25.x` (versi baru juga dapat membangun proyek; untuk memakai tepat 1.25 seperti image Docker, pasang Go 1.25 atau set `GOTOOLCHAIN=go1.25.14`).
 2. Docker Desktop atau Docker Engine + Docker Compose plugin.
 3. Provider LLM yang dapat diakses:
-   - Ollama lokal, dengan model chat dan embedding yang sesuai konfigurasi; atau
-   - Gemini jika dipilih sebagai provider.
+   - Gemini dengan `GEMINI_API_KEY`; atau
+   - provider OpenAI-compatible atau Ollama lokal untuk chat, dengan embedding tetap sesuai `EMBED_PROVIDER`.
 4. Git.
 5. PostgreSQL tidak perlu dipasang secara manual jika menggunakan Docker Compose.
 6. Opsional untuk pengujian: Node.js dan Postman CLI (`postman`).
 
-Model Ollama sesuai default konfigurasi dapat diunduh dengan:
+Jika memakai Ollama lokal, model default dapat diunduh dengan:
 
 ```powershell
 ollama pull gemma3:4b
@@ -102,12 +101,12 @@ ollama pull embeddinggemma
 Ringkasan urutan; detail tiap langkah ada di bagian berikutnya. Jalankan dari direktori `Backend/`.
 
 1. `Copy-Item .env.example .env`, lalu isi nilai lokal (lihat **Konfigurasi Environment**).
-2. `docker compose up -d --build` menjalankan PostgreSQL + pgvector dan API (mode development dari `docker-compose.override.yml`). Saat start, API menjalankan migrasi (AutoMigrate + SQL idempoten).
+2. `docker compose up -d --build` menjalankan PostgreSQL + pgvector dan API (mode, image, dan arsitektur dibaca dari `.env`). Saat start, API menjalankan migrasi (AutoMigrate + SQL idempoten).
 3. `go run ./cmd/seed` lalu `go run ./cmd/seed -backfill` mengisi data wisata, kuliner, budaya, dan acara dari `cmd/seed/data` (menulis database lokal). Backfill melengkapi alamat tempat serta lokasi `places` (desa, kecamatan, Kota/Kabupaten Pasuruan) dari alamat; tambahkan `-dry-run` untuk melihat laporannya tanpa menulis.
 4. Tunggu refresh corpus otomatis (log `[Knowledge] corpus refreshed`) atau jalankan `go run ./cmd/embed-faq`.
 5. Cek `http://localhost:8080/api/v1/health/ready` dan `/api/v1/chat/health`, lalu uji chat (lihat **Pengujian Provider dan PoC RAG**).
 
-Untuk menggunakan Ollama dari Windows saat API berjalan di container, konfigurasi Compose lokal menggunakan `host.docker.internal:11434`.
+Layanan di Windows, seperti Ollama atau gateway LLM, dipanggil dari container lewat `host.docker.internal`. Atur alamatnya di `.env`, misalnya `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
 
 ## Konfigurasi Environment
 
@@ -135,10 +134,11 @@ DB_PASSWORD=isi_password_sendiri
 DB_NAME=pasinfo_travel
 DB_SSLMODE=disable
 
-LLM_PROVIDER=ollama
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_CHAT_MODEL=gemma3:4b
-OLLAMA_EMBED_MODEL=embeddinggemma
+LLM_PROVIDER=gemini
+EMBED_PROVIDER=gemini
+GEMINI_API_KEY=isi_key_sendiri
+EMBED_RELEVANCE_THRESHOLD=0.66
+EMBED_REQUESTS_PER_MINUTE=50
 LLM_HTTP_TIMEOUT_SEC=120
 LLM_MAX_RETRIES=1
 LLM_MAX_CONCURRENCY=1
@@ -148,10 +148,10 @@ CHAT_RETENTION_DAYS=90
 Catatan konfigurasi:
 
 - `JWT_SECRET` wajib diisi. API menolak startup jika nilainya kosong.
-- `LLM_PROVIDER` mendukung `ollama` atau `gemini`.
-- Default provider adalah Ollama pada `http://localhost:11434`.
-- Default model chat adalah `gemma3:4b`; default model embedding adalah `embeddinggemma`.
-- Jika memakai Gemini sebagai provider utama, `GEMINI_API_KEY` wajib disediakan melalui environment. Jangan menuliskan key asli pada README atau repository.
+- `LLM_PROVIDER` mendukung `gemini`, `openai-compatible`, atau `ollama`. Tanpa nilai, kode memakai `gemini` (perlu `GEMINI_API_KEY`); isi `ollama` untuk Ollama lokal.
+- Untuk mengganti provider chat, ubah `LLM_PROVIDER`, lalu untuk `openai-compatible` isi `LLM_API_BASE_URL`, `LLM_API_KEY`, dan `LLM_CHAT_MODEL`. Embedding dan corpus tidak berubah selama `EMBED_PROVIDER` dan modelnya tetap.
+- Mengganti model embedding berarti seluruh corpus di-embed ulang dan `EMBED_RELEVANCE_THRESHOLD` perlu dikalibrasi. Satu database hanya boleh memakai satu model embedding.
+- `GEMINI_API_KEY` wajib disediakan melalui environment selama chat atau embedding memakai Gemini. Jangan menuliskan key asli pada README atau repository.
 - `LLM_FALLBACK_PROVIDER` opsional.
 - `CHAT_RETENTION_DAYS=0` menonaktifkan job purge riwayat chat.
 - Pool koneksi database: `DB_MAX_OPEN_CONNS` (default `20`), `DB_MAX_IDLE_CONNS` (default `10`), `DB_CONN_MAX_LIFETIME_MIN` (default `30`). Saat semua koneksi terpakai, request berikutnya menunggu koneksi bebas, tidak membuka koneksi baru sampai PostgreSQL menolak (`max_connections`, default 100). Total koneksi semua instance API harus di bawah batas itu.
@@ -163,7 +163,7 @@ Variabel AI Travel Assistant (default dari `internal/config/config.go`; key/secr
 
 | Variabel | Default | Keterangan |
 |---|---|---|
-| `LLM_PROVIDER` | `ollama` | Provider chat: `ollama`, `gemini`, `openai-compatible` |
+| `LLM_PROVIDER` | `gemini` | Provider chat: `gemini`, `openai-compatible`, `ollama` |
 | `LLM_FALLBACK_PROVIDER` | kosong | Provider chat cadangan (opsional) |
 | `EMBED_PROVIDER` | sama dengan `LLM_PROVIDER` | Provider embedding; mengganti model embedding berarti corpus di-embed ulang |
 | `OLLAMA_BASE_URL` / `OLLAMA_CHAT_MODEL` / `OLLAMA_EMBED_MODEL` | `http://localhost:11434` / `gemma3:4b` / `embeddinggemma` | Ollama lokal |
@@ -191,7 +191,7 @@ Compose menggunakan image PostgreSQL 16 yang sudah memiliki pgvector. Konfiguras
 - User: `pasinfo`
 - Password: wajib diisi lewat `DB_PASSWORD` di `.env` (Compose tidak punya nilai default)
 
-Untuk lokal tidak perlu membuat network: `docker-compose.override.yml` memakai network default project. Network eksternal `shared-network` hanya dipakai file production (`docker compose -f docker-compose.yml ...`); di server buat sekali bila belum ada:
+Compose memakai network eksternal `shared-network`. Di setiap mesin, buat sekali bila belum ada:
 
 ```powershell
 docker network create shared-network
@@ -251,14 +251,15 @@ Alternatifnya, gunakan command seed yang tersedia setelah memahami data yang aka
 ```powershell
 go run ./cmd/seed
 go run ./cmd/seed_wilayah
-go run ./cmd/seed_users
 ```
+
+Akun seed (admin, penulis, editor, member) dan kategori dibuat dari `SEED_USER_PASSWORD` lewat `RUN_STARTUP_SEED=true`; cara yang sama menyamakan password akun seed bila nilai di `.env` diganti, misalnya `$env:RUN_STARTUP_SEED="true"; go run ./cmd/embed-faq -dry-run; Remove-Item Env:RUN_STARTUP_SEED`. `cmd/seed_users` hanya menulis ke file SQLite lama, bukan PostgreSQL.
 
 Lokasi tempat: `places.district` (kecamatan), `village`, dan `regency` (`Kota Pasuruan` / `Kabupaten Pasuruan`) diisi dari alamat (`Desa X, Kec. Y`) oleh seed dan `go run ./cmd/seed -backfill`. Zona peta kuliner, budaya, dan acara pada corpus AI diturunkan dari kecamatan tempat (daftar kecamatan per zona sama dengan peta frontend); file seed hanya cadangan.
 
 Command seed menulis data ke database. Jangan menjalankannya terhadap database staging/production tanpa persetujuan dan verifikasi target database.
 
-Setelah seed, API membangun corpus AI otomatis (job refresh per jam, juga saat start) dari wisata, kuliner, budaya, acara, dan zona wilayah. Database baru belum berisi berita: berita masuk lewat fetch berita (`RUN_STARTUP_NEWS_FETCH=true`, job 12 jam, atau `POST /api/v1/news/fetch` dengan token admin) dan baru ikut corpus pada refresh berikutnya.
+Setelah seed, `cmd/seed` langsung menjalankan refresh corpus AI bila provider embedding terjangkau (bila tidak, job refresh API mengambilnya: saat start dan tiap 15 menit) dari wisata, kuliner, budaya, acara, dan zona wilayah. Database baru belum berisi berita: berita masuk lewat fetch berita (`RUN_STARTUP_NEWS_FETCH=true`, job 12 jam, atau `POST /api/v1/news/fetch` dengan token admin) dan langsung memicu refresh corpus.
 
 ## Menjalankan API dari Source
 
@@ -292,7 +293,7 @@ go build ./cmd/api
 
 ## Menjalankan API melalui Docker Compose
 
-Compose lokal otomatis membaca `docker-compose.override.yml`. Override tersebut mengubah API menjadi mode development, menggunakan image lokal, dan mengarahkan Ollama container ke `host.docker.internal`.
+Hanya ada satu file Compose, dan nilainya dibaca dari `.env`: `APP_ENV`, `HTTPS`, `BACKEND_IMAGE`, dan `TARGETARCH` (default `amd64`). Untuk lokal, pakai `APP_ENV=development`, `HTTPS=false`, dan `BACKEND_IMAGE=pasinfo-backend:local`.
 
 Jalankan PostgreSQL dan API sekaligus:
 
@@ -319,7 +320,7 @@ Jika hanya ingin membangun ulang API setelah perubahan kode:
 docker compose up -d --build backend
 ```
 
-File Compose production tetap menetapkan `APP_ENV=production` dan `HTTPS=true`; jangan menganggap konfigurasi tersebut sama dengan runtime development lokal.
+Tanpa nilai di `.env`, Compose memakai `APP_ENV=production` dan `HTTPS=true`, yang berbeda dari runtime development lokal.
 
 ## AI Travel Assistant
 
@@ -339,7 +340,7 @@ Threshold relevance diatur lewat `EMBED_RELEVANCE_THRESHOLD` (kosong = `0.60` un
 
 ### Refresh Knowledge Corpus
 
-API menjalankan refresh corpus otomatis ketika provider embedding tersedia, lalu melakukan pengecekan berkala. Refresh hanya meng-embed dokumen baru atau berubah. Dokumen yang sumbernya tidak lagi `published` atau sudah dihapus dinonaktifkan (ditandai `source_unpublished` di metadata) dan aktif kembali bila sumbernya dipublikasikan lagi; dokumen yang dinonaktifkan manual tetap nonaktif.
+API menjalankan refresh corpus otomatis ketika provider embedding tersedia, lalu memeriksa ulang tiap 15 menit; tulis berita (admin, fetch) dan ubah kategori memicu refresh segera, `cmd/seed` menjalankan refresh setelah seed. Refresh hanya meng-embed dokumen baru atau berubah. Dokumen yang sumbernya tidak lagi `published` atau sudah dihapus dinonaktifkan (ditandai `source_unpublished` di metadata) dan aktif kembali bila sumbernya dipublikasikan lagi; dokumen yang dinonaktifkan manual tetap nonaktif.
 
 `cmd/embed-faq` membaca `.env` seperti API: variabel yang di-set di shell menang, misalnya `$env:DB_NAME="pasinfo_travel_gemini"` untuk menargetkan database lain.
 
@@ -362,6 +363,18 @@ go run ./cmd/embed-faq -force
 ```
 
 `-force` memanggil provider embedding dan menulis ulang embedding seluruh corpus. Gunakan hanya jika memang diperlukan, misalnya setelah perubahan model embedding.
+
+Status pemrosesan setiap dokumen tersimpan di `faq_knowledge_bases.embedding_status` (`pending` → `processing` → `completed` atau `failed`), bersama `embedding_attempts`, `embedding_error`, dan `embedding_next_retry_at`. Kegagalan milik dokumen (input ditolak 400/413/422, vektor tidak valid) dicoba ulang setelah 15 menit, 30 menit, 1 jam, lalu 2 jam; setelah 5 kali tidak dicoba otomatis sampai teksnya berubah atau `-force`. Gangguan provider (koneksi, timeout, 5xx, kuota, key ditolak, model tidak ditemukan) menghentikan run tanpa menambah percobaan; dokumennya tetap `pending` untuk run berikutnya. FAQ manual (baris tanpa `source_type`) ikut di-embed; editnya dikenali dari sidik jari teks di `metadata`.
+
+Memantau status (baca-saja):
+
+```sql
+SELECT embedding_status, count(*) FROM faq_knowledge_bases GROUP BY 1;
+SELECT id, source_type, source_id, embedding_attempts, embedding_error, embedding_next_retry_at
+FROM faq_knowledge_bases WHERE embedding_status <> 'completed';
+```
+
+Log worker: `docker logs pasinfo-backend 2>&1 | Select-String "\[Knowledge\]"`. Tutorial langkah demi langkah (menjalankan, memantau, uji data manual, troubleshooting): `docs/5 November 2026/TUTORIAL_MENJALANKAN_WORKER.md`. Rincian desain dan hasil uji: `docs/5 November 2026/BACKGROUND_WORKER_DATA_INGESTION.md`.
 
 ### Endpoint Chat
 
@@ -576,7 +589,7 @@ Pastikan nilai `.env` sesuai port host Compose. Konfigurasi default Compose mema
 
 ### Provider Ollama tidak terjangkau
 
-Pastikan Ollama berjalan dan model yang dikonfigurasi tersedia. Saat API berjalan langsung dari host gunakan `OLLAMA_BASE_URL=http://localhost:11434`; saat API berjalan di container, Compose lokal mengarahkan URL ke `http://host.docker.internal:11434`.
+Pastikan Ollama berjalan dan model yang dikonfigurasi tersedia. Saat API berjalan langsung dari host gunakan `OLLAMA_BASE_URL=http://localhost:11434`; saat API berjalan di container, gunakan `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
 
 ### Semantic search tidak tersedia
 

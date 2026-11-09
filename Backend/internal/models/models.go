@@ -106,36 +106,6 @@ type Category struct {
 	Slug      string    `json:"slug" gorm:"unique"`
 }
 
-type ArticleCategory struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
-	Name      string    `gorm:"size:150" json:"name"`
-	Slug      string    `gorm:"size:100;uniqueIndex" json:"slug"`
-	CreatedAt time.Time `json:"-"`
-	UpdatedAt time.Time `json:"-"`
-}
-
-func (ArticleCategory) TableName() string { return "article_categories" }
-
-type Article struct {
-	ID          uint            `gorm:"primaryKey" json:"id"`
-	AuthorID    *uint           `json:"-"`
-	CategoryID  uint            `gorm:"index" json:"category_id"`
-	Title       string          `gorm:"size:255" json:"title"`
-	Slug        string          `gorm:"size:191;uniqueIndex" json:"slug"`
-	Excerpt     *string         `gorm:"type:text" json:"excerpt"`
-	Content     string          `gorm:"type:text" json:"content"`
-	AuthorName  string          `gorm:"size:150" json:"author_name"`
-	Source      string          `gorm:"size:100" json:"source"`
-	Status      string          `gorm:"size:20;default:published" json:"status"`
-	Featured    bool            `json:"featured"`
-	PublishedAt *time.Time      `json:"published_at"`
-	CreatedAt   time.Time       `json:"-"`
-	UpdatedAt   time.Time       `json:"-"`
-	Category    ArticleCategory `gorm:"foreignKey:CategoryID" json:"category"`
-}
-
-func (Article) TableName() string { return "articles" }
-
 type NewsImage struct {
 	ID           uint   `json:"id" gorm:"primaryKey"`
 	NewsID       uint   `json:"news_id"`
@@ -350,6 +320,9 @@ type Culinary struct {
 	Description      string `gorm:"type:text" json:"description"`
 	CulinaryType     string `gorm:"size:100" json:"culinary_type"`
 	PriceRange       string `gorm:"size:50" json:"price_range"`
+	// OperationalStatus is schema.md §12 (open / closed / temporarily_closed / unknown; Owner 2026-11-09), as
+	// Destination.OperationalStatus. The "open now" snapshot of the seed file is not this status and is not imported.
+	OperationalStatus string `gorm:"size:30" json:"operational_status"`
 	// Keyakinan is the editorial confidence of the seed data (tinggi/sedang/rendah/perlu_cek), like destinations
 	// (Owner 2026-11-03, jobdesk 2 Nov p3 R2): a quality weight for "pilihan editor" recommendations.
 	Keyakinan   string         `gorm:"size:30" json:"keyakinan"`
@@ -361,6 +334,8 @@ type Culinary struct {
 	UpdatedAt   time.Time      `json:"-"`
 	Place       *Place         `gorm:"foreignKey:PlaceID" json:"place"`
 	Menus       []CulinaryMenu `gorm:"foreignKey:CulinaryID" json:"menus"`
+	// Hours are read for the chat corpus only (Owner 2026-11-09); hidden from the API like Destination.Hours.
+	Hours []OpeningHour `gorm:"polymorphic:Openable;polymorphicValue:Culinary" json:"-"`
 }
 
 type CulinaryMenu struct {
@@ -494,9 +469,15 @@ type FAQKnowledgeBase struct {
 	Embedding          pgvector.Vector `gorm:"type:vector(768)"`
 	EmbeddingModel     *string         `gorm:"size:50"`
 	EmbeddingUpdatedAt *time.Time
-	Metadata           []byte    `gorm:"type:jsonb"`
-	CreatedAt          time.Time `gorm:"not null"`
-	UpdatedAt          time.Time `gorm:"not null"`
+	// Processing status of the embedding (W3, jobdesk 5 Nov p4, Owner option B, 2026-11-05): pending → processing →
+	// completed or failed. The default marks rows embedded before the column existed as completed.
+	EmbeddingStatus      string     `gorm:"size:20;not null;default:completed;check:chk_faq_embedding_status,embedding_status IN ('pending','processing','completed','failed')"`
+	EmbeddingAttempts    int        `gorm:"not null;default:0"` // failures since the last success
+	EmbeddingError       *string    `gorm:"type:text"`          // cause of the last failure
+	EmbeddingNextRetryAt *time.Time // earliest automatic retry of a failed row; nil after the last allowed attempt
+	Metadata             []byte     `gorm:"type:jsonb"`
+	CreatedAt            time.Time  `gorm:"not null"`
+	UpdatedAt            time.Time  `gorm:"not null"`
 }
 
 func (FAQKnowledgeBase) TableName() string { return "faq_knowledge_bases" }

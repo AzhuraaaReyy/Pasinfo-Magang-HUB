@@ -108,7 +108,7 @@ func TestPurgeExpiredChatSessionsNoopWhenNothingExpired(t *testing.T) {
 func TestChatServiceAskUpdatesSessionLastMessageAt(t *testing.T) {
 	db := newRetentionTestDB(t)
 	createSession(t, db, 1, time.Now().UTC().AddDate(0, 0, -1), nil)
-	service := NewChatService(db, &recordingProvider{stubProvider: stubProvider{name: "ollama:chat"}}, time.Second)
+	service := testChatService(db, &recordingProvider{stubProvider: stubProvider{name: "ollama:chat"}}, time.Second)
 	session := &models.ChatSession{ID: 1, VisitorID: "visitor"}
 
 	if _, err := service.Ask(context.Background(), session, "Apa itu Pasuruan?"); err != nil {

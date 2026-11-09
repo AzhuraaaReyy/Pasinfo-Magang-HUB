@@ -128,7 +128,7 @@ var stagingNewsCategories = []NewsCategory{{"nasional", "NASIONAL", 50}, {"lokal
 func newsService(t *testing.T, retriever *newsFakeRetriever) (*ChatService, *recordingProvider, *fakeJudge) {
 	t.Helper()
 	provider := &recordingProvider{stubProvider: stubProvider{name: "ollama:chat"}}
-	service := NewChatService(newChatTestDB(t), provider, time.Second, retriever)
+	service := testChatService(newChatTestDB(t), provider, time.Second, retriever)
 	judge := &fakeJudge{}
 	service.Judge = judge
 	service.Now = func() time.Time { return testToday }
@@ -175,7 +175,7 @@ func TestEmptyNewsCategoryOffersAvailableCategories(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "Maaf, saat ini belum ada berita kategori Teknologi di database Pasuruan Info. Berita yang tersedia ada di kategori Nasional, Lokal, Politik. Mau saya tampilkan salah satunya?"
+	want := "Mohon maaf, saat ini belum ada berita kategori Teknologi di database Pasuruan Info. Berita yang tersedia ada di kategori Nasional, Lokal, Politik. Apakah Anda ingin saya tampilkan salah satunya?"
 	if answer := pointerString(result.Assistant.Content); answer != want || provider.messages != nil {
 		t.Fatalf("answer=%q model called=%v", answer, provider.messages != nil)
 	}
@@ -213,19 +213,6 @@ func TestNewsTopicQuestionAndTravelQuestionKeepSemanticPath(t *testing.T) {
 }
 
 func TestGenericNewsRecommendationAsksForCategory(t *testing.T) {
-	for question, want := range map[string]bool{
-		"Berikan rekomendasi berita terbaik":        true,
-		"Rekomendasikan berita yang menarik dong":   true,
-		"Ada berita populer?":                       true,
-		"Rekomendasikan berita tentang banjir Aceh": false,
-		"Rekomendasi berita nasional":               false, // names a category
-		"Rekomendasikan wisata terbaik di Pasuruan": false,
-		"Ada berita tentang DPR?":                   false,
-	} {
-		if got := isGenericNewsRecommendation(question); got != want {
-			t.Errorf("%q = %v, want %v", question, got, want)
-		}
-	}
 	retriever := &newsFakeRetriever{categories: stagingNewsCategories, fakeRetriever: fakeRetriever{results: []SemanticResult{source("news", 1, "Banjir Aceh Utara", "Sumur bor.", 0.7)}}}
 	service, provider, judge := newsService(t, retriever)
 	result, err := service.Ask(context.Background(), &models.ChatSession{ID: 145}, "Berikan rekomendasi berita terbaik")
@@ -265,6 +252,20 @@ func TestPopularNewsWithoutViewsSaysPopularityIsUnavailable(t *testing.T) {
 	}
 	if answer := pointerString(result.Assistant.Content); !strings.Contains(answer, "kategori apa?") || !strings.Contains(answer, "Data jumlah pembaca belum tersedia") {
 		t.Fatalf("answer = %q", answer)
+	}
+}
+
+// N03 (coverage test 2026-11-07): "Berita paling banyak dibaca apa?" searched for its own words and listed unrelated news.
+func TestPopularNewsWithoutViewsOrTopicListsTheNewest(t *testing.T) {
+	retriever := &newsFakeRetriever{categories: stagingNewsCategories, latest: []SemanticResult{eventlessNews(2, "DPR bahas anggaran"), eventlessNews(1, "Banjir Aceh Utara")}}
+	service, provider, judge := newsService(t, retriever)
+	service.Reader = &fakeReader{plans: map[string]QuestionPlan{"Berita paling banyak dibaca apa?": {Domain: "news", Kind: "fact", Sort: "popular"}}}
+	if _, err := service.Ask(context.Background(), &models.ChatSession{ID: 151}, "Berita paling banyak dibaca apa?"); err != nil {
+		t.Fatal(err)
+	}
+	system := provider.messages[0].Content
+	if retriever.latestCalls != 1 || judge.calls != 0 || !strings.Contains(system, "sebagai berita terbaru, bukan berita populer") || strings.Contains(system, "jumlah pembaca terbanyak") {
+		t.Fatalf("latest=%d judge=%d prompt:\n%s", retriever.latestCalls, judge.calls, system)
 	}
 }
 
@@ -337,7 +338,7 @@ func (r *fullRetriever) EventsInPeriod(context.Context, time.Time, time.Time, st
 func fullService(t *testing.T, r *fullRetriever) (*ChatService, *recordingProvider) {
 	t.Helper()
 	provider := &recordingProvider{stubProvider: stubProvider{name: "ollama:chat"}}
-	service := NewChatService(newChatTestDB(t), provider, time.Second, r)
+	service := testChatService(newChatTestDB(t), provider, time.Second, r)
 	service.Judge = &fakeJudge{}
 	service.Now = func() time.Time { return testToday }
 	return service, provider
@@ -395,13 +396,13 @@ func TestNewsQuestionWithEventWordAndTimeKeepsNewsPath(t *testing.T) {
 // Audit K3 (2026-10-31): a bold date or period in an honest no-source answer is kept.
 func TestGroundAnswerNoSourceKeepsBoldDates(t *testing.T) {
 	answer := "Belum ada acara terjadwal pada **tahun 2028** atau **1 Januari 2028** di database kami."
-	got, report := groundAnswer(answer, parseIntent("Acara tahun 2028 apa saja?"), ragContext{Period: "tahun 2028"}, nil, "q")
+	got, report := groundAnswer(answer, listIntent(5, "acara"), ragContext{Period: "tahun 2028"}, nil, "q")
 	if got != answer || report["fallback"] != false {
 		t.Fatalf("honest answer with a bold date replaced: %q (%v)", got, report)
 	}
 	// A bold name next to a bold date is still an invented item.
 	mixed := "Pada **tahun 2028** ada **Festival Karangan Model**."
-	if got, _ := groundAnswer(mixed, parseIntent("Acara tahun 2028 apa saja?"), ragContext{Period: "tahun 2028"}, nil, "q"); got != noSourceFallbackAnswer {
+	if got, _ := groundAnswer(mixed, listIntent(5, "acara"), ragContext{Period: "tahun 2028"}, nil, "q"); got != noSourceFallbackAnswer {
 		t.Fatalf("bold name kept: %q", got)
 	}
 }

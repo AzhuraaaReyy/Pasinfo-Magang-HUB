@@ -37,7 +37,7 @@
       "featured": false,
       "categoryId": "situs-sejarah",
       "culture_type": "situs-sejarah",
-      "historical_period": null,
+      "historical_period": "Singasari–Majapahit",
       "status": "published",
       "gallery": []
     },
@@ -68,7 +68,7 @@
       "featured": false,
       "categoryId": "situs-sejarah",
       "culture_type": "situs-sejarah",
-      "historical_period": null,
+      "historical_period": "Kerajaan Medang (masa Airlangga)",
       "status": "published",
       "gallery": []
     },
@@ -99,7 +99,7 @@
       "featured": false,
       "categoryId": "situs-sejarah",
       "culture_type": "situs-sejarah",
-      "historical_period": null,
+      "historical_period": "Hindu–Buddha",
       "status": "published",
       "gallery": []
     },
@@ -564,7 +564,7 @@
       "featured": false,
       "categoryId": "situs-sejarah",
       "culture_type": "situs-sejarah",
-      "historical_period": null,
+      "historical_period": "Masa kolonial",
       "status": "published",
       "gallery": []
     },

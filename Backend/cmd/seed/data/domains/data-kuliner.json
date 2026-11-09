@@ -1067,6 +1067,215 @@
         { "name": "Rawon babat", "price": "Rp 22.000" }
       ],
       "is_dummy": true
+    },
+    {
+      "id": "kafetaria-taman-edelweiss-wonokitri",
+      "slug": "kafetaria-taman-edelweiss-wonokitri",
+      "name": "Kafetaria Taman Edelweiss Wonokitri",
+      "regionId": "pasuruan-selatan",
+      "place": { "latitude": -7.886001, "longitude": 112.924001 },
+      "media": [
+        {
+          "type": "image",
+          "url": null,
+          "alt": "Foto Kafetaria Taman Edelweiss Wonokitri (belum tersedia)"
+        }
+      ],
+      "short_description": "Kafetaria satu-satunya di Indonesia yang dikelilingi hamparan bunga edelweiss budidaya. Kecamatan mengacu pada wilayah Tosari.",
+      "description": "Kafetaria Taman Edelweiss Wonokitri adalah tempat makan dan ngopi yang sangat unik karena berada tepat di tengah hamparan 7 hektar bunga edelweiss hasil budidaya masyarakat Tengger. Tempat ini dikelola langsung oleh masyarakat lokal setempat.\n\nSelain udaranya yang sangat sejuk karena berada di lereng Bromo, pengunjung kerap datang ke sini untuk menikmati Mie Goreng Wonokitri dan seduhan Kopi Tengger. Terdapat fasilitas jembatan kaca baru sebagai spot foto yang fenomenal.\n\nKafetaria ini beralamat di Desa Wonokitri, Kec. Tosari. Kecamatan dan desa/kelurahan mengacu pada alamat faktual di Google Places.",
+      "gallery_description": "Galeri ini menampilkan pemandangan Kafetaria Taman Edelweiss yang dikelilingi oleh bunga edelweiss budidaya. Foto-fotonya berfokus pada suasana ngopi dengan latar pegunungan dan kabut.\n\nSelain itu, terdapat gambaran fasilitas seperti spot foto jembatan kaca, sehingga pengunjung dapat membayangkan suasana khas lereng Bromo sebelum berkunjung.\n\nTempat ini cocok dijadikan lokasi istirahat dan foto di Wonokitri, Kec. Tosari.",
+      "rating": 4.6,
+      "reviews_label": "350 Ulasan",
+      "address": "Wonokitri, Kec. Tosari",
+      "opening_hours": "10.00 - 17.00 WIB",
+      "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-7.886001,112.924001",
+      "place_id": "ChIJT_EdelweissWonokitri",
+      "keyakinan": "sedang",
+      "source": "destinasi-kuliner-pasuruan.json",
+      "verification": { "status": "pending", "verified_at": null },
+      "featured": false,
+      "categoryId": "kopi-minuman",
+      "culinary_type": "kopi-minuman",
+      "price_range": "Rp 10.000 - Rp 25.000",
+      "prices": [],
+      "operational_status": { "status": "open", "label": "Buka" },
+      "facilities": [
+        "Spot foto jembatan kaca",
+        "Toilet",
+        "Musholla",
+        "Area parkir luas"
+      ],
+      "menus": [
+        { "name": "Mie Goreng Wonokitri", "price": "Rp 20.000" },
+        { "name": "Kopi Tengger", "price": "Rp 15.000" },
+        { "name": "Teh Rempah", "price": "Rp 12.000" },
+        { "name": "Tiket Masuk (Inc. Voucher Makan)", "price": "Rp 10.000" }
+      ],
+      "is_dummy": false
+    },
+    {
+      "id": "warung-pak-slamet-bromo",
+      "slug": "warung-pak-slamet-bromo",
+      "name": "Warung Pak Slamet Bromo",
+      "regionId": "pasuruan-selatan",
+      "place": { "latitude": -7.8821, "longitude": 112.9152 },
+      "media": [
+        {
+          "type": "image",
+          "url": null,
+          "alt": "Foto Warung Pak Slamet Bromo (belum tersedia)"
+        }
+      ],
+      "short_description": "Warung makan legendaris di jalur Bromo via Tosari yang menyajikan makanan rumahan sederhana namun lezat.",
+      "description": "Warung Pak Slamet Bromo merupakan salah satu tempat singgah favorit bagi wisatawan yang berkunjung ke Gunung Bromo melalui jalur Tosari. \n\nMeskipun menyajikan hidangan yang sederhana ala warung rumahan, cita rasanya sangat nikmat dan pas untuk menghangatkan tubuh di tengah sejuknya udara pegunungan. Tempat ini menjadi spot istirahat andalan bagi backpacker maupun pengendara motor.\n\nTempat ini beralamat di Jl. Tlogosari, Kec. Tosari. Kecamatan dan desa/kelurahan mengacu pada alamat di Google Places.",
+      "gallery_description": "Galeri ini berfokus pada suasana sederhana namun hangat di Warung Pak Slamet Bromo. Foto-fotonya menampilkan hidangan rumahan serta suasana kabut pegunungan di depan warung.\n\nGaleri ini dapat membantu wisatawan membayangkan kondisi tempat makan yang menjadi rute transit Bromo via Tosari.\n\nLokasinya berada di Jl. Tlogosari, Kec. Tosari, sangat cocok untuk mengisi tenaga sebelum perjalanan naik gunung.",
+      "rating": 4.5,
+      "reviews_label": "250 Ulasan",
+      "address": "Jl. Tlogosari, Kec. Tosari",
+      "opening_hours": "06.00 - 18.00 WIB",
+      "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-7.882100,112.915200",
+      "place_id": "ChIJ_PakSlametTosari",
+      "keyakinan": "sedang",
+      "source": "destinasi-kuliner-pasuruan.json",
+      "verification": { "status": "pending", "verified_at": null },
+      "featured": false,
+      "categoryId": "tradisional",
+      "culinary_type": "tradisional",
+      "price_range": "Rp 15.000 - Rp 35.000",
+      "prices": [],
+      "operational_status": { "status": "open", "label": "Buka" },
+      "facilities": [],
+      "menus": [
+        { "name": "Nasi Campur", "price": "Rp 20.000" },
+        { "name": "Rawon", "price": "Rp 25.000" },
+        { "name": "Soto Ayam", "price": "Rp 20.000" },
+        { "name": "Kopi Panas", "price": "Rp 8.000" }
+      ],
+      "is_dummy": false
+    },
+    {
+      "id": "omah-tutur",
+      "slug": "omah-tutur",
+      "name": "Omah Tutur",
+      "regionId": "pasuruan-selatan",
+      "place": { "latitude": -7.838333, "longitude": 112.836111 },
+      "media": [
+        {
+          "type": "image",
+          "url": null,
+          "alt": "Foto Omah Tutur (belum tersedia)"
+        }
+      ],
+      "short_description": "Cafe hits dengan pilihan area indoor vintage dan area outdoor bernuansa ala Bali menghadap pegunungan.",
+      "description": "Omah Tutur adalah cafe populer yang berlokasi di kawasan Tutur. Tempat ini menawarkan dua pilihan area; area indoor yang terpisah mengusung tema vintage dengan perabotan khas zaman dulu, serta area outdoor yang memiliki vibes ala Bali dengan hiasan payung-payung cantik.\n\nDari area outdoor, pengunjung dapat langsung melihat view pegunungan yang sangat menawan. Omah Tutur menyajikan menu Nusantara mulai dari makanan ringan, berat, hingga aneka wedang rempah.\n\nCafe ini beralamat di Krajan Dua, Kec. Tutur. Kecamatan dan desa/kelurahan mengacu pada alamat di Google Places.",
+      "gallery_description": "Galeri ini menampilkan dua suasana berbeda di Omah Tutur. Ada foto-foto area indoor yang kental dengan barang vintage, dan area outdoor yang bernuansa khas Bali.\n\nSelain suasana asri dan sejuk khas dataran tinggi Nongkojajar, galeri juga memperlihatkan berbagai sajian masakan Nusantara dan wedang rempah.\n\nGunakan galeri ini sebagai referensi sebelum Anda berkunjung ke Krajan Dua, Kec. Tutur untuk memilih area tempat duduk favorit Anda.",
+      "rating": 4.6,
+      "reviews_label": "420 Ulasan",
+      "address": "Krajan Dua, Kec. Tutur",
+      "opening_hours": "09.00 - 22.00 WIB",
+      "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-7.838333,112.836111",
+      "place_id": "ChIJ_OmahTuturNongkojajar",
+      "keyakinan": "sedang",
+      "source": "destinasi-kuliner-pasuruan.json",
+      "verification": { "status": "pending", "verified_at": null },
+      "featured": false,
+      "categoryId": "kopi-minuman",
+      "culinary_type": "kopi-minuman",
+      "price_range": "Rp 15.000 - Rp 50.000",
+      "prices": [],
+      "operational_status": { "status": "open", "label": "Buka" },
+      "facilities": [
+        "Area Indoor Vintage",
+        "Area Outdoor ala Bali",
+        "Pemandangan Pegunungan"
+      ],
+      "menus": [
+        { "name": "Kopi Omah", "price": "Rp 18.000" },
+        { "name": "Wedang Rempah", "price": "Rp 15.000" },
+        { "name": "Nasi Goreng Nusantara", "price": "Rp 25.000" },
+        { "name": "Snack Platter", "price": "Rp 20.000" }
+      ],
+      "is_dummy": false
+    },
+    {
+      "id": "bakso-mangguan-mak-fina",
+      "slug": "bakso-mangguan-mak-fina",
+      "name": "Bakso Mangguan Mak Fina",
+      "regionId": "pasuruan-selatan",
+      "place": { "latitude": -7.748333, "longitude": 112.916111 },
+      "media": [
+        {
+          "type": "image",
+          "url": null,
+          "alt": "Foto Bakso Mangguan Mak Fina (belum tersedia)"
+        }
+      ],
+      "short_description": "Warung bakso viral di wilayah Pasrepan, selalu ramai dikunjungi oleh warga lokal.",
+      "description": "Bakso Mangguan Mak Fina adalah salah satu warung bakso yang sangat viral dan ramai dikunjungi di kawasan Pasrepan. Berlokasi strategis tidak jauh dari kawasan pasar tradisional Pasrepan, menjadikannya persinggahan favorit warga setempat.\n\nKuah kaldunya yang gurih dipadukan dengan pentol yang tebal membuat banyak pengunjung selalu datang kembali. Kedai ini menjadi bukti kuatnya kuliner lokal kaki lima di wilayah selatan Pasuruan.\n\nTempat makan ini berada tepat di wilayah Kecamatan Pasrepan. Kecamatan dan desa/kelurahan mengacu pada alamat di Google Places.",
+      "gallery_description": "Galeri ini menampilkan sajian mangkok Bakso Mangguan Mak Fina yang sangat terkenal di Pasrepan. Fokus foto ada pada pentol bakso, tahu, dan kuah kaldu yang hangat.\n\nGaleri juga menggambarkan kondisi warung yang sering dipenuhi antrean pembeli, memberi bukti bahwa rasa bakso di sini sudah diakui oleh warga lokal.\n\nJadikan galeri ini sebagai motivasi untuk mampir jika Anda sedang melintas di wilayah Kecamatan Pasrepan.",
+      "rating": 4.7,
+      "reviews_label": "530 Ulasan",
+      "address": "Kec. Pasrepan",
+      "opening_hours": "09.00 - 20.00 WIB",
+      "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-7.748333,112.916111",
+      "place_id": "ChIJ_BaksoMakFinaPasrepan",
+      "keyakinan": "sedang",
+      "source": "destinasi-kuliner-pasuruan.json",
+      "verification": { "status": "pending", "verified_at": null },
+      "featured": false,
+      "categoryId": "tradisional",
+      "culinary_type": "tradisional",
+      "price_range": "Rp 10.000 - Rp 25.000",
+      "prices": [],
+      "operational_status": { "status": "open", "label": "Buka" },
+      "facilities": [],
+      "menus": [
+        { "name": "Bakso Halus", "price": "Rp 15.000" },
+        { "name": "Bakso Kasar (Urat)", "price": "Rp 18.000" },
+        { "name": "Bakso Campur", "price": "Rp 20.000" },
+        { "name": "Es Jeruk", "price": "Rp 6.000" }
+      ],
+      "is_dummy": false
+    },
+    {
+      "id": "cafe-kangen-nongkojajar",
+      "slug": "cafe-kangen-nongkojajar",
+      "name": "Cafe Kangen",
+      "regionId": "pasuruan-selatan",
+      "place": { "latitude": -7.8421, "longitude": 112.8251 },
+      "media": [
+        {
+          "type": "image",
+          "url": null,
+          "alt": "Foto Cafe Kangen Nongkojajar (belum tersedia)"
+        }
+      ],
+      "short_description": "Cafe di dataran tinggi Nongkojajar yang dikelilingi hutan pinus dengan menu andalan wedang khas Jawa.",
+      "description": "Cafe Kangen terletak di kawasan Nongkojajar dan dikelilingi oleh suasana hutan pinus yang asri nan sejuk. Tempat ini seringkali dijadikan persinggahan nyaman bagi wisatawan yang sedang dalam rute perjalanan menuju Gunung Bromo via Pasuruan.\n\nSelain aneka jenis kopi, cafe ini cukup dikenal karena menyajikan minuman tradisional hangat khas Jawa seperti wedang uwuh dan wedang kuwuh. Suhu dingin pegunungan menjadikannya sangat pas untuk menikmati hidangan tersebut.\n\nBerlokasi di Jalan Raya Nongkojajar, wilayah administratifnya sering beririsan antara batas Purwodadi dan Tutur. Namun di peta aplikasi, area ini dikategorikan pada zona selatan.",
+      "gallery_description": "Galeri ini menampilkan lingkungan Cafe Kangen yang dinaungi langsung oleh tegakan pohon-pohon pinus di kawasan Nongkojajar.\n\nDalam foto juga ditampilkan aneka sajian wedang uwuh dan wedang kuwuh dengan rempah asli, serta beberapa camilan pendamping seperti pisang goreng.\n\nSangat direkomendasikan melihat galeri ini untuk membayangkan sejuknya singgah di cafe kawasan Jalan Raya Nongkojajar.",
+      "rating": 4.4,
+      "reviews_label": "210 Ulasan",
+      "address": "Jl. Raya Nongkojajar",
+      "opening_hours": "09.00 - 21.00 WIB",
+      "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-7.842100,112.825100",
+      "place_id": "ChIJ_CafeKangenNongko",
+      "keyakinan": "sedang",
+      "source": "destinasi-kuliner-pasuruan.json",
+      "verification": { "status": "pending", "verified_at": null },
+      "featured": false,
+      "categoryId": "kopi-minuman",
+      "culinary_type": "kopi-minuman",
+      "price_range": "Rp 15.000 - Rp 35.000",
+      "prices": [],
+      "operational_status": { "status": "open", "label": "Buka" },
+      "facilities": ["Pemandangan Hutan Pinus", "Area Terbuka", "Parkir"],
+      "menus": [
+        { "name": "Wedang Uwuh", "price": "Rp 15.000" },
+        { "name": "Wedang Kuwuh", "price": "Rp 15.000" },
+        { "name": "Kopi Hitam", "price": "Rp 12.000" },
+        { "name": "Pisang Goreng", "price": "Rp 15.000" }
+      ],
+      "is_dummy": false
     }
   ]
 }

@@ -26,6 +26,7 @@ const (
 	codeInvalidQuery     = "INVALID_QUERY"
 	codeInvalidCategory  = "INVALID_CATEGORY"
 	codeInvalidLimit     = "INVALID_LIMIT"
+	codeInvalidLocation  = "INVALID_LOCATION"
 )
 
 // chatErrorMessages holds the user-facing text for each code; clients branch on the code.
@@ -44,6 +45,7 @@ var chatErrorMessages = map[string]string{
 	codeInvalidQuery:     "Query wajib diisi.",
 	codeInvalidCategory:  "Kategori tidak valid.",
 	codeInvalidLimit:     "Limit maksimal 50.",
+	codeInvalidLocation:  "Lokasi tidak valid.",
 }
 
 // chatError writes the contract ErrorResponse; request_id repeats the X-Request-ID header.

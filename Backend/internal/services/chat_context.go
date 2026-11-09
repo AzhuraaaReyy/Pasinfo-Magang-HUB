@@ -93,6 +93,8 @@ type ragContext struct {
 	// holds the upcoming events, from another zone when EventsElsewhere is true.
 	EventsPast      bool
 	EventsElsewhere bool
+	// Nearby is the origin and radius of a distance answer; each document then carries a JARAK line.
+	Nearby *nearbyAnswer
 }
 
 // withoutSampleLines drops the knowledge lines marked as sample data (one field per line).
@@ -134,7 +136,12 @@ func buildRAGContext(results []SemanticResult, limit, maxRunes int, includeSampl
 	headers := make([]string, len(relevant))
 	overhead := 0
 	for i, result := range relevant {
-		headers[i] = fmt.Sprintf("DOKUMEN %d\nNAMA: %s\nDOMAIN: %s\nDATA:\n", i+1, pointerString(result.SourceLabel), domainLabel(pointerString(result.SourceType)))
+		headers[i] = fmt.Sprintf("DOKUMEN %d\nNAMA: %s\nDOMAIN: %s\n", i+1, pointerString(result.SourceLabel), domainLabel(pointerString(result.SourceType)))
+		if result.Nearby != nil {
+			// The only distance and travel time the model may state (chat_nearby.go).
+			headers[i] += "JARAK: " + result.Nearby.line() + "\n"
+		}
+		headers[i] += "DATA:\n"
 		// +1 for the newline after the data; the truncation note is counted as if always present.
 		overhead += utf8.RuneCountInString(headers[i]) + 1 + utf8.RuneCountInString(truncatedNote) + utf8.RuneCountInString(blockEnd)
 	}

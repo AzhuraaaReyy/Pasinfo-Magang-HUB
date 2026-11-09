@@ -83,6 +83,8 @@ func TestEmbedInterval(t *testing.T) {
 }
 
 func TestRelevanceThreshold(t *testing.T) {
+	t.Setenv("LLM_PROVIDER", "ollama") // the threshold rule only; the Gemini default would ask for GEMINI_API_KEY
+	t.Setenv("EMBED_PROVIDER", "")
 	for value, wantErr := range map[string]bool{"": false, "0.66": false, "0.6": false, "0.35": true, "0.2": true, "1": true, "abc": true} {
 		t.Setenv("EMBED_RELEVANCE_THRESHOLD", value)
 		err := LoadLLM().Validate()
@@ -122,5 +124,17 @@ func TestCheckJWTSecretRefusesExamplePlaceholderInProduction(t *testing.T) {
 	}
 	if err := CheckJWTSecret("production", "3f9c1a7e5b2d4c6a8e0f1b3d5c7a9e2f4b6d8c0a1e3f5b7d9c2a4e6f8b0d1c3e"); err != nil {
 		t.Fatalf("a random secret must pass: %v", err)
+	}
+}
+
+// Jobdesk 9 Nov point 4: RECOMMEND_RELEVANCE_THRESHOLD is a similarity above 0 and below 1; empty means the default.
+func TestRecommendThreshold(t *testing.T) {
+	t.Setenv("LLM_PROVIDER", "ollama")
+	t.Setenv("EMBED_PROVIDER", "")
+	for value, wantErr := range map[string]bool{"": false, "0.61": false, "0.5": false, "0": false, "1": true, "1.5": true, "-0.2": true, "abc": true} {
+		t.Setenv("RECOMMEND_RELEVANCE_THRESHOLD", value)
+		if err := LoadLLM().Validate(); (err != nil) != wantErr {
+			t.Errorf("RECOMMEND_RELEVANCE_THRESHOLD=%q → error %v, want error %v", value, err, wantErr)
+		}
 	}
 }

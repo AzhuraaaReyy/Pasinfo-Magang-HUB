@@ -3,8 +3,10 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/glebarez/sqlite"
@@ -90,5 +92,48 @@ func TestDetailCountsViews(t *testing.T) {
 	db.Where("slug = ?", "asal").First(&destination)
 	if culinary.Views != 2 || destination.Views != 2 {
 		t.Fatalf("views culinary=%d destination=%d, want 2", culinary.Views, destination.Views)
+	}
+}
+
+// Jobdesk 9 Nov: GET /rekomendasi validates its input before any embedding call, reports a provider failure as 503,
+// and exists only when the text search is wired.
+func TestTextRecommendationValidatesAndReportsProviderFailure(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open("file:"+t.Name()+"?mode=memory&cache=shared"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	app := fiber.New()
+	h := NewRecommendationHandler(services.NewRecommender(db))
+	h.Search, h.LLM = services.NewRetriever(db), failingChatProvider{err: errors.New("provider down")}
+	h.Register(app)
+	long := strings.Repeat("a", textQueryMaxRunes+1)
+	for _, tc := range []struct {
+		url  string
+		code int
+	}{
+		{"/rekomendasi", 400},
+		{"/rekomendasi?q=%20%20", 400},
+		{"/rekomendasi?q=" + long, 400},
+		{"/rekomendasi?q=pantai&limit=0", 400},
+		{"/rekomendasi?q=pantai&limit=13", 400},
+		{"/rekomendasi?q=pantai&domain=wisata,berita", 400},
+		{"/rekomendasi?q=pantai&zona=Pasuruan%20Tengah", 400},
+		{"/rekomendasi?q=pantai&domain=wisata,kuliner&kategori=Wisata%20Alam", 400},
+		{"/rekomendasi?q=pantai&domain=kuliner&kategori=Wisata%20Alam", 400},
+		{"/rekomendasi?q=pantai&domain=wisata", 503},
+	} {
+		resp, err := app.Test(httptest.NewRequest("GET", tc.url, nil))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if resp.StatusCode != tc.code {
+			body, _ := io.ReadAll(resp.Body)
+			t.Fatalf("%s: status %d, want %d (%s)", tc.url, resp.StatusCode, tc.code, body)
+		}
+	}
+	plain := fiber.New()
+	NewRecommendationHandler(services.NewRecommender(db)).Register(plain)
+	if resp, _ := plain.Test(httptest.NewRequest("GET", "/rekomendasi?q=pantai", nil)); resp.StatusCode != 404 {
+		t.Fatalf("route without search: status %d, want 404", resp.StatusCode)
 	}
 }

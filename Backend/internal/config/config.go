@@ -30,8 +30,8 @@ type LLMConfig struct {
 	GeminiKey, GeminiChat, GeminiEmbed string
 	Timeout, Retries, Concurrency      int
 	// OllamaNumGPU is the number of gemma layers Ollama puts on the GPU (LLM_OLLAMA_NUM_GPU); nil = unset,
-	// Ollama decides. A pointer, because 0 means CPU only. A local-machine setting: set it only in
-	// docker-compose.override.yml (H1, 2026-10-31).
+	// Ollama decides. A pointer, because 0 means CPU only. A local-machine setting: set it only in the local .env
+	// (H1, 2026-10-31; docker-compose.override.yml was removed when one env-driven compose file replaced it).
 	OllamaNumGPU *int
 	// Embed is the embedding provider (EMBED_PROVIDER); it defaults to Primary. Chat and embedding are
 	// separate because many chat providers have no embedding model.
@@ -46,6 +46,8 @@ type LLMConfig struct {
 	EmbedRPM int
 	// RelevanceThreshold is EMBED_RELEVANCE_THRESHOLD (see RelevanceThreshold); 0 = unset.
 	RelevanceThreshold float64
+	// RecommendThreshold is RECOMMEND_RELEVANCE_THRESHOLD (see RecommendThreshold); 0 = unset.
+	RecommendThreshold float64
 }
 
 func env(key, fallback string) string {
@@ -88,6 +90,22 @@ func RelevanceThreshold() float64 {
 	return t
 }
 
+// RecommendThreshold is the similarity a text recommendation (GET /rekomendasi) needs to be shown
+// (RECOMMEND_RELEVANCE_THRESHOLD, jobdesk 9 Nov point 4, Owner option A). Like EMBED_RELEVANCE_THRESHOLD it belongs
+// to the embedding model; it is lower because a keyword scores below a question (gemini-embedding-001: "pantai" 0.642).
+// 0 = unset (the services default); NaN = not a number, refused by Validate.
+func RecommendThreshold() float64 {
+	v := env("RECOMMEND_RELEVANCE_THRESHOLD", "")
+	if v == "" {
+		return 0
+	}
+	t, err := strconv.ParseFloat(v, 64)
+	if err != nil {
+		return math.NaN()
+	}
+	return t
+}
+
 // ChatRetentionDays is the anonymous chat history retention (default 90; <= 0 disables purge).
 func ChatRetentionDays() int { return integer("CHAT_RETENTION_DAYS", 90) }
 
@@ -117,7 +135,9 @@ func ProxyConfig() (header string, trusted []string, ok bool) {
 }
 
 func LoadLLM() LLMConfig {
-	primary := Provider(strings.ToLower(env("LLM_PROVIDER", "ollama")))
+	// Empty LLM_PROVIDER = gemini, the primary provider for chat and embedding (OVERRIDE-RAG-007; T17, Owner 2026-11-08:
+	// was ollama). EMBED_PROVIDER defaults to it.
+	primary := Provider(strings.ToLower(env("LLM_PROVIDER", string(ProviderGemini))))
 	apiURL := strings.TrimRight(env("LLM_API_BASE_URL", ""), "/")
 	apiKey := env("LLM_API_KEY", "")
 	return LLMConfig{
@@ -144,6 +164,7 @@ func LoadLLM() LLMConfig {
 		EmbedRPM:     integer("EMBED_REQUESTS_PER_MINUTE", 0),
 
 		RelevanceThreshold: RelevanceThreshold(),
+		RecommendThreshold: RecommendThreshold(),
 	}
 }
 
@@ -193,6 +214,9 @@ func (c LLMConfig) Validate() error {
 	// Above the judge floor (services.judgeCandidateFloor, 0.35) so the judge band stays non-empty.
 	if t := c.RelevanceThreshold; t != 0 && !(t > 0.35 && t < 1) {
 		return fmt.Errorf("EMBED_RELEVANCE_THRESHOLD must be a number above 0.35 and below 1")
+	}
+	if t := c.RecommendThreshold; t != 0 && !(t > 0 && t < 1) {
+		return fmt.Errorf("RECOMMEND_RELEVANCE_THRESHOLD must be a number above 0 and below 1")
 	}
 	return nil
 }

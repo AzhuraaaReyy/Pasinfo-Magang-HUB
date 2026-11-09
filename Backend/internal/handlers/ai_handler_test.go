@@ -128,6 +128,9 @@ func TestPostMessageValidationUsesErrorCodes(t *testing.T) {
 		{"empty", `{"message":"   "}`, "MESSAGE_REQUIRED", fiber.StatusBadRequest},
 		{"missing field", `{}`, "MESSAGE_REQUIRED", fiber.StatusBadRequest},
 		{"too long", `{"message":"` + strings.Repeat("a", 2001) + `"}`, "MESSAGE_TOO_LONG", fiber.StatusRequestEntityTooLarge},
+		{"latitude out of range", `{"message":"wisata dekat sini","location":{"latitude":95,"longitude":112.9}}`, "INVALID_LOCATION", fiber.StatusBadRequest},
+		{"longitude missing", `{"message":"wisata dekat sini","location":{"latitude":-7.6}}`, "INVALID_LOCATION", fiber.StatusBadRequest},
+		{"zero point", `{"message":"wisata dekat sini","location":{"latitude":0,"longitude":0}}`, "INVALID_LOCATION", fiber.StatusBadRequest},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

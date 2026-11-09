@@ -278,7 +278,7 @@ func FetchAndSaveNews() (FetchResult, error) {
 		result.Fetched, result.Saved, result.Skipped, result.Errors)
 
 	if result.Saved > 0 {
-		// New news reaches the AI corpus now instead of at the next hourly refresh (F3, 2026-11-03).
+		// New news reaches the AI corpus now instead of at the next scheduled refresh (F3, 2026-11-03).
 		RequestKnowledgeRefresh()
 	}
 	return result, nil

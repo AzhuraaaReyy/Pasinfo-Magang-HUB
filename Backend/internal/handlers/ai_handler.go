@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -59,8 +60,10 @@ func NewChatHandler(db *gorm.DB, llm services.LLMProvider) *ChatHandler {
 	retriever := services.NewRetriever(db)
 	chat := services.NewChatService(db, llm, 120*time.Second, retriever)
 	chat.Judge = services.LLMRelevanceJudge{LLM: llm}
-	chat.Rewriter = services.LLMQueryRewriter{LLM: llm}
+	chat.Reader = services.LLMQuestionReader{LLM: llm}
 	chat.Recommender = services.NewRecommender(db)
+	// Road distance and car/motorcycle times of nearest answers; without the key, answers keep the straight-line distance.
+	chat.Router = services.NewGeoapifyClient(os.Getenv("GEOAPIFY_API_KEY"))
 	return &ChatHandler{db, chat, retriever}
 }
 func (h *ChatHandler) CreateSession(c *fiber.Ctx) error {
@@ -104,6 +107,11 @@ func (h *ChatHandler) PostMessage(c *fiber.Ctx) error {
 	}
 	var in struct {
 		Message string `json:"message"`
+		// Location is sent only after the user allowed sharing it; it is used for this question and never stored.
+		Location *struct {
+			Latitude  *float64 `json:"latitude"`
+			Longitude *float64 `json:"longitude"`
+		} `json:"location"`
 	}
 	if e := c.BodyParser(&in); e != nil {
 		return chatError(c, fiber.StatusBadRequest, codeInvalidJSON)
@@ -115,6 +123,14 @@ func (h *ChatHandler) PostMessage(c *fiber.Ctx) error {
 	if utf8.RuneCountInString(message) > maxMessageChars {
 		return chatError(c, fiber.StatusRequestEntityTooLarge, codeMessageTooLong)
 	}
+	var location *services.GeoPoint
+	if in.Location != nil {
+		lat, lng := in.Location.Latitude, in.Location.Longitude
+		if lat == nil || lng == nil || math.IsNaN(*lat) || math.IsNaN(*lng) || math.Abs(*lat) > 90 || math.Abs(*lng) > 180 || (*lat == 0 && *lng == 0) {
+			return chatError(c, fiber.StatusBadRequest, codeInvalidLocation)
+		}
+		location = &services.GeoPoint{Lat: *lat, Lng: *lng}
+	}
 	s, e := h.sessionForVisitor(c, id)
 	if errors.Is(e, gorm.ErrRecordNotFound) {
 		return chatError(c, fiber.StatusNotFound, codeSessionNotFound)
@@ -125,7 +141,7 @@ func (h *ChatHandler) PostMessage(c *fiber.Ctx) error {
 	}
 	ctx, cancel := context.WithTimeout(c.UserContext(), h.Chat.Timeout)
 	defer cancel()
-	result, e := h.Chat.Ask(ctx, s, message)
+	result, e := h.Chat.AskWithLocation(ctx, s, message, location)
 	if e != nil {
 		logChatError(c, e)
 		status, code := chatErrorStatus(e)

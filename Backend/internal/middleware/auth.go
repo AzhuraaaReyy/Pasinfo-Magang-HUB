@@ -160,7 +160,8 @@ func RateLimiter(max int, windowSec int64) fiber.Handler {
 	return RateLimiterWithHandler(max, windowSec, func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
 			"success": false,
-			"message": "Too many requests. Please slow down.",
+			// Same text as the chat 429 (handlers.ChatRateLimited); visitors read polite Indonesian (F10, jobdesk 9 Nov).
+			"message": "Terlalu banyak permintaan. Coba lagi sebentar lagi.",
 		})
 	})
 }

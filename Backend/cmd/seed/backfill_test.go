@@ -201,3 +201,42 @@ func TestSharedSeedLocationNeedsOneKecamatan(t *testing.T) {
 		t.Fatalf("different kecamatan = %q", d)
 	}
 }
+
+// Owner 2026-11-09: the seed price range, reviews label, Google place id, and map link are filled into empty columns; a
+// place shared by contents with different seed links is skipped, and nothing is overwritten.
+func TestBackfillFillsSeedLinksAndSampleFields(t *testing.T) {
+	db := backfillTestDB(t)
+	if err := db.Model(&models.Place{}).Where("id = ?", 2).Update("map_url", "https://maps/lama").Error; err != nil {
+		t.Fatal(err)
+	}
+	src := backfillSource{
+		Culinaries: []backfillItem{
+			{Slug: "nasi-punel", PriceRange: "Rp 15.000 - Rp 30.000", PlaceID: "ChIJ-punel", GoogleMapsURL: "https://maps/punel"},
+			{Slug: "warung-isi", PriceRange: "Rp 5.000", PlaceID: "ChIJ-isi", GoogleMapsURL: "https://maps/baru"},
+		},
+		Events: []backfillItem{
+			{Slug: "kirab", GoogleMapsURL: "https://maps/kirab"},
+			{Slug: "parade", GoogleMapsURL: "https://maps/parade"}, // same place 3, different link
+		},
+	}
+	report, err := applyBackfill(db, src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var places []models.Place
+	db.Order("id").Find(&places)
+	var punel models.Culinary
+	db.First(&punel, 1)
+	if punel.PriceRange != "Rp 15.000 - Rp 30.000" || places[0].GooglePlaceID != "ChIJ-punel" || places[0].MapURL != "https://maps/punel" {
+		t.Fatalf("punel = %q, place 1 = %+v", punel.PriceRange, places[0])
+	}
+	if places[1].MapURL != "https://maps/lama" || places[1].GooglePlaceID != "ChIJ-isi" {
+		t.Fatalf("place 2 overwritten or not filled: %+v", places[1])
+	}
+	if places[2].MapURL != "" || report["skip:shared_place_map_url"] != 1 {
+		t.Fatalf("shared place 3 = %q, report %v", places[2].MapURL, report)
+	}
+	if got := backfillTargets(backfillSource{})[0].columns(backfillItem{ReviewsLabel: "100 Ulasan"}); got["reviews_label"] != "100 Ulasan" {
+		t.Fatalf("destination columns = %v", got)
+	}
+}

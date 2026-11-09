@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -77,99 +76,83 @@ func (p eventPeriod) keepSchedules(answer string) (kept string, dated bool) {
 	return strings.Join(out, "\n"), dated
 }
 
-// eventTopicPattern marks a question about events. A time phrase alone ("hari ini") is not enough:
-// "berita hari ini" or "wisata yang buka hari ini" must keep the normal search.
-var eventTopicPattern = regexp.MustCompile(`(?i)\b(acara|event|festival|fest|agenda|karnaval|carnival|pertunjukan|konser|kegiatan|perayaan|pameran|kirab|parade|upacara|lomba|haul|pagelaran|berlangsung)\b`)
-
 var monthNumbers = map[string]time.Month{
 	"januari": time.January, "februari": time.February, "maret": time.March, "april": time.April,
 	"mei": time.May, "juni": time.June, "juli": time.July, "agustus": time.August,
 	"september": time.September, "oktober": time.October, "november": time.November, "desember": time.December,
 }
 
-type periodRule struct {
-	pattern *regexp.Regexp
-	window  func(today time.Time, match []string) eventPeriod
-}
-
-// periodRules are tried in order; the more specific phrase comes first ("akhir pekan ini" before
-// "pekan ini", a month name before a bare year).
-var periodRules = []periodRule{
-	{regexp.MustCompile(`(?i)\b(akhir pekan|weekend|akhir minggu)\s+depan\b`), func(today time.Time, _ []string) eventPeriod {
+// periodWindows gives the dates of each plan period, relative to today in WIB. The model only names the period:
+// gemma3:4b computed "bulan depan" as the current month (probe 2026-11-06).
+var periodWindows = map[string]func(today time.Time) eventPeriod{
+	"next_weekend": func(today time.Time) eventPeriod {
 		from := weekendStart(today).AddDate(0, 0, 7)
 		return eventPeriod{Label: "akhir pekan depan", From: from, To: from.AddDate(0, 0, 2)}
-	}},
-	{regexp.MustCompile(`(?i)\b(akhir pekan|weekend|akhir minggu|malam minggu)\b`), func(today time.Time, _ []string) eventPeriod {
+	},
+	"this_weekend": func(today time.Time) eventPeriod {
 		from := weekendStart(today)
 		to := from.AddDate(0, 0, 2)
 		if today.Weekday() == time.Sunday {
 			from = today
 		}
 		return eventPeriod{Label: "akhir pekan ini", From: from, To: to}
-	}},
-	{regexp.MustCompile(`(?i)\b(minggu|pekan)\s+depan\b`), func(today time.Time, _ []string) eventPeriod {
+	},
+	"next_week": func(today time.Time) eventPeriod {
 		from := nextMonday(today)
 		return eventPeriod{Label: "minggu depan", From: from, To: from.AddDate(0, 0, 7)}
-	}},
-	{regexp.MustCompile(`(?i)\b(minggu|pekan)\s+ini\b`), func(today time.Time, _ []string) eventPeriod {
+	},
+	"this_week": func(today time.Time) eventPeriod {
 		return eventPeriod{Label: "minggu ini", From: today, To: nextMonday(today)}
-	}},
-	{regexp.MustCompile(`(?i)\bbulan\s+depan\b`), func(today time.Time, _ []string) eventPeriod {
+	},
+	"next_month": func(today time.Time) eventPeriod {
 		from := monthStart(today).AddDate(0, 1, 0)
 		return eventPeriod{Label: "bulan depan", From: from, To: from.AddDate(0, 1, 0)}
-	}},
-	{regexp.MustCompile(`(?i)\bbulan\s+ini\b`), func(today time.Time, _ []string) eventPeriod {
+	},
+	"this_month": func(today time.Time) eventPeriod {
 		from := monthStart(today)
 		return eventPeriod{Label: "bulan ini", From: from, To: from.AddDate(0, 1, 0)}
-	}},
-	// A month without a year is its next occurrence (the current month counts), for trip planning.
-	{regexp.MustCompile(`(?i)\b(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)(?:\s+(?:tahun\s+)?(20\d{2}))?\b`), func(today time.Time, match []string) eventPeriod {
-		month := monthNumbers[strings.ToLower(match[1])]
-		year := today.Year()
-		if match[2] != "" {
-			year, _ = strconv.Atoi(match[2])
-		} else if month < today.Month() {
-			year++
-		}
-		from := time.Date(year, month, 1, 0, 0, 0, 0, wib)
-		return eventPeriod{Label: fmt.Sprintf("%s %d", indonesianMonths[month-1], year), From: from, To: from.AddDate(0, 1, 0)}
-	}},
-	{regexp.MustCompile(`(?i)\btahun\s+depan\b`), func(today time.Time, _ []string) eventPeriod {
-		return yearPeriod("tahun depan", today.Year()+1)
-	}},
-	{regexp.MustCompile(`(?i)\btahun\s+ini\b`), func(today time.Time, _ []string) eventPeriod {
-		return yearPeriod("tahun ini", today.Year())
-	}},
-	{regexp.MustCompile(`(?i)\b(?:tahun\s+)?(20\d{2})\b`), func(_ time.Time, match []string) eventPeriod {
-		year, _ := strconv.Atoi(match[1])
-		return yearPeriod(fmt.Sprintf("tahun %d", year), year)
-	}},
-	{regexp.MustCompile(`(?i)\b(hari ini|malam ini)\b`), func(today time.Time, _ []string) eventPeriod {
+	},
+	"next_year": func(today time.Time) eventPeriod { return yearPeriod("tahun depan", today.Year()+1) },
+	"this_year": func(today time.Time) eventPeriod { return yearPeriod("tahun ini", today.Year()) },
+	"today": func(today time.Time) eventPeriod {
 		return eventPeriod{Label: "hari ini", From: today, To: today.AddDate(0, 0, 1)}
-	}},
-	{regexp.MustCompile(`(?i)\bbesok\b`), func(today time.Time, _ []string) eventPeriod {
+	},
+	"tomorrow": func(today time.Time) eventPeriod {
 		return eventPeriod{Label: "besok", From: today.AddDate(0, 0, 1), To: today.AddDate(0, 0, 2)}
-	}},
-	{regexp.MustCompile(`(?i)\blusa\b`), func(today time.Time, _ []string) eventPeriod {
+	},
+	"day_after_tomorrow": func(today time.Time) eventPeriod {
 		return eventPeriod{Label: "lusa", From: today.AddDate(0, 0, 2), To: today.AddDate(0, 0, 3)}
-	}},
-	{regexp.MustCompile(`(?i)\b(sedang berlangsung|lagi berlangsung|sedang diadakan|sedang ada|saat ini|sekarang)\b`), func(today time.Time, _ []string) eventPeriod {
+	},
+	"now": func(today time.Time) eventPeriod {
 		return eventPeriod{Label: "saat ini", From: today, To: today.AddDate(0, 0, 1)}
-	}},
-	{regexp.MustCompile(`(?i)\b(akan datang|mendatang|terdekat|berikutnya|selanjutnya|ke depan)\b`), func(today time.Time, _ []string) eventPeriod {
+	},
+	"upcoming": func(today time.Time) eventPeriod {
 		return eventPeriod{Label: "yang akan datang", From: today}
-	}},
+	},
 }
 
-// detectEventPeriod returns the first time window the text names, relative to today in WIB, or nil.
-// The caller decides whether the question is about events.
-func detectEventPeriod(text string, today time.Time) *eventPeriod {
-	day := dayOf(today.In(wib))
-	for _, rule := range periodRules {
-		if match := rule.pattern.FindStringSubmatch(text); match != nil {
-			period := rule.window(day, match)
-			return &period
+// eventPeriod returns the time window of a checked plan, or nil: a named month first (without a year it is its next
+// occurrence, the current month counts, for trip planning), then a named year, then the relative period.
+func (p QuestionPlan) eventPeriod(now time.Time) *eventPeriod {
+	today := dayOf(now.In(wib))
+	if month, ok := monthNumbers[p.Month]; ok {
+		year := p.Year
+		if year == 0 {
+			year = today.Year()
+			if month < today.Month() {
+				year++
+			}
 		}
+		from := time.Date(year, month, 1, 0, 0, 0, 0, wib)
+		return &eventPeriod{Label: fmt.Sprintf("%s %d", indonesianMonths[month-1], year), From: from, To: from.AddDate(0, 1, 0)}
+	}
+	if p.Year != 0 {
+		period := yearPeriod(fmt.Sprintf("tahun %d", p.Year), p.Year)
+		return &period
+	}
+	if window, ok := periodWindows[p.Period]; ok {
+		period := window(today)
+		return &period
 	}
 	return nil
 }
@@ -213,30 +196,21 @@ type eventPeriodResult struct {
 }
 
 // eventPeriodOutcome selects the event documents of a time question by their schedules. It returns a
-// nil result, and the caller keeps the semantic classification, when the question names no period,
-// is not about events, or the retriever cannot list schedules. results are the semantic candidates;
+// nil result, and the caller keeps the semantic classification, when the question names no period and does not ask
+// when a named event takes place, or the retriever cannot list schedules. results are the semantic candidates;
 // an event the user names among them is kept first even when its dates are outside the period.
-func (s *ChatService) eventPeriodOutcome(ctx context.Context, question, retrievalQuery, region string, results []SemanticResult) (relevanceOutcome, *eventPeriodResult, error) {
+func (s *ChatService) eventPeriodOutcome(ctx context.Context, period *eventPeriod, asksSchedule bool, text, region string, results []SemanticResult) (relevanceOutcome, *eventPeriodResult, error) {
 	scheduler, ok := s.Retriever.(EventScheduleRetriever)
 	if !ok {
 		return relevanceOutcome{}, nil, nil
 	}
-	text := question
-	if retrievalQuery != question {
-		text += "\n" + retrievalQuery
-	}
-	// The user's own words decide the period; a rewrite is used only for an elliptical follow-up.
-	period := detectEventPeriod(question, s.today())
-	if period == nil && retrievalQuery != question {
-		period = detectEventPeriod(retrievalQuery, s.today())
-	}
 	if period == nil {
-		return s.namedEventSchedule(question, text, results)
+		if !asksSchedule {
+			return relevanceOutcome{}, nil, nil
+		}
+		return s.namedEventSchedule(text, results)
 	}
 	named := namedEvents(text, results)
-	if len(named) == 0 && !eventTopicPattern.MatchString(text) {
-		return relevanceOutcome{}, nil, nil
-	}
 	info := &eventPeriodResult{Period: *period}
 	scheduled, err := scheduler.EventsInPeriod(ctx, period.From, period.To, region, maxListCount)
 	if err != nil {
@@ -306,18 +280,12 @@ func (s *ChatService) eventPeriodOutcome(ctx context.Context, question, retrieva
 	return relevanceOutcome{Status: status, Context: selected, Judge: map[string]any{"skipped": "event_period", "pool_k": 0, "picked_k": 0}}, info, nil
 }
 
-// eventWhenPattern marks a question about the date of an event ("Kapan Kirab Pataka digelar?").
-var eventWhenPattern = regexp.MustCompile(`(?i)\b(kapan|tanggal berapa|jadwal|jadwalnya|diadakan|digelar|dilaksanakan|diselenggarakan)\b`)
-
 // namedEventSchedule answers "when" questions about events the user names without a period: only
 // those events are sent, with their schedule lines limited to the ones from today on, so the model
 // does not present a past edition as upcoming (regression 2026-10-30: "Kapan Kirab Pataka…?" called
 // the completed 2026 edition "akan dilaksanakan"). An event without an upcoming date keeps all its
 // lines with their status. Other questions return a nil result.
-func (s *ChatService) namedEventSchedule(question, text string, results []SemanticResult) (relevanceOutcome, *eventPeriodResult, error) {
-	if !eventWhenPattern.MatchString(question) {
-		return relevanceOutcome{}, nil, nil
-	}
+func (s *ChatService) namedEventSchedule(text string, results []SemanticResult) (relevanceOutcome, *eventPeriodResult, error) {
 	named := namedEvents(text, results)
 	if len(named) == 0 {
 		return relevanceOutcome{}, nil, nil

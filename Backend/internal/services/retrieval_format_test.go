@@ -31,7 +31,7 @@ func TestUpsertTravelKnowledgeEmbedsDocumentPromptAndKeepsInactiveRows(t *testin
 		t.Fatal(err)
 	}
 	statements := []string{
-		`CREATE TABLE IF NOT EXISTS faq_knowledge_bases (id INTEGER PRIMARY KEY, question TEXT, answer TEXT, category TEXT, source_type TEXT, source_id INTEGER, source_label TEXT, source_url TEXT, is_active NUMERIC, embedding TEXT, embedding_model TEXT, embedding_updated_at DATETIME, metadata BLOB, created_at DATETIME, updated_at DATETIME)`,
+		`CREATE TABLE IF NOT EXISTS faq_knowledge_bases (id INTEGER PRIMARY KEY, question TEXT, answer TEXT, category TEXT, source_type TEXT, source_id INTEGER, source_label TEXT, source_url TEXT, is_active NUMERIC, embedding TEXT, embedding_model TEXT, embedding_updated_at DATETIME, embedding_status TEXT NOT NULL DEFAULT 'completed', embedding_attempts INTEGER NOT NULL DEFAULT 0, embedding_error TEXT, embedding_next_retry_at DATETIME, metadata BLOB, created_at DATETIME, updated_at DATETIME)`,
 		`INSERT INTO faq_knowledge_bases (id, question, answer, category, source_type, source_id, source_label, is_active) VALUES (7, 'Festival Seni Mock', 'lama', 'acara', 'event', 1, 'Festival Seni Mock', 0)`,
 	}
 	for _, statement := range statements {

@@ -50,6 +50,20 @@ func temperatureFrom(ctx context.Context) (float64, bool) {
 	return temperature, ok
 }
 
+type responseSchemaKey struct{}
+
+// WithResponseSchema asks the chat model for JSON that follows schema, for calls made with ctx (Ollama format, Gemini
+// responseSchema, OpenAI response_format). Like WithTemperature it travels in the context, so the LLMProvider interface
+// and its wrappers stay unchanged.
+func WithResponseSchema(ctx context.Context, schema map[string]any) context.Context {
+	return context.WithValue(ctx, responseSchemaKey{}, schema)
+}
+
+func responseSchemaFrom(ctx context.Context) map[string]any {
+	schema, _ := ctx.Value(responseSchemaKey{}).(map[string]any)
+	return schema
+}
+
 type embedTaskKey struct{}
 
 // EmbedTask is the Gemini embedContent taskType ("RETRIEVAL_QUERY" or "RETRIEVAL_DOCUMENT") and, for a
@@ -219,6 +233,9 @@ func (p *HTTPProvider) Chat(ctx context.Context, msgs []ChatMessage) (string, er
 		if options := p.ollamaOptions(ctx); options != nil {
 			body["options"] = options
 		}
+		if schema := responseSchemaFrom(ctx); schema != nil {
+			body["format"] = schema
+		}
 		d, e := p.call(ctx, "/api/chat", body)
 		if e != nil {
 			return "", e
@@ -250,8 +267,16 @@ func (p *HTTPProvider) Chat(ctx context.Context, msgs []ChatMessage) (string, er
 	if len(system) > 0 {
 		body["systemInstruction"] = map[string]any{"parts": []map[string]string{{"text": strings.Join(system, "\n\n")}}}
 	}
+	generation := map[string]any{}
 	if hasTemperature {
-		body["generationConfig"] = map[string]any{"temperature": temperature}
+		generation["temperature"] = temperature
+	}
+	if schema := responseSchemaFrom(ctx); schema != nil {
+		generation["responseMimeType"] = "application/json"
+		generation["responseSchema"] = schema
+	}
+	if len(generation) > 0 {
+		body["generationConfig"] = generation
 	}
 	d, e := p.call(ctx, "/models/"+p.chat+":generateContent", body)
 	if e != nil {

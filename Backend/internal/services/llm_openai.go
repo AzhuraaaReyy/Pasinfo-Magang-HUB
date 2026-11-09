@@ -20,6 +20,9 @@ func (p *HTTPProvider) openAIChat(ctx context.Context, msgs []ChatMessage) (stri
 	if temperature, ok := temperatureFrom(ctx); ok {
 		body["temperature"] = temperature
 	}
+	if schema := responseSchemaFrom(ctx); schema != nil {
+		body["response_format"] = map[string]any{"type": "json_schema", "json_schema": map[string]any{"name": "response", "schema": schema}}
+	}
 	d, err := p.call(ctx, "/chat/completions", body)
 	if err != nil {
 		return "", err

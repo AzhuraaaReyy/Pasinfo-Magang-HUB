@@ -84,12 +84,12 @@ func TestSampleDataNoteExplainsSampleDataLabel(t *testing.T) {
 
 func TestDestinationKnowledgeTextAddsLoadedCategoryAndCleanArea(t *testing.T) {
 	d := models.Destination{
-		Name: "Taman Kota Pasuruan", Description: "Taman kota.", OperationalStatus: "buka",
+		Name: "Taman Kota Pasuruan", Description: "Taman kota.", OperationalStatus: "open",
 		TravelCategory: models.TravelCategory{Name: "Keluarga"},
 		Place:          models.Place{Regency: "Pasuruan"},
 	}
 	got := destinationKnowledgeText(d)
-	for _, want := range []string{"\nKategori: Keluarga", "\nStatus operasional: buka"} {
+	for _, want := range []string{"\nKategori: Keluarga", "\nStatus operasional: Buka"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("missing %q in:\n%s", want, got)
 		}
@@ -103,6 +103,24 @@ func TestDestinationKnowledgeTextAddsLoadedCategoryAndCleanArea(t *testing.T) {
 	}
 	if empty := destinationKnowledgeText(models.Destination{Description: "x"}); strings.Contains(empty, "Kategori:") || strings.Contains(empty, "Wilayah:") || strings.Contains(empty, "Status operasional:") {
 		t.Fatalf("empty fields produced labels: %q", empty)
+	}
+}
+
+// Owner 2026-11-09: the schema.md operational status codes reach the corpus as plain Indonesian words, for destinations
+// and culinary places; "unknown" (and any other value) writes no line.
+func TestOperationalStatusIsWrittenInIndonesian(t *testing.T) {
+	for code, want := range map[string]string{"open": "\nStatus operasional: Buka", "temporarily_closed": "\nStatus operasional: Tutup sementara", "closed": "\nStatus operasional: Tutup permanen"} {
+		if got := culinaryKnowledgeText(models.Culinary{Description: "x", OperationalStatus: code}, ""); !strings.Contains(got, want) {
+			t.Fatalf("culinary %s: %q", code, got)
+		}
+		if got := destinationKnowledgeText(models.Destination{Description: "x", OperationalStatus: code}); !strings.Contains(got, want) {
+			t.Fatalf("destination %s: %q", code, got)
+		}
+	}
+	for _, code := range []string{"unknown", "buka", ""} {
+		if got := culinaryKnowledgeText(models.Culinary{Description: "x", OperationalStatus: code}, ""); strings.Contains(got, "Status operasional") {
+			t.Fatalf("%q written: %q", code, got)
+		}
 	}
 }
 
@@ -139,7 +157,7 @@ func TestKnowledgeTextNeverFillsMissingOptionalFieldsPerDomain(t *testing.T) {
 				t.Errorf("%s: missing field produced %q in %q", name, label, c.text)
 			}
 		}
-		prompt := protectedSystemPrompt(parseIntent("Berapa harganya?"), buildRAGContext([]SemanticResult{source(c.sourceType, 1, "Sumber Uji", c.text, 0.7)}, defaultFactLimit, maxContextRunes, false), testToday)
+		prompt := protectedSystemPrompt(ChatIntent{Kind: intentFollowUp, FollowUp: true, SampleFields: true}, buildRAGContext([]SemanticResult{source(c.sourceType, 1, "Sumber Uji", c.text, 0.7)}, defaultFactLimit, maxContextRunes, false), testToday)
 		if !strings.Contains(prompt, "belum tersedia di database kami") || !strings.Contains(prompt, "jangan mengarang fakta, harga, jadwal") {
 			t.Errorf("%s: unavailable-field rule missing from prompt", name)
 		}
@@ -150,5 +168,45 @@ func TestEventKnowledgeTextIncludesTicketDescription(t *testing.T) {
 	got := eventKnowledgeText(models.Event{Description: "Pameran.", Tickets: []models.EventTicket{{Name: "Konser malam", Price: floatP(0), Description: strP("Konser musik gratis (edisi 2026).")}}}, "")
 	if !strings.Contains(got, "\nTiket: Konser malam - Harga: 0 - Konser musik gratis (edisi 2026).") {
 		t.Fatalf("ticket line = %q", got)
+	}
+}
+
+// Owner 2026-11-09: opening hours from the seed are written as they are, without the sample-data label.
+func TestKnowledgeTextIncludesOpeningHours(t *testing.T) {
+	at := func(h, m int) time.Time { return time.Date(2000, 1, 1, h, m, 0, 0, wib) }
+	daily := make([]models.OpeningHour, 7)
+	for i := range daily {
+		daily[i] = models.OpeningHour{DayOfWeek: 6 - i, OpensAt: at(8, 0), ClosesAt: at(17, 0)}
+	}
+	got := destinationKnowledgeText(models.Destination{Name: "Candi Jawi", Hours: daily})
+	if !strings.Contains(got, "\nJam buka: setiap hari 08.00–17.00 WIB") || strings.Contains(got, "Jam buka (data contoh") {
+		t.Fatalf("destination hours:\n%s", got)
+	}
+	varied := append([]models.OpeningHour(nil), daily...)
+	varied[0] = models.OpeningHour{DayOfWeek: 6, OpensAt: at(9, 0), ClosesAt: at(21, 30)} // Saturday
+	varied[6] = models.OpeningHour{DayOfWeek: 0, IsClosed: true}                          // Sunday
+	if got := openingHoursText(varied); got != "Senin 08.00–17.00 WIB, Selasa 08.00–17.00 WIB, Rabu 08.00–17.00 WIB, Kamis 08.00–17.00 WIB, Jumat 08.00–17.00 WIB, Sabtu 09.00–21.30 WIB, Minggu tutup" {
+		t.Fatalf("varied hours = %q", got)
+	}
+	if got := culinaryKnowledgeText(models.Culinary{Name: "Nasi Punel", Hours: daily}, "Pasuruan Utara"); !strings.Contains(got, "\nJam buka: setiap hari 08.00–17.00 WIB") {
+		t.Fatalf("culinary hours:\n%s", got)
+	}
+	if got := destinationKnowledgeText(models.Destination{Name: "Tanpa Jam"}); strings.Contains(got, "Jam buka") {
+		t.Fatalf("no hours must write no line:\n%s", got)
+	}
+}
+
+// With the hours line in the context, the grounding guard keeps the model's opening-hours sentence.
+func TestOpeningHoursFromContextAreKept(t *testing.T) {
+	context := "NAMA: Candi Jawi\nDATA:\nJam buka: setiap hari 08.00–17.00 WIB"
+	answer := "Candi Jawi buka setiap hari pukul 08.00–17.00 WIB."
+	if got := removeUnsupportedOpeningHours(answer, context); got != answer {
+		t.Fatalf("hours removed: %q", got)
+	}
+}
+
+func TestCulinaryKnowledgeTextIncludesThePriceRange(t *testing.T) {
+	if got := culinaryKnowledgeText(models.Culinary{Name: "Nasi Punel", PriceRange: "Rp 15.000 - Rp 30.000"}, ""); !strings.Contains(got, "\nKisaran harga: Rp 15.000 - Rp 30.000") {
+		t.Fatalf("price range missing:\n%s", got)
 	}
 }

@@ -85,11 +85,11 @@ func SetupRoutes(app *fiber.App) {
 	liveWisataHandler.Register(api)
 	wisataHandler := handlers.NewWisataHandler(database.DB)
 	wisataHandler.Register(api)
-	handlers.NewRecommendationHandler(services.NewRecommender(database.DB)).Register(api)
-	articleHandler := handlers.NewArticleHandler(database.DB)
-	api.Get("/article-categories", articleHandler.Categories)
-	api.Get("/articles", articleHandler.List)
-	api.Get("/articles/:slug", articleHandler.Detail)
+	recommendationHandler := handlers.NewRecommendationHandler(services.NewRecommender(database.DB))
+	// GET /rekomendasi?q=… searches with the chat provider (jobdesk 9 Nov, Owner 2026-11-09).
+	recommendationHandler.Search, recommendationHandler.LLM = chatHandler.Retriever, llm
+	recommendationHandler.Register(api)
+	// /articles and /article-categories were removed (Owner 2026-11-09): the tables were empty and news is served by /news.
 
 	// ── Auth endpoints (rate-limited: 10 req / 60s per IP) ───────────────────
 	auth := api.Group("/auth", middleware.RateLimiter(10, 60))

@@ -115,11 +115,11 @@ func TestPromptAnswersOnlyTheLastQuestion(t *testing.T) {
 		t.Fatal("prompt misses the last-question rule")
 	}
 	turns := []HistoryTurn{{Question: "Bandingkan dua situs sejarah itu", Sources: []string{"Societeit Harmonie"}}}
-	user := generationUserMessage("Siapa tokoh yang mendirikan situs tersebut?", "Siapa pendiri Societeit Harmonie?", turns, parseIntent("Siapa tokoh yang mendirikan situs tersebut?"), true)
+	user := generationUserMessage("Siapa tokoh yang mendirikan situs tersebut?", "Siapa pendiri Societeit Harmonie?", turns, ChatIntent{Kind: intentFollowUp, FollowUp: true}, true)
 	if !strings.HasSuffix(user, "jangan mengulang jawaban sebelumnya.)") {
 		t.Fatalf("follow-up message misses the reminder: %q", user)
 	}
-	if plain := generationUserMessage("Apa itu Candi Jawi?", "Apa itu Candi Jawi?", nil, parseIntent("Apa itu Candi Jawi?"), true); plain != "Apa itu Candi Jawi?" {
+	if plain := generationUserMessage("Apa itu Candi Jawi?", "Apa itu Candi Jawi?", nil, factIntent(""), true); plain != "Apa itu Candi Jawi?" {
 		t.Fatalf("a first question must stay the user's own text: %q", plain)
 	}
 }

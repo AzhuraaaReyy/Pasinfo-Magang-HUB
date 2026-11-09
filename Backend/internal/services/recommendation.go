@@ -11,6 +11,7 @@ import (
 
 	"github.com/pgvector/pgvector-go"
 	"gorm.io/gorm"
+	"wildan-news-backend/internal/config"
 )
 
 // Recommendation engine, Sprint 1 Tahap A (Owner 2026-11-03, plan docs/2 November 2026/RENCANA_MESIN_REKOMENDASI_SPRINT1.md):
@@ -88,6 +89,7 @@ type recRow struct {
 	RegionName  string
 	SourceName  string
 	CreatedAt   time.Time
+	PlaceID     int64 // places.id of a travel item; 0 for news or an item without a place
 }
 
 func (r recRow) zone() string {
@@ -144,52 +146,77 @@ func (r *Recommender) Recommend(ctx context.Context, source, key, target string,
 	if err != nil {
 		return nil, err
 	}
-	type scored struct {
-		row     recRow
-		score   float64
-		sim     float64
-		reasons []string
-	}
-	var list []scored
+	var list []rankedItem
 	for _, c := range candidates {
 		if source == target && c.ID == origin.ID {
 			continue
 		}
+		// The same site in the other domain is not a recommendation for it (F12, jobdesk 9 Nov point 6: Candi Jawi
+		// wisata → Candi Jawi budaya); samePlaceDomains as in onePlaceCard.
+		if source != target && samePlaceDomains[src.SourceType] && samePlaceDomains[dst.SourceType] && origin.PlaceID != 0 && c.PlaceID == origin.PlaceID {
+			continue
+		}
 		sim := sims[c.ID]
 		score, reasons := scoreRecommendation(origin, c, sim, source == target, dst.SourceType == "news", verifications[c.ID], now)
-		list = append(list, scored{c, score, sim, reasons})
+		list = append(list, rankedItem{dst, c, score, sim, verifications[c.ID], reasons})
 	}
+	sortRanked(list)
+	if len(list) > limit {
+		list = list[:limit]
+	}
+	return r.buildCards(ctx, list)
+}
+
+// rankedItem is one scored candidate of a domain, before its card is built.
+type rankedItem struct {
+	domain       recDomain
+	row          recRow
+	score, sim   float64
+	verification string
+	reasons      []string
+}
+
+// sortRanked orders by score, highest first; equal scores by name, so the order is stable.
+func sortRanked(list []rankedItem) {
 	sort.SliceStable(list, func(i, j int) bool {
 		if list[i].score != list[j].score {
 			return list[i].score > list[j].score
 		}
 		return list[i].row.Name < list[j].row.Name
 	})
-	if len(list) > limit {
-		list = list[:limit]
-	}
+}
+
+// buildCards turns ranked items, of one or several domains, into recommendation cards in the same order.
+func (r *Recommender) buildCards(ctx context.Context, list []rankedItem) ([]Recommendation, error) {
 	keys := make([]SourceKey, 0, len(list))
+	byDomain := map[string][]recRow{}
+	domains := map[string]recDomain{}
 	for _, s := range list {
-		keys = append(keys, SourceKey{dst.SourceType, s.row.ID})
+		keys = append(keys, SourceKey{s.domain.SourceType, s.row.ID})
+		byDomain[s.domain.SourceType] = append(byDomain[s.domain.SourceType], s.row)
+		domains[s.domain.SourceType] = s.domain
 	}
 	cards, err := LoadSourceCards(ctx, r.DB, keys)
 	if err != nil {
 		return nil, err
 	}
-	sources, err := r.sourceNames(ctx, dst, list2rows(list, func(s scored) recRow { return s.row }))
-	if err != nil {
-		return nil, err
+	sources := map[string]map[int64]string{}
+	for sourceType, rows := range byDomain {
+		if sources[sourceType], err = r.sourceNames(ctx, domains[sourceType], rows); err != nil {
+			return nil, err
+		}
 	}
 	out := make([]Recommendation, 0, len(list))
 	for _, s := range list {
-		card := cards[SourceKey{dst.SourceType, s.row.ID}]
-		item := Recommendation{Type: dst.Name, Slug: card.Slug, Name: s.row.Name, Summary: card.Summary, Category: card.CategoryLabel, ThumbnailURL: card.ThumbnailURL, VerificationStatus: verifications[s.row.ID], Score: round3(s.score), Similarity: round3(s.sim), Reasons: s.reasons}
-		if dst.SourceType == "news" {
+		d := s.domain
+		card := cards[SourceKey{d.SourceType, s.row.ID}]
+		item := Recommendation{Type: d.Name, Slug: card.Slug, Name: s.row.Name, Summary: card.Summary, Category: card.CategoryLabel, ThumbnailURL: card.ThumbnailURL, VerificationStatus: s.verification, Score: round3(s.score), Similarity: round3(s.sim), Reasons: s.reasons}
+		if d.SourceType == "news" {
 			item.ID = s.row.ID
 		} else {
 			item.Location = &RecommendationLocation{District: s.row.District, Regency: s.row.Regency, Zone: s.row.zone()}
 		}
-		if name := sources[s.row.ID]; name != "" {
+		if name := sources[d.SourceType][s.row.ID]; name != "" {
 			item.Source = &name
 		}
 		if item.Reasons == nil {
@@ -200,10 +227,94 @@ func (r *Recommender) Recommend(ctx context.Context, source, key, target string,
 	return out, nil
 }
 
-func list2rows[T any](list []T, f func(T) recRow) []recRow {
-	out := make([]recRow, 0, len(list))
-	for _, x := range list {
-		out = append(out, f(x))
+// DefaultRecommendThreshold is the similarity a text recommendation needs when RECOMMEND_RELEVANCE_THRESHOLD is unset:
+// chosen for gemini-embedding-001, the primary embedding model (OVERRIDE-RAG-007), by TestTravelRecommendationThreshold
+// Evaluation on 2026-11-09 (17 queries, labels from the category, type, and name columns). At 0.61 the 5 off-topic
+// queries got no card (highest 0.604) and keyword precision was 100%; the chat threshold 0.66 left 5 of 12 relevant
+// queries empty, and 0.60 or lower let off-topic cards through. Only "candi" (top 0.599) stayed empty.
+const DefaultRecommendThreshold = 0.61
+
+// recommendThreshold is RECOMMEND_RELEVANCE_THRESHOLD when it is valid, otherwise DefaultRecommendThreshold.
+func recommendThreshold() float64 {
+	if t := config.RecommendThreshold(); t > 0 && t < 1 {
+		return t
+	}
+	return DefaultRecommendThreshold
+}
+
+// RecommendByText turns the results of a travel semantic search (Retriever.SearchTravelContent) into recommendation
+// cards, ordered by the cosine similarity of each item to the user's text, highest first (jobdesk 9 Nov point 3; Owner:
+// order by similarity only). Each card reads the item's own published row, so it carries the same public fields as
+// the item recommendations (name, slug, summary, category, thumbnail, location, source, verification). Only items that
+// loadCandidates accepts are kept: published content, events still running or upcoming. A place that is both a
+// destination and a culture item gets one card (onePlaceCard).
+func (r *Recommender) RecommendByText(ctx context.Context, results []SemanticResult, limit int) ([]Recommendation, error) {
+	now := time.Now()
+	if r.Now != nil {
+		now = r.Now()
+	}
+	threshold := recommendThreshold()
+	sims := map[string]map[int64]float64{}
+	for _, res := range results {
+		if res.Similarity < threshold {
+			continue
+		}
+		sourceType, id := pointerString(res.SourceType), pointerInt64Value(res.SourceID)
+		if sims[sourceType] == nil {
+			sims[sourceType] = map[int64]float64{}
+		}
+		if _, seen := sims[sourceType][id]; !seen {
+			sims[sourceType][id] = res.Similarity
+		}
+	}
+	var list []rankedItem
+	for _, d := range travelSearchDomains {
+		domain := recDomains[d.Name]
+		found := sims[domain.SourceType]
+		if len(found) == 0 {
+			continue
+		}
+		candidates, err := r.loadCandidates(ctx, domain, found, now)
+		if err != nil {
+			return nil, err
+		}
+		verifications, err := r.verificationStatuses(ctx, domain, candidates)
+		if err != nil {
+			return nil, err
+		}
+		for _, c := range candidates {
+			if sim, ok := found[c.ID]; ok {
+				list = append(list, rankedItem{domain, c, sim, sim, verifications[c.ID], nil})
+			}
+		}
+	}
+	sortRanked(list)
+	list = onePlaceCard(list)
+	// The count bound is set by the caller (point 4); a limit below 1 cuts nothing rather than panicking.
+	if limit > 0 && len(list) > limit {
+		list = list[:limit]
+	}
+	return r.buildCards(ctx, list)
+}
+
+// samePlaceDomains are the domains that describe a place itself: one site can be both a destination and a culture
+// item on the same places row (F2, jobdesk 9 Nov point 6: 9 published pairs, e.g. Candi Keboireng). A culinary business
+// or an event at a place is something else, and two events can share a venue, so those are never merged.
+var samePlaceDomains = map[string]bool{"destination": true, "culture": true}
+
+// onePlaceCard keeps, of the destination and culture items on one place, only the first of list (ordered, so the most
+// similar); the other items keep their order.
+func onePlaceCard(list []rankedItem) []rankedItem {
+	seen := map[int64]bool{}
+	out := list[:0]
+	for _, s := range list {
+		if samePlaceDomains[s.domain.SourceType] && s.row.PlaceID != 0 {
+			if seen[s.row.PlaceID] {
+				continue
+			}
+			seen[s.row.PlaceID] = true
+		}
+		out = append(out, s)
 	}
 	return out
 }
@@ -254,7 +365,7 @@ func scoreRecommendation(origin, c recRow, similarity float64, sameDomain, news 
 // recSelect returns the scoring columns of a domain table aliased t.
 func recSelect(d recDomain) string {
 	if d.SourceType == "news" {
-		return `SELECT t.id, COALESCE(t.slug,'') AS slug, t.title AS name, CAST(t.category_id AS TEXT) AS category_key, false AS featured, '' AS keyakinan, '' AS district, '' AS regency, '' AS region_name, COALESCE(t.source,'') AS source_name, t.created_at FROM news t WHERE t.status = 'published'`
+		return `SELECT t.id, COALESCE(t.slug,'') AS slug, t.title AS name, CAST(t.category_id AS TEXT) AS category_key, false AS featured, '' AS keyakinan, '' AS district, '' AS regency, '' AS region_name, COALESCE(t.source,'') AS source_name, t.created_at, 0 AS place_id FROM news t WHERE t.status = 'published'`
 	}
 	keyakinan, region, join := "COALESCE(t.keyakinan,'')", "''", ""
 	switch d.SourceType {
@@ -263,7 +374,7 @@ func recSelect(d recDomain) string {
 	case "destination":
 		region, join = "COALESCE(r.name,'')", " LEFT JOIN regions r ON r.id = t.region_id"
 	}
-	return `SELECT t.id, t.slug, t.name, CAST(t.` + d.CategoryColumn + ` AS TEXT) AS category_key, t.featured, ` + keyakinan + ` AS keyakinan, COALESCE(p.district,'') AS district, COALESCE(p.regency,'') AS regency, ` + region + ` AS region_name, '' AS source_name, t.created_at FROM ` + d.Table + ` t LEFT JOIN places p ON p.id = t.place_id` + join + ` WHERE t.status = 'published'`
+	return `SELECT t.id, t.slug, t.name, CAST(t.` + d.CategoryColumn + ` AS TEXT) AS category_key, t.featured, ` + keyakinan + ` AS keyakinan, COALESCE(p.district,'') AS district, COALESCE(p.regency,'') AS regency, ` + region + ` AS region_name, '' AS source_name, t.created_at, COALESCE(t.place_id, 0) AS place_id FROM ` + d.Table + ` t LEFT JOIN places p ON p.id = t.place_id` + join + ` WHERE t.status = 'published'`
 }
 
 func (r *Recommender) loadSource(ctx context.Context, d recDomain, key string) (recRow, error) {
@@ -287,7 +398,8 @@ func (r *Recommender) loadSource(ctx context.Context, d recDomain, key string) (
 }
 
 // loadCandidates reads the published items of the target domain: news only among the nearest vectors (the table
-// grows every fetch), travel domains completely (tens of rows). Events must still run or be upcoming.
+// grows every fetch), travel domains completely (tens of rows). Events must still run or be upcoming; destinations and
+// culinary places must not be closed (operatingSQL).
 func (r *Recommender) loadCandidates(ctx context.Context, d recDomain, sims map[int64]float64, now time.Time) ([]recRow, error) {
 	q := recSelect(d)
 	var args []any
@@ -303,8 +415,10 @@ func (r *Recommender) loadCandidates(ctx context.Context, d recDomain, sims map[
 		q += ` AND t.id IN ?`
 		args = append(args, ids)
 	case "event":
-		q += ` AND EXISTS (SELECT 1 FROM event_occurrences o WHERE o.event_id = t.id AND (o.ends_at >= ? OR (o.ends_at IS NULL AND (o.starts_at >= ? OR o.status = 'ongoing'))))`
+		q += ` AND ` + upcomingOccurrenceSQL("t.id")
 		args = append(args, now, now)
+	case "destination", "culinary":
+		q += ` AND ` + operatingSQL("t")
 	}
 	var rows []recRow
 	err := r.DB.WithContext(ctx).Raw(q, args...).Scan(&rows).Error
@@ -372,7 +486,7 @@ func (r *Recommender) vectorSimilarity(ctx context.Context, sourceType string, s
 		return out, nil
 	}
 	err := r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Exec("SET LOCAL hnsw.iterative_scan = strict_order").Error; err != nil {
+		if err := setHNSWSearch(tx); err != nil {
 			return err
 		}
 		var origin []struct {

@@ -139,13 +139,12 @@ func ConnectDB() {
 	if DB.Migrator().HasTable("verifiy_otps") && !DB.Migrator().HasTable("verify_otps") {
 		_ = DB.Migrator().RenameTable("verifiy_otps", "verify_otps")
 	}
+	dropRemovedTables(DB)
 
 	err = DB.AutoMigrate(
 		&models.User{},
 		&models.Category{},
 		&models.News{},
-		&models.ArticleCategory{},
-		&models.Article{},
 		&models.NewsImage{},
 		&models.Notification{},
 		&models.Province{},
@@ -224,7 +223,7 @@ func ConnectDB() {
 
 	if dbDriver == "postgres" || dbDriver == "postgresql" || os.Getenv("DB_HOST") != "" {
 		_ = DB.Exec("SELECT setval(pg_get_serial_sequence('news_images', 'id'), coalesce(max(id), 1)) FROM news_images;").Error
-		_ = DB.Exec("SELECT setval(pg_get_serial_sequence('news', 'id'), coalesce(max(id), 1)) FROM news;").Error
+		_ = DB.Exec(sequenceCatchUpSQL("news")).Error
 	}
 
 	if os.Getenv("RUN_STARTUP_SEED") == "true" {
@@ -235,6 +234,42 @@ func ConnectDB() {
 	} else {
 		log.Println("[Seed] Startup seed disabled; use explicit seed commands or RUN_STARTUP_SEED=true")
 	}
+}
+
+// removedTables were dropped from the models (Owner 2026-11-09: news is served by the news table); listed so that a
+// child table goes before its parent (articles references article_categories). AutoMigrate never drops a table.
+var removedTables = []string{"articles", "article_categories"}
+
+// dropRemovedTables drops each removed table that still exists and is empty, so staging and production lose them at the
+// next start without a manual step. A table that holds rows is kept and reported: no data is deleted automatically.
+func dropRemovedTables(db *gorm.DB) {
+	for _, table := range removedTables {
+		if !db.Migrator().HasTable(table) {
+			continue
+		}
+		var rows int64
+		if err := db.Table(table).Count(&rows).Error; err != nil {
+			log.Printf("[Database] %s not dropped: %v", table, err)
+			continue
+		}
+		if rows > 0 {
+			log.Printf("[Database] %s holds %d rows; kept, drop it by hand after a backup", table, rows)
+			continue
+		}
+		if err := db.Migrator().DropTable(table); err != nil {
+			log.Printf("[Database] %s not dropped: %v", table, err)
+			continue
+		}
+		log.Printf("[Database] dropped empty removed table %s", table)
+	}
+}
+
+// sequenceCatchUpSQL moves the id sequence of a table up to its highest id (rows may have been copied in with explicit
+// ids) and never back: setting it to max(id) on every process start gave the id of a deleted newest news item to the next
+// fetched one, so old links and chat sources pointed at another article (W1, jobdesk 6 Nov, 2026-11-06).
+func sequenceCatchUpSQL(table string) string {
+	sequence := fmt.Sprintf("pg_get_serial_sequence('%s', 'id')", table)
+	return fmt.Sprintf("SELECT setval(%s, GREATEST(coalesce(max(id), 1), coalesce(pg_sequence_last_value(%s::regclass), 1))) FROM %s;", sequence, sequence, table)
 }
 
 func SeedDatabase() {

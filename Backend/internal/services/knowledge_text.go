@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -49,6 +50,14 @@ func bodyText(shortDescription, description string) string {
 	return shortDescription
 }
 
+// operationalStatusLabels are the Indonesian words of the schema.md operational status codes (§12, Owner 2026-11-09):
+// the corpus feeds the answers, which use plain Indonesian without codes. "unknown" and other values give no line.
+var operationalStatusLabels = map[string]string{"open": "Buka", "temporarily_closed": "Tutup sementara", "closed": "Tutup permanen"}
+
+func operationalStatusLabel(code string) string {
+	return operationalStatusLabels[strings.TrimSpace(code)]
+}
+
 func appendLine(b *strings.Builder, label, value string) {
 	if strings.TrimSpace(value) != "" {
 		b.WriteString("\n" + label + ": " + value)
@@ -65,11 +74,55 @@ func appendPlace(b *strings.Builder, place *models.Place, region string) {
 	}
 }
 
+var indonesianWeekdays = [7]string{"Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"}
+
+// openingHoursText writes the opening_hours rows as one line: "setiap hari 08.00–17.00 WIB" when every day is the same,
+// else one part per day ("Senin 08.00–17.00 WIB, Minggu tutup"). Owner 2026-11-09: the seed hours are used as they are,
+// without a sample-data label, until the Owner replaces them.
+func openingHoursText(hours []models.OpeningHour) string {
+	if len(hours) == 0 {
+		return ""
+	}
+	sorted := append([]models.OpeningHour(nil), hours...)
+	sort.Slice(sorted, func(i, j int) bool { return sorted[i].DayOfWeek < sorted[j].DayOfWeek })
+	day := func(h models.OpeningHour) string {
+		switch {
+		case h.IsClosed:
+			return "tutup"
+		case h.Is24Hours:
+			return "24 jam"
+		default:
+			return h.OpensAt.In(wib).Format("15.04") + "–" + h.ClosesAt.In(wib).Format("15.04") + " WIB"
+		}
+	}
+	same := len(sorted) == 7
+	for _, h := range sorted[1:] {
+		same = same && day(h) == day(sorted[0])
+	}
+	if same {
+		return "setiap hari " + day(sorted[0])
+	}
+	// Monday first, Sunday last, as Indonesian schedules are read.
+	var parts []string
+	for _, i := range []int{1, 2, 3, 4, 5, 6, 0} {
+		for _, h := range sorted {
+			if h.DayOfWeek == i {
+				parts = append(parts, indonesianWeekdays[i]+" "+day(h))
+			}
+		}
+	}
+	return strings.Join(parts, ", ")
+}
+
 func culinaryKnowledgeText(c models.Culinary, region string) string {
 	var b strings.Builder
 	b.WriteString(bodyText(c.ShortDescription, c.Description))
 	appendLine(&b, "Jenis", c.CulinaryType)
+	appendLine(&b, "Status operasional", operationalStatusLabel(c.OperationalStatus))
 	appendPlace(&b, c.Place, region)
+	appendLine(&b, "Jam buka", openingHoursText(c.Hours))
+	// The seed price range is used as it is during development (Owner 2026-11-09), like the opening hours.
+	appendLine(&b, "Kisaran harga", c.PriceRange)
 	for _, menu := range c.Menus {
 		b.WriteString("\nMenu " + sampleDataLabel + ": " + menu.Name)
 		if menu.Category != "" {
@@ -129,7 +182,8 @@ func destinationKnowledgeText(d models.Destination) string {
 	var b strings.Builder
 	b.WriteString(bodyText(d.ShortDescription, d.Description))
 	appendLine(&b, "Kategori", d.TravelCategory.Name)
-	appendLine(&b, "Status operasional", d.OperationalStatus)
+	appendLine(&b, "Status operasional", operationalStatusLabel(d.OperationalStatus))
+	appendLine(&b, "Jam buka", openingHoursText(d.Hours))
 	appendLine(&b, "Alamat", d.Place.Address)
 	var area []string
 	for _, part := range []string{d.Place.Village, d.Place.District, d.Place.Regency} {

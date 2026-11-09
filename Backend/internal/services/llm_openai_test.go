@@ -168,13 +168,19 @@ func TestEmbedSettingsDefaultToChatAPIAndChatProvider(t *testing.T) {
 	}
 }
 
-func TestDevelopmentOllamaConfigIsUnchanged(t *testing.T) {
-	for _, k := range []string{"LLM_PROVIDER", "EMBED_PROVIDER", "LLM_API_BASE_URL", "LLM_API_KEY", "LLM_CHAT_MODEL", "EMBED_MODEL"} {
+// T17 (Owner 2026-11-08): an empty LLM_PROVIDER is Gemini for chat and embedding (OVERRIDE-RAG-007), and its
+// missing key is named; an explicit LLM_PROVIDER=ollama keeps the local Ollama setup.
+func TestEmptyProviderIsGeminiAndOllamaStaysAvailable(t *testing.T) {
+	for _, k := range []string{"LLM_PROVIDER", "EMBED_PROVIDER", "LLM_API_BASE_URL", "LLM_API_KEY", "LLM_CHAT_MODEL", "EMBED_MODEL", "GEMINI_API_KEY"} {
 		t.Setenv(k, "")
 	}
+	if c := config.LoadLLM(); c.Primary != config.ProviderGemini || c.Embed != config.ProviderGemini || c.Validate() == nil || !strings.Contains(c.Validate().Error(), "GEMINI_API_KEY") {
+		t.Fatalf("empty provider: %+v, validate %v", c, c.Validate())
+	}
+	t.Setenv("LLM_PROVIDER", "ollama")
 	c := config.LoadLLM()
 	if c.Primary != config.ProviderOllama || c.Embed != config.ProviderOllama || c.Validate() != nil {
-		t.Fatalf("development defaults changed: %+v", c)
+		t.Fatalf("ollama setup changed: %+v", c)
 	}
 	p, err := NewLLMFromEnv()
 	if err != nil || p.Name() != "ollama:gemma3:4b" || EmbeddingModelOf(p) != "embeddinggemma" {

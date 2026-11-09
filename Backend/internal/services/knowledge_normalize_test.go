@@ -42,7 +42,7 @@ func TestSaveKnowledgeStoresNormalizedTextOnce(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.Exec(`CREATE TABLE IF NOT EXISTS faq_knowledge_bases (id INTEGER PRIMARY KEY, question TEXT, answer TEXT, category TEXT, source_type TEXT, source_id INTEGER, source_label TEXT, source_url TEXT, is_active NUMERIC, embedding TEXT, embedding_model TEXT, embedding_updated_at DATETIME, metadata BLOB, created_at DATETIME, updated_at DATETIME)`).Error; err != nil {
+	if err := db.Exec(`CREATE TABLE IF NOT EXISTS faq_knowledge_bases (id INTEGER PRIMARY KEY, question TEXT, answer TEXT, category TEXT, source_type TEXT, source_id INTEGER, source_label TEXT, source_url TEXT, is_active NUMERIC, embedding TEXT, embedding_model TEXT, embedding_updated_at DATETIME, embedding_status TEXT NOT NULL DEFAULT 'completed', embedding_attempts INTEGER NOT NULL DEFAULT 0, embedding_error TEXT, embedding_next_retry_at DATETIME, metadata BLOB, created_at DATETIME, updated_at DATETIME)`).Error; err != nil {
 		t.Fatal(err)
 	}
 	p := &recordingEmbedder{}

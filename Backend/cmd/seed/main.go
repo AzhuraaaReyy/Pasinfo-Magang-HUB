@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -14,28 +15,35 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/gorm"
 
+	"wildan-news-backend/internal/config"
 	"wildan-news-backend/internal/database"
 	"wildan-news-backend/internal/models"
 	"wildan-news-backend/internal/services"
 )
 
 type item struct {
-	// PlaceID stays untagged: tagging it would change how existing places are matched.
-	Slug, Name, Status, PlaceID, Source string
-	ShortDescription                    string `json:"short_description"`
-	CulinaryType                        string `json:"culinary_type"`
-	CultureType                         string `json:"culture_type"`
-	HistoricalPeriod                    string `json:"historical_period"`
-	Keyakinan                           string `json:"keyakinan"`
-	EventType                           string `json:"event_type"`
-	Description                         json.RawMessage
-	RegionID, CategoryID                string
-	Featured                            bool
+	Slug, Name, Status, Source string
+	// PlaceID is the Google place id of the seed file. It was untagged until 2026-11-09, so it was always empty and
+	// place() matched every new item to the first place with an empty id (place 1, Penanjakan Bromo).
+	PlaceID              string `json:"place_id"`
+	ShortDescription     string `json:"short_description"`
+	CulinaryType         string `json:"culinary_type"`
+	CultureType          string `json:"culture_type"`
+	HistoricalPeriod     string `json:"historical_period"`
+	Keyakinan            string `json:"keyakinan"`
+	EventType            string `json:"event_type"`
+	Description          json.RawMessage
+	RegionID, CategoryID string
+	Featured             bool
 
 	Place struct {
-		Name, Address, MapURL string
-		Latitude, Longitude   float64
+		Name, Address       string
+		MapURL              string `json:"map_url"`
+		Latitude, Longitude float64
 	} `json:"place"`
+	// Address is the item's own address (kuliner, budaya), used when its place has none.
+	Address           string                     `json:"address"`
+	GoogleMapsURL     string                     `json:"googleMapsUrl"`
 	Verification      struct{ Status *string }   `json:"verification"`
 	OpeningHours      string                     `json:"opening_hours"`
 	Prices            []string                   `json:"prices"`
@@ -107,16 +115,52 @@ func main() {
 	flag.Parse()
 	database.ConnectDB()
 	if *backfill {
-		runBackfill(*dryRun)
+		if runBackfill(*dryRun) {
+			refreshCorpusAfterSeed()
+		}
 		return
 	}
 	if e := database.DB.Transaction(seed); e != nil {
 		panic(e)
 	}
 	fmt.Println("seed completed")
+	refreshCorpusAfterSeed()
 }
 
-func runBackfill(dryRun bool) {
+// refreshCorpusAfterSeed embeds the seeded travel data at once with the corpus worker of the API (jobdesk 6 Nov P1-1,
+// Owner option B, 2026-11-06): travel data has no write API, so without this it waited for the API's next scheduled run.
+// The seed has already succeeded, so a missing or busy provider only prints a note.
+func refreshCorpusAfterSeed() {
+	c := config.LoadLLM()
+	if e := c.Validate(); e != nil {
+		fmt.Printf("corpus refresh skipped (provider not configured: %v); the API worker embeds the data at its next run\n", e)
+		return
+	}
+	p := services.NewRetryProvider(services.NewEmbedProvider(c, c.Embed), c.Retries)
+	fmt.Println(refreshCorpus(database.DB, p, filepath.Join("cmd", "seed", "data")))
+}
+
+// refreshCorpus runs one corpus refresh and describes the result in one line.
+func refreshCorpus(db *gorm.DB, p services.LLMProvider, seedRoot string) string {
+	healthCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if e := services.ProviderHealth(healthCtx, p); e != nil {
+		return fmt.Sprintf("corpus refresh skipped (embedding provider not reachable: %v); the API worker embeds the data at its next run", e)
+	}
+	ctx, cancelRun := context.WithTimeout(context.Background(), 30*time.Minute)
+	defer cancelRun()
+	stats, e := services.RefreshKnowledge(ctx, db, p, seedRoot)
+	switch {
+	case errors.Is(e, services.ErrRefreshInProgress):
+		return "corpus refresh skipped: the API worker is refreshing now and includes the seeded data"
+	case e != nil:
+		return fmt.Sprintf("corpus refresh failed (%v); the API worker retries at its next run", e)
+	}
+	return fmt.Sprintf("corpus refreshed: embedded=%d unchanged=%d deactivated=%d failed=%d deferred=%d", stats.Embedded, stats.Skipped, stats.Deactivated, stats.Failed, stats.Deferred)
+}
+
+// runBackfill applies the seed backfill and reports whether it committed (a dry run never does).
+func runBackfill(dryRun bool) bool {
 	root := filepath.Join("cmd", "seed", "data")
 	var src backfillSource
 	var wisata struct {
@@ -159,11 +203,12 @@ func runBackfill(dryRun bool) {
 	switch {
 	case dryRun && errors.Is(err, errDryRun):
 		fmt.Println("backfill dry run: rolled back")
+		return false
 	case err != nil:
 		panic(err)
-	default:
-		fmt.Println("backfill committed")
 	}
+	fmt.Println("backfill committed")
+	return true
 }
 func seed(tx *gorm.DB) error {
 	seedRoot := filepath.Join("cmd", "seed", "data")
@@ -203,7 +248,7 @@ func seed(tx *gorm.DB) error {
 		cm[x.Slug] = x.ID
 	}
 	for _, x := range base.Destinations {
-		p, e := place(tx, x)
+		p, e := place(tx, "destinations", x)
 		if e != nil {
 			return e
 		}
@@ -239,6 +284,9 @@ func seed(tx *gorm.DB) error {
 			if e = tx.Where("mediable_type = ? AND mediable_id = ? AND url = ?", "Destination", row.ID, m.URL).FirstOrCreate(&m).Error; e != nil {
 				return e
 			}
+		}
+		if e = seedOpeningHours(tx, "Destination", row.ID, x.OpeningHours); e != nil {
+			return e
 		}
 		if x.Weather != nil {
 			x.Weather.DestinationID = row.ID
@@ -285,7 +333,7 @@ func seed(tx *gorm.DB) error {
 			return e
 		}
 		for _, x := range xs {
-			p, e := place(tx, x)
+			p, e := place(tx, f.Key, x)
 			if e != nil {
 				return e
 			}
@@ -311,6 +359,9 @@ func seed(tx *gorm.DB) error {
 							if e != nil {
 								break
 							}
+						}
+						if e == nil {
+							e = seedOpeningHours(tx, "Culinary", v.ID, x.OpeningHours)
 						}
 						if e == nil {
 							e = linkID(tx, src, "Culinary", v.ID, x.Verification.Status)
@@ -376,16 +427,42 @@ func descriptionText(raw json.RawMessage) string {
 }
 
 func now() *time.Time { t := time.Now(); return &t }
-func place(tx *gorm.DB, x item) (models.Place, error) {
+
+// place returns the place of a seed item. Content that already exists keeps its place (its row is matched by slug), so
+// a rerun creates no place. New content reuses the place with the same Google place id, or gets a new place; an empty id
+// is never looked up (it matched place 1 for every new item until 2026-11-09).
+func place(tx *gorm.DB, table string, x item) (models.Place, error) {
 	var p models.Place
+	var existing struct{ PlaceID *uint }
+	if e := tx.Table(table).Select("place_id").Where("slug = ?", x.Slug).Limit(1).Scan(&existing).Error; e != nil {
+		return p, e
+	}
+	if existing.PlaceID != nil {
+		return p, tx.First(&p, *existing.PlaceID).Error
+	}
+	address := x.Place.Address
+	if address == "" {
+		address = x.Address
+	}
 	// A new place gets its village, kecamatan, and Kota/Kabupaten from the address (T1, 2026-11-03).
-	village, district := services.ParseLocation(x.Place.Address)
+	village, district := services.ParseLocation(address)
 	regency := services.RegencyOfZone(services.ZoneOfDistrict(district))
 	if regency == "" {
 		regency = regencyOfRegionID(x.RegionID)
 	}
-	e := tx.Where("google_place_id=?", x.PlaceID).FirstOrCreate(&p, models.Place{GooglePlaceID: x.PlaceID, Name: x.Place.Name, Address: x.Place.Address, Village: village, District: district, Regency: regency, Latitude: x.Place.Latitude, Longitude: x.Place.Longitude, MapURL: x.Place.MapURL}).Error
-	return p, e
+	p = models.Place{GooglePlaceID: x.PlaceID, Name: x.Place.Name, Address: address, Village: village, District: district, Regency: regency, Latitude: x.Place.Latitude, Longitude: x.Place.Longitude, MapURL: x.mapURL()}
+	if x.PlaceID != "" {
+		return p, tx.Where("google_place_id = ?", x.PlaceID).FirstOrCreate(&p).Error
+	}
+	return p, tx.Create(&p).Error
+}
+
+// mapURL is the map link of a seed item: the place's own link, or the item's Google Maps link.
+func (x item) mapURL() string {
+	if x.Place.MapURL != "" {
+		return x.Place.MapURL
+	}
+	return x.GoogleMapsURL
 }
 func link(tx *gorm.DB, typ string, id uint, name string, status *string) error {
 	var s models.TravelSource

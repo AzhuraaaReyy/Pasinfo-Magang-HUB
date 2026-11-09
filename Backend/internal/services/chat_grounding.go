@@ -12,7 +12,7 @@ import (
 )
 
 // noSourceFallbackAnswer replaces a no-source reply that named a place absent from the context.
-const noSourceFallbackAnswer = "Maaf, informasi tersebut belum tersedia di database kami. Saya bisa membantu mencari informasi wisata, kuliner, budaya, acara, atau berita di Pasuruan berdasarkan nama tempat, kategori, atau wilayah yang tersedia."
+const noSourceFallbackAnswer = "Mohon maaf, informasi tersebut belum tersedia di database kami. Saya siap membantu mencari informasi wisata, kuliner, budaya, acara, atau berita di Pasuruan berdasarkan nama tempat, kategori, atau wilayahnya."
 
 // sampleDataNote is appended when sample prices, facilities, or menus were given to the model.
 const sampleDataNote = "\n\nCatatan: informasi harga, fasilitas, atau menu di atas masih data contoh dan belum terverifikasi, jadi sebaiknya dicek kembali ke pengelola tempat."
@@ -55,13 +55,12 @@ func withItineraryNote(answer, question string, grounding map[string]any, hasCon
 	return answer + itineraryNote
 }
 
-var facilityQuestionPattern = regexp.MustCompile(`(?i)\bfasilitas(nya)?\b`)
-
 // withoutUnsupportedFacilities answers a facility question with "not available" when no context document has
 // a Fasilitas line: gemma3:4b listed a menu as facilities despite the prompt rule (J4-10, 2026-11-02). The
-// note offers the fields the documents do hold.
-func withoutUnsupportedFacilities(answer, question string, included []SemanticResult, grounding map[string]any) string {
-	if len(included) == 0 || !facilityQuestionPattern.MatchString(question) {
+// note offers the fields the documents do hold. asksFacility is the reader plan's info=facility (T15, audit 2026-11-08):
+// the former keyword "fasilitas" missed 7 facility questions in the DB and matched 6 pasted answers that were not.
+func withoutUnsupportedFacilities(answer string, asksFacility bool, included []SemanticResult, grounding map[string]any) string {
+	if len(included) == 0 || !asksFacility {
 		return answer
 	}
 	var names []string
@@ -119,7 +118,8 @@ var (
 	inlineDomainLabelPattern = regexp.MustCompile(`[ \t]*\(?\**(?i:DOMA?I?N)\**[ \t]*:\**[ \t]*(?:Wisata \(destinasi\)|Informasi umum \(wilayah\)|Kuliner|Budaya|Acara|Berita|Informasi)\**\)?`)
 	// openingClaimPattern finds a statement of when a place is open ("buka setiap hari", "buka pada
 	// pagi hari", "beroperasi mulai pukul …").
-	openingClaimPattern = regexp.MustCompile(`(?i)\b(?:buka|beroperasi|tutup)\s+(?:setiap|tiap|pada|mulai|sejak|dari|pukul|jam|sampai|hingga|24|sepanjang|hanya)\b`)
+	// "Jam buka … 08.00 hingga 16.00" (gemma3:4b, shadow test 2026-11-06) states the hours as a time range.
+	openingClaimPattern = regexp.MustCompile(`(?i)\b(?:buka|beroperasi|tutup)\s+(?:setiap|tiap|pada|mulai|sejak|dari|pukul|jam|sampai|hingga|24|sepanjang|hanya)\b|\bjam\s+(?:buka|operasional)\b[^.\n]*\b\d{1,2}[.:]\d{2}\b`)
 	// spaceRun closes gaps left inside a line by removed IDs; leading indentation is kept.
 	spaceRun = regexp.MustCompile(`(\S)[ \t]{2,}`)
 )
@@ -162,7 +162,7 @@ func groundAnswer(answer string, intent ChatIntent, rag ragContext, candidates [
 	answer = strings.TrimSpace(spaceRun.ReplaceAllString(answer, "$1 "))
 	answer = strings.TrimSpace(strings.TrimRight(answer, "` \n"))
 
-	problems := groundingProblems(answer, intent, included, candidates, allowedText)
+	problems := groundingProblems(answer, intent, included, candidates, allowedText, rag.Found)
 	report := map[string]any{"valid": len(problems) == 0, "problems": problems, "cleaned": cleaned, "fallback": false}
 	if len(problems) > 0 {
 		answer = groundedFallback(intent, rag)
@@ -188,8 +188,38 @@ func groundAnswer(answer string, intent ChatIntent, rag ragContext, candidates [
 			report["unverified_note"] = true
 		}
 	}
-	report["used_sources"] = mentionedLabels(answer, included)
+	used := mentionedLabels(answer, included)
+	// A grounded answer from a context with one source states that source's facts even when it names it only as "di
+	// sana" or "upacara ini" (74 such DB answers, T14 option, Owner 2026-11-08). An answer that says the information is
+	// missing is not given a source line: the source did not hold it.
+	if label := singleSourceLabel(included); len(used) == 0 && report["fallback"] == false && label != "" && !saysUnavailable(answer) {
+		used = []string{label}
+		report["single_source"] = true
+	}
+	report["used_sources"] = used
 	return answer, report
+}
+
+// singleSourceLabel is the one source name of the context ("Candi Jawi" twice counts once), or "".
+func singleSourceLabel(included []SemanticResult) string {
+	label := ""
+	for _, doc := range included {
+		switch name := pointerString(doc.SourceLabel); {
+		case name == "" || name == label:
+		case label == "":
+			label = name
+		default:
+			return ""
+		}
+	}
+	return label
+}
+
+// saysUnavailable reports an answer that apologizes for or reports missing information (systemRules BAHASA asks for
+// "Mohon maaf," then; "belum tersedia" is the BATASAN wording).
+func saysUnavailable(answer string) bool {
+	lower := strings.ToLower(strings.TrimSpace(answer))
+	return strings.HasPrefix(lower, "mohon maaf") || strings.Contains(lower, "belum tersedia")
 }
 
 // danglingEndPattern matches a sentence left without its object after a document reference was
@@ -308,7 +338,10 @@ func sentenceBounds(text string, from, to int) (int, int) {
 	}
 	end := to
 	for end < len(text) && text[end] != '\n' {
-		if strings.ContainsRune(".!?", rune(text[end])) && !isListNumberDot(text, end) {
+		// The period of a time or number ("08.00") does not end a sentence: cutting there left "00." as the answer
+		// (regression 2026-11-06).
+		innerDot := text[end] == '.' && end > 0 && end+1 < len(text) && isASCIIDigit(text[end-1]) && isASCIIDigit(text[end+1])
+		if !innerDot && strings.ContainsRune(".!?", rune(text[end])) && !isListNumberDot(text, end) {
 			end++
 			break
 		}
@@ -316,6 +349,8 @@ func sentenceBounds(text string, from, to int) (int, int) {
 	}
 	return start, end
 }
+
+func isASCIIDigit(c byte) bool { return c >= '0' && c <= '9' }
 
 // isListNumberDot reports whether text[dot] is the period of a line-leading list number ("  12.").
 func isListNumberDot(text string, dot int) bool {
@@ -372,7 +407,9 @@ func hasBoldName(answer string) bool {
 	return false
 }
 
-func groundingProblems(answer string, intent ChatIntent, included, candidates []SemanticResult, allowedText string) []string {
+// found is the number of relevant documents the system found (ragContext.Found); the prompt states it as
+// JUMLAH_DOKUMEN_DITEMUKAN, so a count up to it is no overclaim even when fewer documents were sent (T08 F3).
+func groundingProblems(answer string, intent ChatIntent, included, candidates []SemanticResult, allowedText string, found int) []string {
 	var problems []string
 	if answer == "" {
 		return []string{"empty_answer"}
@@ -426,7 +463,7 @@ func groundingProblems(answer string, intent ChatIntent, included, candidates []
 		if match == nil || countExplanationPattern.MatchString(sentence) {
 			continue
 		}
-		if n, _ := strconv.Atoi(match[1]); n > len(included) {
+		if n, _ := strconv.Atoi(match[1]); n > max(len(included), found) {
 			problems = append(problems, "count_overclaim")
 			break
 		}
@@ -501,11 +538,23 @@ func mentionedLabels(answer string, included []SemanticResult) []string {
 		return len(pointerString(included[order[a]].SourceLabel)) > len(pointerString(included[order[b]].SourceLabel))
 	})
 	at := make(map[int]int) // included index → byte offset of its first mention
-	for _, i := range order {
-		label := strings.ToLower(pointerString(included[i].SourceLabel))
-		if pos := strings.Index(lower, label); label != "" && pos >= 0 {
+	mark := func(i int, name string) {
+		if pos := strings.Index(lower, name); name != "" && pos >= 0 {
 			at[i] = pos
-			lower = strings.ReplaceAll(lower, label, strings.Repeat(" ", len(label)))
+			lower = strings.ReplaceAll(lower, name, strings.Repeat(" ", len(name)))
+		}
+	}
+	for _, i := range order {
+		mark(i, strings.ToLower(pointerString(included[i].SourceLabel)))
+	}
+	// A name the answer shortens ("Bangil Carnival" for "Bangil Carnival (Pasuruan Carnival)") still names its source: 202
+	// of 704 grounded answers without a source line named such a short form (T14, audit 2026-11-08).
+	for _, i := range order {
+		if _, ok := at[i]; !ok {
+			// At least two words: a one-word short form ("Update" of "Update: banjir …") is too common to name a source.
+			if label, core := pointerString(included[i].SourceLabel), coreLabel(pointerString(included[i].SourceLabel)); core != label && len(strings.Fields(core)) >= 2 {
+				mark(i, strings.ToLower(core))
+			}
 		}
 	}
 	found := make([]int, 0, len(at))
@@ -529,9 +578,9 @@ func groundedFallback(intent ChatIntent, rag ragContext) string {
 	}
 	var b strings.Builder
 	switch {
-	case intent.isList() && intent.Requested > len(included) && rag.Found <= len(included):
+	case intent.isList() && !intent.DefaultCount && intent.Requested > len(included) && rag.Found <= len(included):
 		fmt.Fprintf(&b, "Saya baru menemukan %d pilihan yang sesuai dari %d yang Anda minta. Berikut pilihannya:\n", len(included), intent.Requested)
-	case intent.isList() && intent.Requested > len(included):
+	case intent.isList() && intent.Requested > len(included) && rag.Found > len(included):
 		fmt.Fprintf(&b, "Berikut %d pilihan yang bisa saya tampilkan dulu:\n", len(included))
 	case intent.isList():
 		fmt.Fprintf(&b, "Tentu, berikut %d pilihan yang bisa dipertimbangkan:\n", len(included))
@@ -546,9 +595,9 @@ func groundedFallback(intent ChatIntent, rag ragContext) string {
 		b.WriteString("\n")
 	}
 	if rag.Found > len(included) {
-		b.WriteString("\nMasih ada pilihan lain yang sesuai. Mau saya carikan lagi, atau saya jelaskan lebih detail salah satunya?")
+		b.WriteString("\nMasih ada pilihan lain yang sesuai. Apakah Anda ingin saya carikan lagi, atau saya jelaskan lebih detail salah satunya?")
 	} else {
-		b.WriteString("\nMau saya jelaskan lebih detail salah satunya?")
+		b.WriteString("\nApakah Anda ingin saya jelaskan lebih detail salah satunya?")
 	}
 	return b.String()
 }

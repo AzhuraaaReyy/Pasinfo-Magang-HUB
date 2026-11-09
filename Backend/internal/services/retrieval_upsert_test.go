@@ -25,10 +25,10 @@ func newKnowledgeTestDB(t *testing.T) *gorm.DB {
 		t.Fatal(err)
 	}
 	if err := db.AutoMigrate(&models.News{}, &models.Region{}, &models.TravelCategory{}, &models.Place{}, &models.Destination{}, &models.DestinationPrice{}, &models.Facility{},
-		&models.Culinary{}, &models.CulinaryMenu{}, &models.Culture{}, &models.Event{}, &models.EventOccurrence{}, &models.EventTicket{}, &models.Verification{}); err != nil {
+		&models.Culinary{}, &models.CulinaryMenu{}, &models.Culture{}, &models.Event{}, &models.EventOccurrence{}, &models.EventTicket{}, &models.Verification{}, &models.OpeningHour{}); err != nil {
 		t.Fatal(err)
 	}
-	if err := db.Exec(`CREATE TABLE faq_knowledge_bases (id INTEGER PRIMARY KEY, question TEXT, answer TEXT, category TEXT, source_type TEXT, source_id INTEGER, source_label TEXT, source_url TEXT, is_active NUMERIC, embedding TEXT, embedding_model TEXT, embedding_updated_at DATETIME, metadata BLOB, created_at DATETIME, updated_at DATETIME)`).Error; err != nil {
+	if err := db.Exec(`CREATE TABLE faq_knowledge_bases (id INTEGER PRIMARY KEY, question TEXT, answer TEXT, category TEXT, source_type TEXT, source_id INTEGER, source_label TEXT, source_url TEXT, is_active NUMERIC, embedding TEXT, embedding_model TEXT, embedding_updated_at DATETIME, embedding_status TEXT NOT NULL DEFAULT 'completed', embedding_attempts INTEGER NOT NULL DEFAULT 0, embedding_error TEXT, embedding_next_retry_at DATETIME, metadata BLOB, created_at DATETIME, updated_at DATETIME)`).Error; err != nil {
 		t.Fatal(err)
 	}
 	return db
@@ -195,15 +195,17 @@ func TestUpsertSourcesAddsVerificationStatusToCorpus(t *testing.T) {
 func TestLoadSourcesReturnsActiveDocumentsInOrder(t *testing.T) {
 	db := newKnowledgeTestDB(t)
 	for _, stmt := range []string{
-		`INSERT INTO faq_knowledge_bases (id, question, answer, category, source_type, source_id, source_label, is_active) VALUES (1, 'Taman Kota Pasuruan', 'Taman.', 'wisata', 'destination', 35, 'Taman Kota Pasuruan', 1)`,
-		`INSERT INTO faq_knowledge_bases (id, question, answer, category, source_type, source_id, source_label, is_active) VALUES (2, 'Hutan Mangrove', 'Mangrove.', 'wisata', 'destination', 36, 'Hutan Mangrove Kota Pasuruan', 1)`,
-		`INSERT INTO faq_knowledge_bases (id, question, answer, category, source_type, source_id, source_label, is_active) VALUES (3, 'Festival Mock', 'Mock.', 'acara', 'event', 1, 'Festival Mock', 0)`,
+		`INSERT INTO faq_knowledge_bases (id, question, answer, category, source_type, source_id, source_label, is_active, embedding) VALUES (1, 'Taman Kota Pasuruan', 'Taman.', 'wisata', 'destination', 35, 'Taman Kota Pasuruan', 1, '[0.1]')`,
+		`INSERT INTO faq_knowledge_bases (id, question, answer, category, source_type, source_id, source_label, is_active, embedding) VALUES (2, 'Hutan Mangrove', 'Mangrove.', 'wisata', 'destination', 36, 'Hutan Mangrove Kota Pasuruan', 1, '[0.1]')`,
+		`INSERT INTO faq_knowledge_bases (id, question, answer, category, source_type, source_id, source_label, is_active, embedding) VALUES (3, 'Festival Mock', 'Mock.', 'acara', 'event', 1, 'Festival Mock', 0, '[0.1]')`,
+		// A new source still waiting for its vector (jobdesk 5 Nov p4) must not reach the chat.
+		`INSERT INTO faq_knowledge_bases (id, question, answer, category, source_type, source_id, source_label, is_active, embedding_status) VALUES (4, 'Pantai Baru', 'Baru.', 'wisata', 'destination', 37, 'Pantai Baru', 1, 'pending')`,
 	} {
 		if err := db.Exec(stmt).Error; err != nil {
 			t.Fatal(err)
 		}
 	}
-	got, err := NewRetriever(db).LoadSources(context.Background(), []SourceRef{{"destination", 36}, {"event", 1}, {"destination", 99}, {"destination", 35}})
+	got, err := NewRetriever(db).LoadSources(context.Background(), []SourceRef{{"destination", 36}, {"event", 1}, {"destination", 99}, {"destination", 37}, {"destination", 35}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -592,12 +594,14 @@ func TestUpsertSourcesSkipsDocumentTheProviderRefuses(t *testing.T) {
 	if err := r.UpsertSources(context.Background(), &refusingEmbedder{err: &ProviderError{Provider: "ollama", Kind: "upstream", Status: 400, Message: "input refused"}}); err != nil {
 		t.Fatalf("refused document must not stop the refresh: %v", err)
 	}
-	rows := knowledgeRows(t, db)
-	if r.Stats.Failed != 1 || r.Stats.Embedded != 5 || len(rows) != 5 {
-		t.Fatalf("stats=%+v rows=%d", r.Stats, len(rows))
+	// Since jobdesk 5 Nov p4 the refused document is kept as a failed row without a vector, so it can be traced.
+	if r.Stats.Failed != 1 || r.Stats.Embedded != 5 || embeddingStatuses(t, db) != "completed=5 failed=1" {
+		t.Fatalf("stats=%+v statuses=%s", r.Stats, embeddingStatuses(t, db))
 	}
-	if _, ok := rows["news:Berita Uji"]; ok {
-		t.Fatal("refused document saved")
+	var vector *string
+	db.Raw(`SELECT embedding FROM faq_knowledge_bases WHERE source_type = 'news'`).Scan(&vector)
+	if vector != nil {
+		t.Fatal("refused document got a vector")
 	}
 	for _, outage := range []error{&ProviderError{Kind: "connection"}, &ProviderError{Kind: "upstream", Status: 503}, &ProviderError{Kind: "rate_limit", Status: 429}, &ProviderError{Kind: "timeout"}} {
 		if documentFailure(outage) {
@@ -644,7 +648,8 @@ func TestRequestKnowledgeRefreshNeverBlocks(t *testing.T) {
 }
 
 // jobdesk 4 Nov p5: a provider that cannot be reached stops the refresh with a ProviderError that names the document,
-// never the API key, and writes nothing.
+// never the API key, and saves no vector. Since the jobdesk 5 Nov audit (A1) an outage is not the document's failure:
+// the document it stopped at keeps its attempts and is pending with the cause stored (key absent), like the rest.
 func TestRefreshStopsOnUnreachableProviderWithoutLeakingKey(t *testing.T) {
 	db := newKnowledgeTestDB(t)
 	seedKnowledgeSources(t, db)
@@ -658,10 +663,18 @@ func TestRefreshStopsOnUnreachableProviderWithoutLeakingKey(t *testing.T) {
 	if !errors.As(err, &pe) || pe.Kind != "connection" || !strings.Contains(err.Error(), "embedding news:") || strings.Contains(err.Error(), "SECRET-TEST-KEY") {
 		t.Fatalf("err = %v", err)
 	}
-	var count int64
-	db.Raw(`SELECT count(*) FROM faq_knowledge_bases`).Scan(&count)
-	if count != 0 || r.Stats.Embedded != 0 {
-		t.Fatalf("rows=%d stats=%+v", count, r.Stats)
+	var stored struct {
+		Error   string
+		Vectors int
+	}
+	db.Raw(`SELECT max(embedding_error) AS error, count(embedding) AS vectors FROM faq_knowledge_bases`).Scan(&stored)
+	var attempts int64
+	db.Raw(`SELECT count(*) FROM faq_knowledge_bases WHERE embedding_attempts > 0`).Scan(&attempts)
+	if attempts != 0 {
+		t.Fatalf("an outage counted %d document attempts", attempts)
+	}
+	if r.Stats.Embedded != 0 || stored.Vectors != 0 || embeddingStatuses(t, db) != "pending=6" || !strings.Contains(stored.Error, "provider gemini") || strings.Contains(stored.Error, "SECRET-TEST-KEY") {
+		t.Fatalf("stats=%+v stored=%+v statuses=%s", r.Stats, stored, embeddingStatuses(t, db))
 	}
 }
 
