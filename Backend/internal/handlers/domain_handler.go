@@ -41,6 +41,9 @@ func (h *DomainHandler) list(model any, key string, preload ...string) fiber.Han
 		return c.JSON(fiber.Map{key: v})
 	}
 }
+
+// detail answers one published item; a missing slug is a polite Indonesian 404 like "Destinasi tidak ditemukan" of wisata
+// (Owner 2026-11-10: messages to the user are Indonesian).
 func (h *DomainHandler) detail(model any, key string, preload ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		q := h.DB
@@ -51,21 +54,21 @@ func (h *DomainHandler) detail(model any, key string, preload ...string) fiber.H
 		case *models.Culinary:
 			var v models.Culinary
 			if e := q.Where("slug=? AND status=?", c.Params("slug"), "published").First(&v).Error; e != nil {
-				return c.Status(404).JSON(fiber.Map{"message": "not found"})
+				return c.Status(404).JSON(fiber.Map{"message": "Kuliner tidak ditemukan"})
 			}
 			countView(h.DB, &v, v.ID)
 			return c.JSON(fiber.Map{key: v})
 		case *models.Culture:
 			var v models.Culture
 			if e := q.Where("slug=? AND status=?", c.Params("slug"), "published").First(&v).Error; e != nil {
-				return c.Status(404).JSON(fiber.Map{"message": "not found"})
+				return c.Status(404).JSON(fiber.Map{"message": "Budaya tidak ditemukan"})
 			}
 			countView(h.DB, &v, v.ID)
 			return c.JSON(fiber.Map{key: v})
 		case *models.Event:
 			var v models.Event
 			if e := q.Where("slug=? AND status=?", c.Params("slug"), "published").First(&v).Error; e != nil {
-				return c.Status(404).JSON(fiber.Map{"message": "not found"})
+				return c.Status(404).JSON(fiber.Map{"message": "Acara tidak ditemukan"})
 			}
 			countView(h.DB, &v, v.ID)
 			return c.JSON(fiber.Map{key: v})

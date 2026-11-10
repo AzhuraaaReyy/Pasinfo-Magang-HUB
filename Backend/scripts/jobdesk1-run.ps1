@@ -28,7 +28,18 @@ function Get-StoredMetadata([long]$MessageId) {
 # BRT-05 mirrors Retriever.LatestNews (5 newest by news.created_at); BRT-04 = every active TEKNOLOGI news;
 # BRT-02/07 = every active Nasional news.
 $nasionalNewsSql = "SELECT 'news:' || k.source_id FROM faq_knowledge_bases k WHERE k.is_active AND k.source_type = 'news' AND k.metadata->>'news_category' = 'nasional' ORDER BY k.source_id"
+# Event labels (Owner 2026-11-10, same option A): the events of the seed file change (16 -> 20 on 2026-11-09), so the
+# accepted events are read from the tested DB. EVT-01/03/05 = every published event; EVT-02 "kegiatan seni" = published
+# events of type kesenian or whose text names "seni".
+$publishedEventSql = "SELECT 'event:' || k.source_id FROM faq_knowledge_bases k JOIN events e ON e.id = k.source_id WHERE k.is_active AND k.source_type = 'event' AND e.status = 'published' ORDER BY k.source_id"
 $expectedAcceptSql = @{
+    "EVT-01" = $publishedEventSql
+    "EVT-03" = $publishedEventSql
+    "EVT-05" = $publishedEventSql
+    # EVT-04 "pertunjukan seni komunitas di Pasuruan Timur": the running or upcoming events of Pasuruan Timur; when there
+    # is none, the answer offers the running or upcoming events of every zone (Owner option B, 2026-11-04).
+    "EVT-04" = "WITH up AS (SELECT k.source_id, k.metadata->>'region' AS region FROM faq_knowledge_bases k JOIN events e ON e.id = k.source_id WHERE k.is_active AND k.source_type = 'event' AND e.status = 'published' AND EXISTS (SELECT 1 FROM event_occurrences o WHERE o.event_id = e.id AND (o.ends_at >= now() OR (o.ends_at IS NULL AND (o.starts_at >= now() OR o.status = 'ongoing'))))) SELECT 'event:' || source_id FROM up WHERE region = 'Pasuruan Timur' OR NOT EXISTS (SELECT 1 FROM up WHERE region = 'Pasuruan Timur') ORDER BY source_id"
+    "EVT-02" = "SELECT 'event:' || k.source_id FROM faq_knowledge_bases k JOIN events e ON e.id = k.source_id WHERE k.is_active AND k.source_type = 'event' AND e.status = 'published' AND (e.event_type = 'kesenian' OR (e.name || ' ' || coalesce(e.short_description, '') || ' ' || coalesce(e.description, '')) ILIKE '%seni%') ORDER BY k.source_id"
     "BRT-02" = $nasionalNewsSql
     "BRT-07" = $nasionalNewsSql
     "BRT-04" = "SELECT 'news:' || k.source_id FROM faq_knowledge_bases k WHERE k.is_active AND k.source_type = 'news' AND k.metadata->>'news_category' = 'teknologi' ORDER BY k.source_id"
@@ -38,7 +49,7 @@ function Get-ExpectedAccept([string]$ScenarioId) {
     if (-not $expectedAcceptSql.ContainsKey($ScenarioId)) { return $null }
     $sql = "BEGIN READ ONLY; $($expectedAcceptSql[$ScenarioId]); ROLLBACK;"
     $lines = $sql | docker exec -i $DbContainer sh -c "psql -U `$POSTGRES_USER -d $DbName -At -q"
-    return (@($lines | Where-Object { $_ -like 'news:*' }) -join ";")
+    return (@($lines | Where-Object { $_ -like 'news:*' -or $_ -like 'event:*' }) -join ";")
 }
 
 $scenarios = @(

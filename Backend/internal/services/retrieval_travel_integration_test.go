@@ -256,6 +256,13 @@ func TestTravelFiltersOnPostgres(t *testing.T) {
 		{"kategori wisata", TravelSearch{Domains: []string{"wisata"}, Category: "Wisata Alam"}, SearchFilter{SourceType: "destination", TravelCategory: "Wisata Alam"}, `SELECT tc.name = 'Wisata Alam' FROM destinations x JOIN travel_categories tc ON tc.id = x.category_id WHERE ? <> '' AND x.id = ?`},
 		{"kategori kuliner", TravelSearch{Domains: []string{"kuliner"}, Category: "Seafood"}, SearchFilter{SourceType: "culinary", TypeCode: "seafood"}, `SELECT x.culinary_type = 'seafood' FROM culinaries x WHERE ? <> '' AND x.id = ?`},
 		{"acara", TravelSearch{Domains: []string{"acara"}}, SearchFilter{}, `SELECT EXISTS (SELECT 1 FROM event_occurrences o WHERE o.event_id = ? :: bigint * 0 + ? AND (o.ends_at >= now() OR (o.ends_at IS NULL AND (o.starts_at >= now() OR o.status = 'ongoing'))))`},
+		// Jobdesk 10 Nov point 3: the category and location filters combined (the source type is checked below).
+		{"kategori + kecamatan", TravelSearch{Domains: []string{"wisata"}, District: "prigen"}, SearchFilter{District: "prigen"}, `SELECT pl.district ILIKE 'prigen' FROM %s x JOIN places pl ON pl.id = x.place_id WHERE ? <> '' AND x.id = ?`},
+		{"dua kategori + kecamatan", TravelSearch{Domains: []string{"kuliner", "budaya"}, District: "Panggungrejo"}, SearchFilter{District: "Panggungrejo"}, `SELECT pl.district ILIKE 'Panggungrejo' FROM %s x JOIN places pl ON pl.id = x.place_id WHERE ? <> '' AND x.id = ?`},
+		{"kategori + zona", TravelSearch{Domains: []string{"wisata"}, Zone: "Pasuruan Selatan"}, SearchFilter{Region: "Pasuruan Selatan"}, `SELECT metadata->>'region' = 'Pasuruan Selatan' FROM faq_knowledge_bases WHERE source_type = ? AND source_id = ? AND is_active`},
+		{"kategori + sub-kategori + kecamatan", TravelSearch{Domains: []string{"wisata"}, Category: "Wisata Alam", District: "Prigen"}, SearchFilter{SourceType: "destination", TravelCategory: "Wisata Alam", District: "Prigen"}, `SELECT pl.district ILIKE 'Prigen' AND tc.name = 'Wisata Alam' FROM destinations x JOIN places pl ON pl.id = x.place_id JOIN travel_categories tc ON tc.id = x.category_id WHERE ? <> '' AND x.id = ?`},
+		// Jobdesk 10 Nov point 5: a lower-case category and zone mean the stored names.
+		{"kategori + zona huruf kecil", TravelSearch{Domains: []string{"wisata"}, Category: "wisata alam", Zone: "pasuruan barat"}, SearchFilter{SourceType: "destination", TravelCategory: "Wisata Alam", Region: "Pasuruan Barat"}, `SELECT tc.name = 'Wisata Alam' AND fk.metadata->>'region' = 'Pasuruan Barat' FROM destinations x JOIN travel_categories tc ON tc.id = x.category_id JOIN faq_knowledge_bases fk ON fk.source_type = 'destination' AND fk.source_id = x.id AND fk.is_active WHERE ? <> '' AND x.id = ?`},
 	}
 	for _, tc := range cases {
 		got, err := r.SearchTravelContent(context.Background(), p, tc.name, tc.search, 10)
@@ -280,6 +287,14 @@ func TestTravelFiltersOnPostgres(t *testing.T) {
 			if !published || !ok {
 				t.Fatalf("%s: result %d (%s:%d %s) published=%v meets filter=%v", tc.name, i, st, id, pointerString(res.SourceLabel), published, ok)
 			}
+			if len(tc.search.Domains) > 0 && !slices.ContainsFunc(travelSearchDomains, func(d struct{ Name, SourceType string }) bool {
+				return d.SourceType == st && slices.Contains(tc.search.Domains, d.Name)
+			}) {
+				t.Fatalf("%s: result %d is %s, outside the categories %v", tc.name, i, st, tc.search.Domains)
+			}
+		}
+		if len(got) == 0 {
+			t.Fatalf("%s: no result; the case must exercise the filter", tc.name)
 		}
 		// Same order as an exact scan with the same filters and the eligibility check.
 		var types []string
@@ -313,5 +328,84 @@ func TestTravelFiltersOnPostgres(t *testing.T) {
 			}
 		}
 		t.Logf("%s: %d hasil, semua memenuhi filter, urutan = pemindaian eksak", tc.name, len(got))
+	}
+}
+
+// errRollbackTravelTest ends the transaction of a test that must leave the database unchanged.
+var errRollbackTravelTest = fmt.Errorf("rollback")
+
+// Jobdesk 10 Nov point 2 on a real corpus (TRAVEL_SEARCH_DSN): a document whose embedding is not available yet, or was
+// made by another embedding model, is skipped without an error, and a corpus without any embedding gives an empty
+// result, not an error. The test works on a TEMP copy of faq_knowledge_bases (it shadows the real table inside the
+// transaction, which is rolled back), so the real corpus is never written.
+func TestTravelSearchSkipsDocumentsWithoutEmbedding(t *testing.T) {
+	dsn := os.Getenv("TRAVEL_SEARCH_DSN")
+	if dsn == "" {
+		t.Skip("TRAVEL_SEARCH_DSN not set")
+	}
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec(`CREATE TEMP TABLE faq_knowledge_bases ON COMMIT DROP AS SELECT * FROM public.faq_knowledge_bases`).Error; err != nil {
+			return err
+		}
+		var doc struct {
+			ID             int64
+			SourceLabel    string
+			Embedding      pgvector.Vector
+			EmbeddingModel string
+		}
+		if err := tx.Raw(`SELECT k.id, k.source_label, k.embedding, k.embedding_model FROM faq_knowledge_bases k JOIN destinations d ON d.id = k.source_id WHERE k.source_type = 'destination' AND k.is_active AND k.embedding IS NOT NULL AND d.status = 'published' ORDER BY k.source_id LIMIT 1`).Scan(&doc).Error; err != nil || doc.ID == 0 {
+			return fmt.Errorf("no embedded destination: %v", err)
+		}
+		query := &vectorEmbedder{vector: doc.Embedding.Slice(), model: doc.EmbeddingModel}
+		r := NewRetriever(tx)
+		search := func() ([]SemanticResult, error) {
+			return r.SearchTravelContent(context.Background(), query, doc.SourceLabel, TravelSearch{}, 10)
+		}
+		got, err := search()
+		if err != nil || len(got) == 0 || got[0].ID != doc.ID {
+			return fmt.Errorf("with its embedding %s must come first: %d results, err %v", doc.SourceLabel, len(got), err)
+		}
+		for _, step := range []struct{ name, sql string }{
+			{"embedding not available", `UPDATE faq_knowledge_bases SET embedding = NULL WHERE id = ?`},
+			{"embedding of another model", `UPDATE faq_knowledge_bases SET embedding = (SELECT embedding FROM public.faq_knowledge_bases WHERE id = ?), embedding_model = 'model-lain' WHERE id = ?`},
+		} {
+			args := []any{doc.ID}
+			if strings.Contains(step.sql, "model-lain") {
+				args = []any{doc.ID, doc.ID}
+			}
+			if err := tx.Exec(step.sql, args...).Error; err != nil {
+				return err
+			}
+			got, err := search()
+			if err != nil {
+				return fmt.Errorf("%s: error %v", step.name, err)
+			}
+			for _, res := range got {
+				if res.ID == doc.ID {
+					return fmt.Errorf("%s: %s still returned", step.name, doc.SourceLabel)
+				}
+			}
+			t.Logf("%s: %s skipped, %d other results, no error", step.name, doc.SourceLabel, len(got))
+		}
+		if err := tx.Exec(`UPDATE faq_knowledge_bases SET embedding = NULL`).Error; err != nil {
+			return err
+		}
+		if got, err := search(); err != nil || len(got) != 0 {
+			return fmt.Errorf("corpus without embeddings: %d results, err %v (want 0, no error)", len(got), err)
+		}
+		t.Log("corpus without any embedding: 0 results, no error")
+		return errRollbackTravelTest
+	})
+	if err != errRollbackTravelTest {
+		t.Fatal(err)
+	}
+	var stillEmbedded int64
+	db.Raw(`SELECT count(*) FROM faq_knowledge_bases WHERE embedding IS NOT NULL`).Scan(&stillEmbedded)
+	if stillEmbedded == 0 {
+		t.Fatal("the real corpus lost its embeddings")
 	}
 }

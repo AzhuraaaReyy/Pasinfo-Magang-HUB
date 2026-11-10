@@ -78,8 +78,10 @@
       "media": [
         {
           "type": "image",
-          "url": null,
-          "alt": "Foto Kirab Pataka Hari Jadi Kota Pasuruan (belum tersedia)"
+          "url": "../../public/assets/images/acara/optimized/Hari-Jadi-Kota-Pasuruan.webp",
+          "thumbnail_url": "../../public/assets/images/acara/optimized/Hari-Jadi-Kota-Pasuruan.thumb.webp",
+          "alt_text": "Foto Kirab Pataka Hari Jadi Kota Pasuruan (foto sementara)",
+          "alt": "Foto Kirab Pataka Hari Jadi Kota Pasuruan (foto sementara)"
         }
       ],
       "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-7.6474192,112.9084766&query_place_id=ChIJex3ZdQnG1y0RzI87Rjxo-hc",
@@ -248,8 +250,10 @@
       "media": [
         {
           "type": "image",
-          "url": null,
-          "alt": "Foto Pekan Raya Pasuruan (belum tersedia)"
+          "url": "../../public/assets/images/acara/optimized/Pekan-Raya-Pasuruan-(PRP).webp",
+          "thumbnail_url": "../../public/assets/images/acara/optimized/Pekan-Raya-Pasuruan-(PRP).thumb.webp",
+          "alt_text": "Foto Pekan Raya Pasuruan (foto sementara)",
+          "alt": "Foto Pekan Raya Pasuruan (foto sementara)"
         }
       ],
       "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-7.6581814,112.6750356&query_place_id=ChIJMwDuP8nZ1y0RL2hMiE_PmnA",
@@ -460,7 +464,7 @@
         }
       ],
       "tickets": [],
-      "organizer_name": null,
+      "organizer_name": "Pemerintah Kabupaten Pasuruan (perkiraan, belum dikonfirmasi)",
       "organizer_phone": null,
       "website_url": null,
       "media": [
@@ -664,7 +668,7 @@
         }
       ],
       "tickets": [],
-      "organizer_name": null,
+      "organizer_name": "Pemerintah Kabupaten Pasuruan (perkiraan, belum dikonfirmasi)",
       "organizer_phone": null,
       "website_url": null,
       "media": [
@@ -730,7 +734,7 @@
           "available": false
         }
       ],
-      "organizer_name": null,
+      "organizer_name": "Pemerintah Kabupaten Pasuruan (perkiraan, belum dikonfirmasi)",
       "organizer_phone": null,
       "website_url": null,
       "media": [
@@ -786,7 +790,7 @@
         }
       ],
       "tickets": [],
-      "organizer_name": null,
+      "organizer_name": "Pemerintah Kabupaten Pasuruan (perkiraan, belum dikonfirmasi)",
       "organizer_phone": null,
       "website_url": null,
       "media": [
@@ -842,7 +846,7 @@
         }
       ],
       "tickets": [],
-      "organizer_name": null,
+      "organizer_name": "Pemerintah Kabupaten Pasuruan (perkiraan, belum dikonfirmasi)",
       "organizer_phone": null,
       "website_url": null,
       "media": [
@@ -898,7 +902,7 @@
         }
       ],
       "tickets": [],
-      "organizer_name": null,
+      "organizer_name": "Pemerintah Kabupaten Pasuruan (perkiraan, belum dikonfirmasi)",
       "organizer_phone": null,
       "website_url": null,
       "media": [
@@ -960,7 +964,7 @@
         }
       ],
       "tickets": [],
-      "organizer_name": null,
+      "organizer_name": "Pemerintah Kabupaten Pasuruan (perkiraan, belum dikonfirmasi)",
       "organizer_phone": null,
       "website_url": null,
       "media": [

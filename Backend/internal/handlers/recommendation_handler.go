@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -31,6 +32,20 @@ const (
 	recommendationMaxLimit     = 12
 )
 
+// queryLimit reads ?limit= of the recommendation routes (jobdesk 10 Nov point 5, Owner): empty = the default; a value
+// that is not a whole number from 1 to 12 ("abc", "1.5", "0") is refused instead of silently becoming the default.
+func queryLimit(c *fiber.Ctx) (int, bool) {
+	raw := strings.TrimSpace(c.Query("limit"))
+	if raw == "" {
+		return recommendationDefaultLimit, true
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil || n < 1 || n > recommendationMaxLimit {
+		return 0, false
+	}
+	return n, true
+}
+
 func (h *RecommendationHandler) Register(r fiber.Router) {
 	// Each request reads the corpus vectors, so it is rate limited like the other computed wisata routes.
 	limiter := middleware.RateLimiter(60, 60)
@@ -41,12 +56,16 @@ func (h *RecommendationHandler) Register(r fiber.Router) {
 	r.Get("/news/:id/rekomendasi", limiter, h.handle("berita", "id"))
 	if h.Search != nil && h.LLM != nil {
 		// Every request embeds the text with the embedding provider (quota), so it is limited like the chat.
-		r.Get("/rekomendasi", middleware.RateLimiter(20, 60), h.handleText)
+		r.Get(travelRecommendationPath, middleware.RateLimiter(20, 60), h.handleText)
 	}
 }
 
+// travelRecommendationPath is the travel recommendation endpoint of the frontend (jobdesk 10 Nov point 1, Owner
+// 2026-11-10). It replaced GET /rekomendasi of 2026-11-09 (same handler, no consumer yet), so one path serves it.
+const travelRecommendationPath = "/recommendations/travel"
+
 const (
-	// textQueryMaxRunes bounds the text of GET /rekomendasi: a keyword or a short description of a need.
+	// textQueryMaxRunes bounds the text of GET /recommendations/travel: a keyword or a short description of a need.
 	textQueryMaxRunes = 300
 	// textSearchPool is the number of nearest documents read before the eligibility check (drafts, finished events)
 	// and the limit, so a filtered result still fills the asked count.
@@ -55,7 +74,7 @@ const (
 	textSearchTimeout = 30 * time.Second
 )
 
-// handleText answers GET /rekomendasi?q=tempat+sejuk+di+pegunungan&domain=wisata,kuliner&zona=Pasuruan+Selatan&kecamatan=Tosari&kategori=Wisata+Alam&limit=6: recommendation
+// handleText answers GET /recommendations/travel?q=tempat+sejuk+di+pegunungan&domain=wisata,kuliner&zona=Pasuruan+Selatan&kecamatan=Tosari&kategori=Wisata+Alam&limit=6: recommendation
 // cards of the travel domains (wisata, kuliner, budaya, acara; empty = all) ordered by the meaning similarity of each
 // item to q.
 func (h *RecommendationHandler) handleText(c *fiber.Ctx) error {
@@ -63,13 +82,14 @@ func (h *RecommendationHandler) handleText(c *fiber.Ctx) error {
 	if q == "" || utf8.RuneCountInString(q) > textQueryMaxRunes {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "q wajib diisi, paling banyak 300 karakter"})
 	}
-	limit := c.QueryInt("limit", recommendationDefaultLimit)
-	if limit < 1 || limit > recommendationMaxLimit {
+	limit, ok := queryLimit(c)
+	if !ok {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "limit harus 1 sampai 12"})
 	}
 	var domains []string
 	for _, d := range strings.Split(c.Query("domain"), ",") {
-		if d = strings.TrimSpace(d); d != "" {
+		// Any letter case, like kecamatan and zona (jobdesk 10 Nov point 5, Owner): "Wisata" is wisata.
+		if d = strings.ToLower(strings.TrimSpace(d)); d != "" {
 			domains = append(domains, d)
 		}
 	}
@@ -101,11 +121,12 @@ func (h *RecommendationHandler) handleText(c *fiber.Ctx) error {
 // ("kuliner dekat wisata ini"); news only recommends news.
 func (h *RecommendationHandler) handle(source, param string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		limit := c.QueryInt("limit", recommendationDefaultLimit)
-		if limit < 1 || limit > recommendationMaxLimit {
+		limit, ok := queryLimit(c)
+		if !ok {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "limit harus 1 sampai 12"})
 		}
-		target := c.Query("domain", source)
+		// Any letter case, like GET /recommendations/travel (jobdesk 10 Nov point 5, Owner): "Kuliner" is kuliner.
+		target := strings.ToLower(strings.TrimSpace(c.Query("domain", source)))
 		if source == "berita" && target != "berita" || source != "berita" && !services.IsTravelDomain(target) {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "domain harus wisata, kuliner, budaya, atau acara (berita hanya untuk berita)"})
 		}

@@ -366,6 +366,9 @@ func seed(tx *gorm.DB) error {
 						if e == nil {
 							e = linkID(tx, src, "Culinary", v.ID, x.Verification.Status)
 						}
+						if e == nil {
+							e = seedDomainMedia(tx, "Culinary", v.ID, x.Media)
+						}
 					}
 				}
 			case "cultures":
@@ -381,6 +384,9 @@ func seed(tx *gorm.DB) error {
 					if e == nil {
 						e = linkID(tx, src, "Culture", v.ID, x.Verification.Status)
 					}
+					if e == nil {
+						e = seedDomainMedia(tx, "Culture", v.ID, x.Media)
+					}
 				}
 			default:
 				var v models.Event
@@ -394,6 +400,9 @@ func seed(tx *gorm.DB) error {
 					}
 					if e == nil {
 						e = linkID(tx, src, "Event", v.ID, x.Verification.Status)
+					}
+					if e == nil {
+						e = seedDomainMedia(tx, "Event", v.ID, x.Media)
 					}
 					for _, o := range x.Occurrences {
 						if e == nil {

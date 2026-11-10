@@ -47,6 +47,11 @@ func TestRecommendationEndpointValidatesAndAnswers(t *testing.T) {
 		"/wisata/asal/rekomendasi?domain=kuliner": 200,
 		"/wisata/asal/rekomendasi?limit=13":       400,
 		"/wisata/asal/rekomendasi?limit=0":        400,
+		"/wisata/asal/rekomendasi?limit=abc":      400, // jobdesk 10 Nov point 5: not silently the default
+		"/wisata/asal/rekomendasi?limit=1.5":      400,
+		"/wisata/asal/rekomendasi?limit=2":        200,
+		"/wisata/asal/rekomendasi?domain=Kuliner": 200, // any letter case, like /recommendations/travel
+		"/wisata/asal/rekomendasi?domain=event":   400,
 		"/wisata/asal/rekomendasi?domain=berita":  400,
 		"/news/1/rekomendasi?domain=wisata":       400,
 		"/wisata/tidak-ada/rekomendasi":           404,
@@ -95,13 +100,46 @@ func TestDetailCountsViews(t *testing.T) {
 	}
 }
 
-// Jobdesk 9 Nov: GET /rekomendasi validates its input before any embedding call, reports a provider failure as 503,
+// Owner 2026-11-10: a missing or unpublished travel item answers 404 with a polite Indonesian message.
+func TestDomainDetailNotFoundIsIndonesian(t *testing.T) {
+	_, db := recommendationTestApp(t)
+	if err := db.AutoMigrate(&models.Event{}, &models.EventOccurrence{}, &models.EventTicket{}); err != nil {
+		t.Fatal(err)
+	}
+	db.Create(&models.Culinary{Name: "Draf", Slug: "draf", Status: "draft"})
+	app := fiber.New()
+	NewDomainHandler(db).Register(app)
+	NewWisataHandler(db).Register(app)
+	for path, want := range map[string]string{
+		"/kuliner/draf":      "Kuliner tidak ditemukan",
+		"/kuliner/tidak-ada": "Kuliner tidak ditemukan",
+		"/budaya/tidak-ada":  "Budaya tidak ditemukan",
+		"/acara/tidak-ada":   "Acara tidak ditemukan",
+		"/wisata/tidak-ada":  "Destinasi tidak ditemukan",
+	} {
+		resp, err := app.Test(httptest.NewRequest("GET", path, nil))
+		if err != nil {
+			t.Fatal(err)
+		}
+		raw, _ := io.ReadAll(resp.Body)
+		var body map[string]any
+		if json.Unmarshal(raw, &body); resp.StatusCode != 404 || body["message"] != want {
+			t.Errorf("%s = %d %s, want 404 %q", path, resp.StatusCode, raw, want)
+		}
+	}
+}
+
+// Jobdesk 9 Nov: GET /recommendations/travel (path of jobdesk 10 Nov) validates its input before any embedding call, reports a provider failure as 503,
 // and exists only when the text search is wired.
 func TestTextRecommendationValidatesAndReportsProviderFailure(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open("file:"+t.Name()+"?mode=memory&cache=shared"), &gorm.Config{})
 	if err != nil {
 		t.Fatal(err)
 	}
+	if err := db.AutoMigrate(&models.TravelCategory{}); err != nil {
+		t.Fatal(err)
+	}
+	db.Create(&models.TravelCategory{Name: "Wisata Alam"})
 	app := fiber.New()
 	h := NewRecommendationHandler(services.NewRecommender(db))
 	h.Search, h.LLM = services.NewRetriever(db), failingChatProvider{err: errors.New("provider down")}
@@ -111,16 +149,28 @@ func TestTextRecommendationValidatesAndReportsProviderFailure(t *testing.T) {
 		url  string
 		code int
 	}{
-		{"/rekomendasi", 400},
-		{"/rekomendasi?q=%20%20", 400},
-		{"/rekomendasi?q=" + long, 400},
-		{"/rekomendasi?q=pantai&limit=0", 400},
-		{"/rekomendasi?q=pantai&limit=13", 400},
-		{"/rekomendasi?q=pantai&domain=wisata,berita", 400},
-		{"/rekomendasi?q=pantai&zona=Pasuruan%20Tengah", 400},
-		{"/rekomendasi?q=pantai&domain=wisata,kuliner&kategori=Wisata%20Alam", 400},
-		{"/rekomendasi?q=pantai&domain=kuliner&kategori=Wisata%20Alam", 400},
-		{"/rekomendasi?q=pantai&domain=wisata", 503},
+		{travelRecommendationPath, 400},
+		{travelRecommendationPath + "?q=%20%20", 400},
+		{travelRecommendationPath + "?q=" + long, 400},
+		{travelRecommendationPath + "?q=pantai&limit=0", 400},
+		{travelRecommendationPath + "?q=pantai&limit=13", 400},
+		{travelRecommendationPath + "?q=pantai&domain=wisata,berita", 400},
+		{travelRecommendationPath + "?q=pantai&zona=Pasuruan%20Tengah", 400},
+		{travelRecommendationPath + "?q=pantai&domain=wisata,kuliner&kategori=Wisata%20Alam", 400},
+		{travelRecommendationPath + "?q=pantai&domain=kuliner&kategori=Wisata%20Alam", 400},
+		{travelRecommendationPath + "?q=pantai&domain=wisata", 503},
+		// Jobdesk 10 Nov point 5 (Owner): a strict limit; domain, zona, and a destination category in any letter case
+		// (503 = valid, it reached the provider); no "event" alias; an unknown kecamatan or destination category is refused.
+		{travelRecommendationPath + "?q=pantai&limit=abc", 400},
+		{travelRecommendationPath + "?q=pantai&limit=1.5", 400},
+		{travelRecommendationPath + "?q=pantai&domain=WISATA&zona=kota%20pasuruan", 503},
+		{travelRecommendationPath + "?q=pantai&domain=event", 400},
+		{travelRecommendationPath + "?q=pantai&kecamatan=Bandung", 400},
+		{travelRecommendationPath + "?q=pantai&kecamatan=grati", 503},
+		{travelRecommendationPath + "?q=pantai&domain=wisata&kategori=Pizza", 400},
+		{travelRecommendationPath + "?q=pantai&domain=wisata&kategori=wisata%20alam", 503},
+		// The 2026-11-09 path was replaced by the jobdesk 10 Nov path, not kept as a second one.
+		{"/rekomendasi?q=pantai", 404},
 	} {
 		resp, err := app.Test(httptest.NewRequest("GET", tc.url, nil))
 		if err != nil {
@@ -133,7 +183,7 @@ func TestTextRecommendationValidatesAndReportsProviderFailure(t *testing.T) {
 	}
 	plain := fiber.New()
 	NewRecommendationHandler(services.NewRecommender(db)).Register(plain)
-	if resp, _ := plain.Test(httptest.NewRequest("GET", "/rekomendasi?q=pantai", nil)); resp.StatusCode != 404 {
+	if resp, _ := plain.Test(httptest.NewRequest("GET", travelRecommendationPath+"?q=pantai", nil)); resp.StatusCode != 404 {
 		t.Fatalf("route without search: status %d, want 404", resp.StatusCode)
 	}
 }

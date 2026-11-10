@@ -110,27 +110,8 @@ func main() {
 		// Disable X-Powered-By equivalent
 		DisableDefaultDate: false,
 
-		// Central error handler — never leak internal error details to client
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			code := fiber.StatusInternalServerError
-			msg := "An internal error occurred"
-
-			if e, ok := err.(*fiber.Error); ok {
-				code = e.Code
-				// Only expose user-safe messages for 4xx errors
-				if code < 500 {
-					msg = e.Message
-				}
-			}
-
-			requestID, _ := c.Locals("request_id").(string)
-			log.Printf("[ERROR] request_id=%s status=%d error=%v", requestID, code, err)
-
-			return c.Status(code).JSON(fiber.Map{
-				"success": false,
-				"message": msg,
-			})
-		},
+		// Central error handler — never leak internal error details to client; Indonesian messages (T3, 2026-11-10)
+		ErrorHandler: handlers.AppErrorHandler,
 	})
 
 	// Recovery middleware — prevents panics from crashing the whole server

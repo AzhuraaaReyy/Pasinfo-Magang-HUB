@@ -41,7 +41,7 @@ var travelEvalQueries = []travelEvalQuery{
 
 // Jobdesk 9 Nov point 4 (read-only; TRAVEL_SEARCH_DSN and TRAVEL_THRESHOLD_EVAL=1, one embedding per query): for each
 // candidate threshold, the cards of each query (limit 6) are compared with the labels. It prints the table the
-// threshold of GET /rekomendasi is chosen from.
+// threshold of GET /recommendations/travel is chosen from.
 func TestTravelRecommendationThresholdEvaluation(t *testing.T) {
 	dsn := os.Getenv("TRAVEL_SEARCH_DSN")
 	if dsn == "" || os.Getenv("TRAVEL_THRESHOLD_EVAL") != "1" {

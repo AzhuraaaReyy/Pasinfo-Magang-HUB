@@ -1,0 +1,536 @@
+﻿[
+    {
+        "id":  "EVT-01",
+        "question":  "Acara apa saja yang tersedia dalam database Pasuruan?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "relevant",
+        "retrieval_k":  10,
+        "context_k":  5,
+        "context_similarity_min":  0.6887518322822208,
+        "llm_latency_ms":  2282,
+        "sources":  [
+                        {
+                            "distance":  0.29516668565123916,
+                            "source_id":  32,
+                            "similarity":  0.7048333143487608,
+                            "source_type":  "event",
+                            "source_label":  "Pasuruan Creative Fest: WasikOn Festivale",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "semantic"
+                        },
+                        {
+                            "distance":  0.2953367628944059,
+                            "source_id":  35,
+                            "similarity":  0.7046632371055941,
+                            "source_type":  "event",
+                            "source_label":  "Pesta Rakyat dan Doa Lintas Agama Malam Tahun Baru 2027",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "semantic"
+                        },
+                        {
+                            "distance":  0.29825912809908095,
+                            "source_id":  19,
+                            "similarity":  0.701740871900919,
+                            "source_type":  "event",
+                            "source_label":  "Pekan Raya Pasuruan",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "semantic"
+                        },
+                        {
+                            "distance":  0.2988527943219592,
+                            "source_id":  30,
+                            "similarity":  0.7011472056780408,
+                            "source_type":  "event",
+                            "source_label":  "Parade Budaya dan Wayang Dalang Muda",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "semantic"
+                        },
+                        {
+                            "distance":  0.3112481677177792,
+                            "source_id":  23,
+                            "similarity":  0.6887518322822208,
+                            "source_type":  "event",
+                            "source_label":  "Pasuruan Street Art Fashion Carnival",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "semantic"
+                        }
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.29516668565123916,
+                                         "source_id":  32,
+                                         "similarity":  0.7048333143487608,
+                                         "source_type":  "event",
+                                         "source_label":  "Pasuruan Creative Fest: WasikOn Festivale",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.2953367628944059,
+                                         "source_id":  35,
+                                         "similarity":  0.7046632371055941,
+                                         "source_type":  "event",
+                                         "source_label":  "Pesta Rakyat dan Doa Lintas Agama Malam Tahun Baru 2027",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.29825912809908095,
+                                         "source_id":  19,
+                                         "similarity":  0.701740871900919,
+                                         "source_type":  "event",
+                                         "source_label":  "Pekan Raya Pasuruan",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.2988527943219592,
+                                         "source_id":  30,
+                                         "similarity":  0.7011472056780408,
+                                         "source_type":  "event",
+                                         "source_label":  "Parade Budaya dan Wayang Dalang Muda",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.3112481677177792,
+                                         "source_id":  23,
+                                         "similarity":  0.6887518322822208,
+                                         "source_type":  "event",
+                                         "source_label":  "Pasuruan Street Art Fashion Carnival",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.3203921162123252,
+                                         "source_id":  36,
+                                         "similarity":  0.6796078837876748,
+                                         "source_type":  "event",
+                                         "source_label":  "Pameran Tosan Aji dan Keris Pusaka Pasuruan Raya",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.32460293008269725,
+                                         "source_id":  20,
+                                         "similarity":  0.6753970699173028,
+                                         "source_type":  "event",
+                                         "source_label":  "Bangil Carnival (Pasuruan Carnival)",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.32659450004096346,
+                                         "source_id":  33,
+                                         "similarity":  0.6734054999590365,
+                                         "source_type":  "event",
+                                         "source_label":  "Festival Kopi Kapiten (Kopi Asli Kabupaten Pasuruan)",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.3284339234461877,
+                                         "source_id":  28,
+                                         "similarity":  0.6715660765538123,
+                                         "source_type":  "event",
+                                         "source_label":  "Festival Jalur Rempah: Pagelaran Warisan Budaya Tak Benda",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.3292786263955143,
+                                         "source_id":  27,
+                                         "similarity":  0.6707213736044857,
+                                         "source_type":  "event",
+                                         "source_label":  "Nongkojajar Culture Festival",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     }
+                                 ],
+        "answer":  "Berikut adalah beberapa pilihan acara yang tercatat dalam database kami:\n\n1. Pasuruan Creative Fest: WasikOn Festivale\n- Penyelenggara: Dinas Pariwisata, Pemuda, dan Olahraga Kota Pasuruan\n- Alamat: TIC Kota Pasuruan, Jl. Alun-Alun Utara, Kec. Panggungrejo, Kota Pasuruan\n- Jadwal: 2–3 Desember 2024 (sudah selesai), 1 September 2025 (sudah lewat, pelaksanaannya belum terkonfirmasi)\n\n2. Pesta Rakyat dan Doa Lintas Agama Malam Tahun Baru 2027\n- Penyelenggara: Pemerintah Kota Pasuruan\n- Alamat: Alun-Alun Kota Pasuruan, Jl. Alun-Alun, Kec. Panggungrejo, Kota Pasuruan\n- Jadwal: 31 Desember 2026 – 1 Januari 2027 (akan datang, jadwal belum pasti)\n\n3. Pekan Raya Pasuruan\n- Penyelenggara: Pemerintah Kabupaten Pasuruan (panitia Pekan Raya Pasuruan)\n- Wilayah: Pasuruan Barat\n- Jadwal: 24–30 September 2025 (sudah lewat, pelaksanaannya belum terkonfirmasi), 21–27 September 2026 (sudah selesai)\n\n4. Parade Budaya dan Wayang Dalang Muda\n- Alamat: Situs Prasasti Cungrang, Dusun Sukci, Desa Bulusari, Kec. Gempol, Kab. Pasuruan\n- Wilayah: Pasuruan Barat\n- Jadwal: 18 September 2025 (sudah lewat, pelaksanaannya belum terkonfirmasi)\n\n5. Pasuruan Street Art Fashion Carnival\n- Penyelenggara: Pemerintah Kota Pasuruan (Disparpora Kota Pasuruan)\n- Alamat: Kota Pasuruan (rute belum terverifikasi)\n- Jadwal: 1 September 2026 (sudah selesai)\n\nApakah Anda ingin mengetahui informasi lebih lanjut mengenai salah satu acara di atas?\n\nPasuruan Creative Fest: WasikOn Festivale, Pesta Rakyat dan Doa Lintas Agama Malam Tahun Baru 2027, Pekan Raya Pasuruan, Parade Budaya dan Wayang Dalang Muda, Pasuruan Street Art Fashion Carnival\n\nSumber: Pasuruan Creative Fest: WasikOn Festivale; Pesta Rakyat dan Doa Lintas Agama Malam Tahun Baru 2027; Pekan Raya Pasuruan; Parade Budaya dan Wayang Dalang Muda; Pasuruan Street Art Fashion Carnival",
+        "retrieval_query":  "Acara apa saja yang tersedia dalam database Pasuruan?",
+        "judge":  {
+                      "pool_k":  0,
+                      "skipped":  "limit_filled",
+                      "picked_k":  0
+                  },
+        "total_latency_ms":  7663,
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null,
+        "expected_accept":  "event:17;event:18;event:19;event:20;event:21;event:22;event:23;event:24;event:25;event:26;event:27;event:28;event:29;event:30;event:31;event:32;event:33;event:34;event:35;event:36"
+    },
+    {
+        "id":  "EVT-02",
+        "question":  "Kegiatan seni apa yang tercatat di data acara?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "relevant",
+        "retrieval_k":  4,
+        "context_k":  4,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  1355,
+        "sources":  [
+                        {
+                            "distance":  0,
+                            "source_id":  35,
+                            "similarity":  0,
+                            "source_type":  "event",
+                            "source_label":  "Pesta Rakyat dan Doa Lintas Agama Malam Tahun Baru 2027",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "follow_up_previous_sources"
+                        },
+                        {
+                            "distance":  0,
+                            "source_id":  19,
+                            "similarity":  0,
+                            "source_type":  "event",
+                            "source_label":  "Pekan Raya Pasuruan",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "follow_up_previous_sources"
+                        },
+                        {
+                            "distance":  0,
+                            "source_id":  30,
+                            "similarity":  0,
+                            "source_type":  "event",
+                            "source_label":  "Parade Budaya dan Wayang Dalang Muda",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "follow_up_previous_sources"
+                        },
+                        {
+                            "distance":  0,
+                            "source_id":  23,
+                            "similarity":  0,
+                            "source_type":  "event",
+                            "source_label":  "Pasuruan Street Art Fashion Carnival",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "follow_up_previous_sources"
+                        }
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0,
+                                         "source_id":  35,
+                                         "similarity":  0,
+                                         "source_type":  "event",
+                                         "source_label":  "Pesta Rakyat dan Doa Lintas Agama Malam Tahun Baru 2027",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "follow_up_previous_sources"
+                                     },
+                                     {
+                                         "distance":  0,
+                                         "source_id":  19,
+                                         "similarity":  0,
+                                         "source_type":  "event",
+                                         "source_label":  "Pekan Raya Pasuruan",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "follow_up_previous_sources"
+                                     },
+                                     {
+                                         "distance":  0,
+                                         "source_id":  30,
+                                         "similarity":  0,
+                                         "source_type":  "event",
+                                         "source_label":  "Parade Budaya dan Wayang Dalang Muda",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "follow_up_previous_sources"
+                                     },
+                                     {
+                                         "distance":  0,
+                                         "source_id":  23,
+                                         "similarity":  0,
+                                         "source_type":  "event",
+                                         "source_label":  "Pasuruan Street Art Fashion Carnival",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "follow_up_previous_sources"
+                                     }
+                                 ],
+        "answer":  "1. Pesta Rakyat dan Doa Lintas Agama Malam Tahun Baru 2027\n- Jenis: kesenian\n- Alamat: Alun-Alun Kota Pasuruan, Jl. Alun-Alun, Kec. Panggungrejo, Kota Pasuruan\n\n2. Pekan Raya Pasuruan\n- Jenis: kesenian\n- Wilayah: Pasuruan Barat\n\n3. Parade Budaya dan Wayang Dalang Muda\n- Jenis: kesenian\n- Alamat: Situs Prasasti Cungrang, Dusun Sukci, Desa Bulusari, Kec. Gempol, Kab. Pasuruan\n\n4. Pasuruan Street Art Fashion Carnival\n- Jenis: kesenian\n- Alamat: Kota Pasuruan (rute belum terverifikasi)\n\nApakah Anda ingin mengetahui informasi lebih lanjut mengenai salah satu acara tersebut?\n\nSumber: Pesta Rakyat dan Doa Lintas Agama Malam Tahun Baru 2027; Pekan Raya Pasuruan; Parade Budaya dan Wayang Dalang Muda; Pasuruan Street Art Fashion Carnival",
+        "retrieval_query":  "kegiatan seni apa yang tercatat di data acara Pasuruan Creative Fest WasikOn Festivale Pesta Rakyat dan Doa Lintas Agama Malam Tahun Baru 2027 Pekan Raya Pasuruan Parade Budaya dan Wayang Dalang Muda Pasuruan Street Art Fashion Carnival",
+        "judge":  {
+                      "pool_k":  0,
+                      "skipped":  "follow_up_previous_sources",
+                      "picked_k":  0
+                  },
+        "total_latency_ms":  7326,
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null,
+        "expected_accept":  "event:17;event:18;event:19;event:20;event:21;event:23;event:25;event:29;event:30;event:32;event:33;event:35"
+    },
+    {
+        "id":  "EVT-03",
+        "question":  "Ada agenda atau event menarik di Pasuruan?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "relevant",
+        "retrieval_k":  10,
+        "context_k":  5,
+        "context_similarity_min":  0.7095637158454361,
+        "llm_latency_ms":  2878,
+        "sources":  [
+                        {
+                            "distance":  0.27963346844423764,
+                            "source_id":  32,
+                            "similarity":  0.7203665315557624,
+                            "source_type":  "event",
+                            "source_label":  "Pasuruan Creative Fest: WasikOn Festivale",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "semantic"
+                        },
+                        {
+                            "distance":  0.2803984662843737,
+                            "source_id":  30,
+                            "similarity":  0.7196015337156263,
+                            "source_type":  "event",
+                            "source_label":  "Parade Budaya dan Wayang Dalang Muda",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "semantic"
+                        },
+                        {
+                            "distance":  0.2812101525671593,
+                            "source_id":  19,
+                            "similarity":  0.7187898474328407,
+                            "source_type":  "event",
+                            "source_label":  "Pekan Raya Pasuruan",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "semantic"
+                        },
+                        {
+                            "distance":  0.2851025535779671,
+                            "source_id":  35,
+                            "similarity":  0.7148974464220329,
+                            "source_type":  "event",
+                            "source_label":  "Pesta Rakyat dan Doa Lintas Agama Malam Tahun Baru 2027",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "semantic"
+                        },
+                        {
+                            "distance":  0.2904362841545639,
+                            "source_id":  33,
+                            "similarity":  0.7095637158454361,
+                            "source_type":  "event",
+                            "source_label":  "Festival Kopi Kapiten (Kopi Asli Kabupaten Pasuruan)",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "semantic"
+                        }
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.27963346844423764,
+                                         "source_id":  32,
+                                         "similarity":  0.7203665315557624,
+                                         "source_type":  "event",
+                                         "source_label":  "Pasuruan Creative Fest: WasikOn Festivale",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.2803984662843737,
+                                         "source_id":  30,
+                                         "similarity":  0.7196015337156263,
+                                         "source_type":  "event",
+                                         "source_label":  "Parade Budaya dan Wayang Dalang Muda",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.2812101525671593,
+                                         "source_id":  19,
+                                         "similarity":  0.7187898474328407,
+                                         "source_type":  "event",
+                                         "source_label":  "Pekan Raya Pasuruan",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.2851025535779671,
+                                         "source_id":  35,
+                                         "similarity":  0.7148974464220329,
+                                         "source_type":  "event",
+                                         "source_label":  "Pesta Rakyat dan Doa Lintas Agama Malam Tahun Baru 2027",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.2904362841545639,
+                                         "source_id":  33,
+                                         "similarity":  0.7095637158454361,
+                                         "source_type":  "event",
+                                         "source_label":  "Festival Kopi Kapiten (Kopi Asli Kabupaten Pasuruan)",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.29738480163219005,
+                                         "source_id":  28,
+                                         "similarity":  0.70261519836781,
+                                         "source_type":  "event",
+                                         "source_label":  "Festival Jalur Rempah: Pagelaran Warisan Budaya Tak Benda",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.3016356112064511,
+                                         "source_id":  23,
+                                         "similarity":  0.6983643887935489,
+                                         "source_type":  "event",
+                                         "source_label":  "Pasuruan Street Art Fashion Carnival",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.30426549915187506,
+                                         "source_id":  27,
+                                         "similarity":  0.6957345008481249,
+                                         "source_type":  "event",
+                                         "source_label":  "Nongkojajar Culture Festival",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.3051512308648956,
+                                         "source_id":  36,
+                                         "similarity":  0.6948487691351044,
+                                         "source_type":  "event",
+                                         "source_label":  "Pameran Tosan Aji dan Keris Pusaka Pasuruan Raya",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.305618566517995,
+                                         "source_id":  20,
+                                         "similarity":  0.694381433482005,
+                                         "source_type":  "event",
+                                         "source_label":  "Bangil Carnival (Pasuruan Carnival)",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     }
+                                 ],
+        "answer":  "Berikut adalah beberapa agenda atau event menarik di Pasuruan yang bisa Anda ketahui:\n\n1. Pasuruan Creative Fest: WasikOn Festivale\n- Alamat: TIC Kota Pasuruan, Jl. Alun-Alun Utara, Kec. Panggungrejo, Kota Pasuruan\n- Jadwal: 2–3 Desember 2024 (sudah selesai), 1 September 2025 (sudah lewat, pelaksanaannya belum terkonfirmasi)\n\n2. Parade Budaya dan Wayang Dalang Muda\n- Alamat: Situs Prasasti Cungrang, Dusun Sukci, Desa Bulusari, Kec. Gempol, Kab. Pasuruan\n- Jadwal: 18 September 2025 (sudah lewat, pelaksanaannya belum terkonfirmasi)\n\n3. Pekan Raya Pasuruan\n- Wilayah: Pasuruan Barat\n- Jadwal: 24–30 September 2025 (sudah lewat, pelaksanaannya belum terkonfirmasi), 21–27 September 2026 (sudah selesai)\n\n4. Pesta Rakyat dan Doa Lintas Agama Malam Tahun Baru 2027\n- Alamat: Alun-Alun Kota Pasuruan, Jl. Alun-Alun, Kec. Panggungrejo, Kota Pasuruan\n- Jadwal: 31 Desember 2026 – 1 Januari 2027 (akan datang, jadwal belum pasti)\n\n5. Festival Kopi Kapiten (Kopi Asli Kabupaten Pasuruan)\n- Alamat: Amphiteater Taman Candra Wilwatikta, Jl. Dr. Soetomo No. 2, Sumber Gedang, Kec. Pandaan, Kab. Pasuruan\n- Jadwal: 19–20 Desember 2026 (akan datang, jadwal belum pasti)\n- Tiket: Pengunjung Umum - Rp0 (Gratis untuk masyarakat umum)\n\nApakah Anda ingin mengetahui informasi lebih lanjut mengenai salah satu acara tersebut?\n\nCatatan: informasi tempat di atas belum terverifikasi, jadi sebaiknya dicek kembali ke pengelola sebelum berkunjung.\n\nSumber: Pasuruan Creative Fest: WasikOn Festivale; Parade Budaya dan Wayang Dalang Muda; Pekan Raya Pasuruan; Pesta Rakyat dan Doa Lintas Agama Malam Tahun Baru 2027; Festival Kopi Kapiten (Kopi Asli Kabupaten Pasuruan)",
+        "retrieval_query":  "Ada agenda atau event menarik di Pasuruan?",
+        "judge":  {
+                      "pool_k":  0,
+                      "skipped":  "limit_filled",
+                      "picked_k":  0
+                  },
+        "total_latency_ms":  12534,
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null,
+        "expected_accept":  "event:17;event:18;event:19;event:20;event:21;event:22;event:23;event:24;event:25;event:26;event:27;event:28;event:29;event:30;event:31;event:32;event:33;event:34;event:35;event:36"
+    },
+    {
+        "id":  "EVT-04",
+        "question":  "Saya tertarik pertunjukan seni komunitas di Pasuruan Timur. Acara apa yang cocok?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "relevant",
+        "retrieval_k":  3,
+        "context_k":  1,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  1546,
+        "sources":  [
+                        {
+                            "distance":  0,
+                            "source_id":  34,
+                            "similarity":  0,
+                            "source_type":  "event",
+                            "source_label":  "Tradisi Praonan Lebaran Ketupat Lekok",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "event_schedule"
+                        }
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0.31252296868665996,
+                                         "source_id":  25,
+                                         "similarity":  0.68747703131334,
+                                         "source_type":  "event",
+                                         "source_label":  "Nguling Nyawiji",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.3566793143802558,
+                                         "source_id":  26,
+                                         "similarity":  0.6433206856197442,
+                                         "source_type":  "event",
+                                         "source_label":  "Pramesty Winongan",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     },
+                                     {
+                                         "distance":  0.3681958594760072,
+                                         "source_id":  34,
+                                         "similarity":  0.6318041405239928,
+                                         "source_type":  "event",
+                                         "source_label":  "Tradisi Praonan Lebaran Ketupat Lekok",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "semantic"
+                                     }
+                                 ],
+        "answer":  "Acara yang cocok dengan pertanyaan Anda dalam data kami sudah lewat.\n\n1. Tradisi Praonan Lebaran Ketupat Lekok bisa jadi pilihan karena merupakan budaya turun-temurun warga pesisir utara Pasuruan.\n- Alamat: TPI Lekok / Pesisir Pantai Lekok, Jatirejo, Kec. Lekok, Kab. Pasuruan\n- Jadwal: 16 Maret 2027 (akan datang, jadwal belum pasti)\n\nApakah Anda ingin tahu informasi mengenai acara lain di wilayah Pasuruan?\n\nCatatan: informasi tempat di atas belum terverifikasi, jadi sebaiknya dicek kembali ke pengelola sebelum berkunjung.\n\nSumber: Tradisi Praonan Lebaran Ketupat Lekok",
+        "retrieval_query":  "Saya tertarik pertunjukan seni komunitas di Pasuruan Timur. Acara apa yang cocok?",
+        "judge":  {
+                      "pool_k":  2,
+                      "picked_k":  0,
+                      "latency_ms":  2380,
+                      "events_past":  {
+                                          "region":  "Pasuruan Timur",
+                                          "upcoming":  1
+                                      },
+                      "needs_clarification":  false,
+                      "recommendation_ranked":  {
+                                                    "zone":  "Pasuruan Timur",
+                                                    "dropped":  1
+                                                }
+                  },
+        "total_latency_ms":  11111,
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null
+    },
+    {
+        "id":  "EVT-05",
+        "question":  "Apakah ada acara yang jadwalnya sudah tercatat?",
+        "http_status":  200,
+        "assistant_status":  "complete",
+        "retrieval_status":  "relevant",
+        "retrieval_k":  1,
+        "context_k":  1,
+        "context_similarity_min":  0,
+        "llm_latency_ms":  1622,
+        "sources":  [
+                        {
+                            "distance":  0,
+                            "source_id":  34,
+                            "similarity":  0,
+                            "source_type":  "event",
+                            "source_label":  "Tradisi Praonan Lebaran Ketupat Lekok",
+                            "embedding_model":  "gemini-embedding-001",
+                            "retrieval_method":  "follow_up_previous_sources"
+                        }
+                    ],
+        "retrieval_candidates":  [
+                                     {
+                                         "distance":  0,
+                                         "source_id":  34,
+                                         "similarity":  0,
+                                         "source_type":  "event",
+                                         "source_label":  "Tradisi Praonan Lebaran Ketupat Lekok",
+                                         "embedding_model":  "gemini-embedding-001",
+                                         "retrieval_method":  "follow_up_previous_sources"
+                                     }
+                                 ],
+        "answer":  "1. Tradisi Praonan Lebaran Ketupat Lekok\n- Alamat: TPI Lekok / Pesisir Pantai Lekok, Jatirejo, Kec. Lekok, Kab. Pasuruan\n- Jadwal: 16 Maret 2027 (akan datang, jadwal belum pasti)\n\nApakah Anda ingin tahu informasi lebih lanjut mengenai acara tersebut?\n\nCatatan: informasi tempat di atas belum terverifikasi, jadi sebaiknya dicek kembali ke pengelola sebelum berkunjung.\n\nSumber: Tradisi Praonan Lebaran Ketupat Lekok",
+        "retrieval_query":  "Apakah jadwal Tradisi Praonan Lebaran Ketupat Lekok sudah tercatat?",
+        "judge":  {
+                      "pool_k":  0,
+                      "skipped":  "follow_up_previous_sources",
+                      "picked_k":  0
+                  },
+        "total_latency_ms":  6058,
+        "evaluation":  "REVIEW_REQUIRED",
+        "error":  null,
+        "expected_accept":  "event:17;event:18;event:19;event:20;event:21;event:22;event:23;event:24;event:25;event:26;event:27;event:28;event:29;event:30;event:31;event:32;event:33;event:34;event:35;event:36"
+    }
+]

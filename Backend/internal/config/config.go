@@ -90,7 +90,7 @@ func RelevanceThreshold() float64 {
 	return t
 }
 
-// RecommendThreshold is the similarity a text recommendation (GET /rekomendasi) needs to be shown
+// RecommendThreshold is the similarity a text recommendation (GET /recommendations/travel) needs to be shown
 // (RECOMMEND_RELEVANCE_THRESHOLD, jobdesk 9 Nov point 4, Owner option A). Like EMBED_RELEVANCE_THRESHOLD it belongs
 // to the embedding model; it is lower because a keyword scores below a question (gemini-embedding-001: "pantai" 0.642).
 // 0 = unset (the services default); NaN = not a number, refused by Validate.

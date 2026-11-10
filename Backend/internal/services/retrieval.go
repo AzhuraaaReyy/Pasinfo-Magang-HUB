@@ -536,14 +536,21 @@ func (r *Retriever) SearchTravelContent(ctx context.Context, p LLMProvider, quer
 	}
 	filter := SearchFilter{SourceTypes: types, EligibleAt: time.Now()}
 	if s.Zone = strings.TrimSpace(s.Zone); s.Zone != "" {
-		if !slices.Contains(planZones[1:], s.Zone) {
+		// Any letter case (jobdesk 10 Nov point 5, Owner); the metadata keeps the spelling of the zone list.
+		i := slices.IndexFunc(planZones[1:], func(z string) bool { return strings.EqualFold(z, s.Zone) })
+		if i < 0 {
 			return nil, fmt.Errorf("%w: zona harus Kota Pasuruan, Pasuruan Barat, Pasuruan Timur, Pasuruan Utara, atau Pasuruan Selatan", ErrInvalidTravelFilter)
 		}
-		filter.Region = s.Zone
+		filter.Region = planZones[1+i]
 	}
 	if s.District = strings.TrimSpace(s.District); s.District != "" {
 		if utf8.RuneCountInString(s.District) > travelSearchDistrictMaxRunes {
 			return nil, fmt.Errorf("%w: kecamatan paling banyak %d karakter", ErrInvalidTravelFilter, travelSearchDistrictMaxRunes)
+		}
+		// A kecamatan outside Kota and Kabupaten Pasuruan is a wrong input, not a place without data (jobdesk 10 Nov
+		// point 5, Owner): it is refused, while a known kecamatan without content still answers an empty list.
+		if ZoneOfDistrict(s.District) == "" {
+			return nil, fmt.Errorf("%w: kecamatan tidak dikenal, isi kecamatan di Kota atau Kabupaten Pasuruan", ErrInvalidTravelFilter)
 		}
 		filter.District = s.District
 	}
@@ -553,7 +560,16 @@ func (r *Retriever) SearchTravelContent(ctx context.Context, p LLMProvider, quer
 		}
 		filter.SourceType = types[0]
 		if types[0] == "destination" {
-			filter.TravelCategory = s.Category
+			// A destination category is a travel_categories row; like the other domains, an unknown name is refused and
+			// any letter case is accepted (jobdesk 10 Nov point 5, Owner).
+			var name string
+			if err := r.DB.WithContext(ctx).Raw(`SELECT name FROM travel_categories WHERE lower(name) = lower(?) LIMIT 1`, s.Category).Scan(&name).Error; err != nil {
+				return nil, err
+			}
+			if name == "" {
+				return nil, fmt.Errorf("%w: kategori %q tidak ada di domain ini", ErrInvalidTravelFilter, s.Category)
+			}
+			filter.TravelCategory = name
 		} else {
 			for code, label := range typeLabels[types[0]] {
 				if strings.EqualFold(label, s.Category) {

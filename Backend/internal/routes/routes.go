@@ -86,7 +86,7 @@ func SetupRoutes(app *fiber.App) {
 	wisataHandler := handlers.NewWisataHandler(database.DB)
 	wisataHandler.Register(api)
 	recommendationHandler := handlers.NewRecommendationHandler(services.NewRecommender(database.DB))
-	// GET /rekomendasi?q=… searches with the chat provider (jobdesk 9 Nov, Owner 2026-11-09).
+	// GET /recommendations/travel?q=… searches with the chat provider (jobdesk 9 Nov; path of jobdesk 10 Nov, Owner).
 	recommendationHandler.Search, recommendationHandler.LLM = chatHandler.Retriever, llm
 	recommendationHandler.Register(api)
 	// /articles and /article-categories were removed (Owner 2026-11-09): the tables were empty and news is served by /news.

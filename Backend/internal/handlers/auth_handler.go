@@ -393,7 +393,7 @@ func UploadImage(c *fiber.Ctx) error {
 	file, err := c.FormFile("image")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false, "message": "No image file provided",
+			"success": false, "message": "Berkas gambar belum dipilih.",
 		})
 	}
 
@@ -412,12 +412,12 @@ func UploadImage(c *fiber.Ctx) error {
 	uploadDir, err := resolveUploadDir(os.Getenv("UPLOAD_DIR"))
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false, "message": "Upload directory unavailable",
+			"success": false, "message": "Gambar belum dapat disimpan. Silakan coba lagi.",
 		})
 	}
 	if err := os.MkdirAll(uploadDir, 0750); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false, "message": "Upload directory unavailable",
+			"success": false, "message": "Gambar belum dapat disimpan. Silakan coba lagi.",
 		})
 	}
 
@@ -425,13 +425,13 @@ func UploadImage(c *fiber.Ctx) error {
 	destPath, err := uploadDestination(uploadDir, safeName)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false, "message": "Invalid filename",
+			"success": false, "message": "Nama berkas tidak valid.",
 		})
 	}
 
 	if err := c.SaveFile(file, destPath); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false, "message": "Failed to save file",
+			"success": false, "message": "Gambar gagal disimpan. Silakan coba lagi.",
 		})
 	}
 
@@ -452,27 +452,27 @@ func validateImageFile(fh *multipart.FileHeader) error {
 
 	if fh.Size > maxSize {
 		return fiber.NewError(fiber.StatusRequestEntityTooLarge,
-			"File too large. Maximum allowed size is 5 MB")
+			"Ukuran gambar terlalu besar. Maksimal 5 MB.")
 	}
 
 	ext := strings.ToLower(filepath.Ext(fh.Filename))
 	allowedExt := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
 	if !allowedExt[ext] {
 		return fiber.NewError(fiber.StatusUnsupportedMediaType,
-			"File extension not allowed. Accepted: jpg, jpeg, png, webp")
+			"Format berkas tidak didukung. Gunakan jpg, jpeg, png, atau webp.")
 	}
 
 	// Magic bytes check — open and read first 512 bytes
 	f, err := fh.Open()
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "Cannot open uploaded file")
+		return fiber.NewError(fiber.StatusInternalServerError, "Berkas gambar tidak dapat dibuka. Silakan coba lagi.")
 	}
 	defer f.Close()
 
 	buf := make([]byte, 512)
 	n, err := io.ReadFull(f, buf)
 	if err != nil && err != io.ErrUnexpectedEOF {
-		return fiber.NewError(fiber.StatusBadRequest, "Cannot read uploaded file")
+		return fiber.NewError(fiber.StatusBadRequest, "Berkas gambar tidak dapat dibaca.")
 	}
 
 	detected := detectMIME(buf[:n])
@@ -483,7 +483,7 @@ func validateImageFile(fh *multipart.FileHeader) error {
 	}
 	if !allowedMIME[detected] {
 		return fiber.NewError(fiber.StatusUnsupportedMediaType,
-			"File content does not match an allowed image type (JPG/PNG/WEBP)")
+			"Isi berkas bukan gambar JPG, PNG, atau WEBP.")
 	}
 
 	return nil

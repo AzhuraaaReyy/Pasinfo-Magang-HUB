@@ -64,7 +64,11 @@ var sourceCardQueries = map[string]string{
 // Rows are ordered so the first row per id is the card image.
 var sourceThumbnailQueries = map[string]string{
 	"destination": `SELECT mediable_id AS id, thumbnail_url AS url FROM media WHERE mediable_type = 'Destination' AND mediable_id IN ? AND thumbnail_url <> '' ORDER BY mediable_id, sort_order, id`,
-	"news":        `SELECT news_id AS id, image_path AS url FROM news_images WHERE news_id IN ? AND image_path <> '' ORDER BY news_id, id`,
+	// Culinary, culture, and event photos come from the seed file (Owner 2026-11-10), stored like destination media.
+	"culinary": `SELECT mediable_id AS id, thumbnail_url AS url FROM media WHERE mediable_type = 'Culinary' AND mediable_id IN ? AND thumbnail_url <> '' ORDER BY mediable_id, sort_order, id`,
+	"culture":  `SELECT mediable_id AS id, thumbnail_url AS url FROM media WHERE mediable_type = 'Culture' AND mediable_id IN ? AND thumbnail_url <> '' ORDER BY mediable_id, sort_order, id`,
+	"event":    `SELECT mediable_id AS id, thumbnail_url AS url FROM media WHERE mediable_type = 'Event' AND mediable_id IN ? AND thumbnail_url <> '' ORDER BY mediable_id, sort_order, id`,
+	"news":     `SELECT news_id AS id, image_path AS url FROM news_images WHERE news_id IN ? AND image_path <> '' ORDER BY news_id, id`,
 }
 
 // LoadSourceCards reads card fields for the given sources with at most two queries per

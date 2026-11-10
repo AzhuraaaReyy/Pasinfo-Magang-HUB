@@ -66,8 +66,10 @@
       "media": [
         {
           "type": "image",
-          "url": null,
-          "alt": "Foto Nasi Punel Bu Hj. Lin (belum tersedia)"
+          "url": "../../public/assets/images/kuliner/optimized/Nasi Punel.webp",
+          "thumbnail_url": "../../public/assets/images/kuliner/optimized/Nasi Punel.thumb.webp",
+          "alt_text": "Foto hidangan nasi punel (foto sementara)",
+          "alt": "Foto hidangan nasi punel (foto sementara)"
         }
       ],
       "short_description": "Nasi punel khas Bangil dengan lauk empal, lidah, babat, dan ayam. Kecamatan dan desa/kelurahan mengacu pada alamat di Google Places.",
@@ -106,8 +108,10 @@
       "media": [
         {
           "type": "image",
-          "url": null,
-          "alt": "Foto Depot Nasi Punel Setia Budi Bangil (belum tersedia)"
+          "url": "../../public/assets/images/kuliner/optimized/Nasi Punel.webp",
+          "thumbnail_url": "../../public/assets/images/kuliner/optimized/Nasi Punel.thumb.webp",
+          "alt_text": "Foto hidangan nasi punel (foto sementara)",
+          "alt": "Foto hidangan nasi punel (foto sementara)"
         }
       ],
       "short_description": "Nasi punel dengan pilihan lauk daging, ayam, dan jeroan. Kecamatan dan desa/kelurahan mengacu pada alamat di Google Places.",
@@ -146,8 +150,10 @@
       "media": [
         {
           "type": "image",
-          "url": null,
-          "alt": "Foto Warung Pojok Nasi Punel Bangil (belum tersedia)"
+          "url": "../../public/assets/images/kuliner/optimized/Nasi Punel.webp",
+          "thumbnail_url": "../../public/assets/images/kuliner/optimized/Nasi Punel.thumb.webp",
+          "alt_text": "Foto hidangan nasi punel (foto sementara)",
+          "alt": "Foto hidangan nasi punel (foto sementara)"
         }
       ],
       "short_description": "Warung kecil dengan tempat duduk terbatas dan sering antre; lokasi di gang kecil dari jalan utama. Kecamatan dan desa/kelurahan mengacu pada alamat di Google Places.",

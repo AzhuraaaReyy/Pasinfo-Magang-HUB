@@ -48,6 +48,7 @@ func TestSearchTravelContentRefusesInvalidFilters(t *testing.T) {
 		{Category: "Wisata Alam"}, // all four domains
 		{Domains: []string{"wisata", "kuliner"}, Category: "Wisata Alam"},
 		{Domains: []string{"kuliner"}, Category: "Wisata Alam"}, // not a kuliner category
+		{District: "Bandung"}, // jobdesk 10 Nov point 5: not a kecamatan of Pasuruan
 	}
 	for i, s := range cases {
 		p := &recordingEmbedder{}

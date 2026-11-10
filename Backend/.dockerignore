@@ -23,3 +23,5 @@ uploads/
 .gitignore
 .vscode/
 .idea/
+
+docs/

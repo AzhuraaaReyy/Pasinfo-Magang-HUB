@@ -103,6 +103,28 @@ func TestLoadSourceCardsNamesTypeWithFrontendCategory(t *testing.T) {
 	}
 }
 
+// Owner 2026-11-10: culinary, culture, and event cards carry the first photo stored for them, like destinations;
+// without a photo the thumbnail stays null.
+func TestLoadSourceCardsReadsDomainPhotos(t *testing.T) {
+	db := newSourceCardTestDB(t)
+	if err := db.Exec(`INSERT INTO media VALUES (30, 'Event', 6, 'acara.thumb.webp', 0), (31, 'Culinary', 5, 'kuliner-2.thumb.webp', 1), (32, 'Culinary', 5, 'kuliner-1.thumb.webp', 0), (33, 'Destination', 2, 'other.thumb.webp', 0)`).Error; err != nil {
+		t.Fatal(err)
+	}
+	cards, err := LoadSourceCards(context.Background(), db, []SourceKey{{"event", 6}, {"culinary", 5}, {"culture", 2}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := strValue(cards[SourceKey{"event", 6}].ThumbnailURL); got != "acara.thumb.webp" {
+		t.Fatalf("event thumbnail = %s", got)
+	}
+	if got := strValue(cards[SourceKey{"culinary", 5}].ThumbnailURL); got != "kuliner-1.thumb.webp" {
+		t.Fatalf("culinary thumbnail = %s, want the first photo", got)
+	}
+	if thumb := cards[SourceKey{"culture", 2}].ThumbnailURL; thumb != nil {
+		t.Fatalf("culture without a photo got %q", *thumb)
+	}
+}
+
 func TestLoadSourceCardsWithoutKeysRunsNoQuery(t *testing.T) {
 	cards, err := LoadSourceCards(context.Background(), nil, nil)
 	if err != nil || len(cards) != 0 {
