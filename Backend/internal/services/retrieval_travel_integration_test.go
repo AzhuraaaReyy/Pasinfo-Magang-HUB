@@ -409,3 +409,119 @@ func TestTravelSearchSkipsDocumentsWithoutEmbedding(t *testing.T) {
 		t.Fatal("the real corpus lost its embeddings")
 	}
 }
+
+// Jobdesk 11 Nov point 5, extended to the travel domains (Owner 2026-11-11): a destination, culinary place, culture item,
+// or event that is not published reaches no chat path and no saved-answer card, also while its corpus row is still
+// active. In a rolled-back transaction TEMP tables shadow the four source tables; one embedded item per domain (with
+// coordinates, and for an event an upcoming occurrence) is set to draft in the shadow only.
+func TestTravelPublicationRuleOnPostgres(t *testing.T) {
+	dsn := os.Getenv("TRAVEL_SEARCH_DSN")
+	if dsn == "" {
+		t.Skip("TRAVEL_SEARCH_DSN not set")
+	}
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	tables := map[string]string{"destination": "destinations", "culinary": "culinaries", "culture": "cultures", "event": "events"}
+	categories := map[string]string{"destination": "wisata", "culinary": "kuliner", "culture": "budaya", "event": "acara"}
+	for sourceType, table := range tables {
+		for _, status := range []string{"published", "draft"} {
+			err := db.Transaction(func(tx *gorm.DB) error {
+				if err := tx.Exec(`CREATE TEMP TABLE ` + table + ` ON COMMIT DROP AS SELECT * FROM public.` + table).Error; err != nil {
+					return err
+				}
+				var doc struct {
+					SourceID       int64
+					SourceLabel    string
+					Embedding      pgvector.Vector
+					EmbeddingModel string
+					Lat, Lng       float64
+				}
+				upcoming := ""
+				if sourceType == "event" {
+					upcoming = ` AND EXISTS (SELECT 1 FROM event_occurrences o WHERE o.event_id = x.id AND (o.ends_at >= now() OR (o.ends_at IS NULL AND o.starts_at >= now())))`
+				}
+				if err := tx.Raw(`SELECT k.source_id, k.source_label, k.embedding, k.embedding_model, p.latitude AS lat, p.longitude AS lng FROM faq_knowledge_bases k JOIN `+table+` x ON x.id = k.source_id JOIN places p ON p.id = x.place_id WHERE k.source_type = ? AND k.is_active AND k.embedding IS NOT NULL AND x.status = 'published' AND p.latitude <> 0 AND p.longitude <> 0`+upcoming+` ORDER BY k.source_id LIMIT 1`, sourceType).Scan(&doc).Error; err != nil || doc.SourceID == 0 {
+					return fmt.Errorf("%s: no embedded published item with a place: %v", sourceType, err)
+				}
+				if err := tx.Exec(`UPDATE `+table+` SET status = ? WHERE id = ?`, status, doc.SourceID).Error; err != nil {
+					return err
+				}
+				want := status == "published"
+				query := &vectorEmbedder{vector: doc.Embedding.Slice(), model: doc.EmbeddingModel}
+				r, ctx, ref := NewRetriever(tx), context.Background(), SourceRef{SourceType: sourceType, SourceID: doc.SourceID}
+				has := func(rs []SemanticResult) bool {
+					for _, x := range rs {
+						if pointerString(x.SourceType) == sourceType && pointerInt64Value(x.SourceID) == doc.SourceID {
+							return true
+						}
+					}
+					return false
+				}
+				paths := map[string]func() ([]SemanticResult, error){
+					"SemanticSearch all": func() ([]SemanticResult, error) { return r.SemanticSearch(ctx, query, doc.SourceLabel, "", 10) },
+					"SemanticSearch category": func() ([]SemanticResult, error) {
+						return r.SemanticSearch(ctx, query, doc.SourceLabel, categories[sourceType], 10)
+					},
+					"LoadSources": func() ([]SemanticResult, error) { return r.LoadSources(ctx, []SourceRef{ref}) },
+					"NearestContent": func() ([]SemanticResult, error) {
+						return r.NearestContent(ctx, sourceType, GeoPoint{Lat: doc.Lat, Lng: doc.Lng}, nil, time.Now(), 0.01, 50)
+					},
+				}
+				if sourceType == "event" {
+					paths["EventsInPeriod"] = func() ([]SemanticResult, error) {
+						return r.EventsInPeriod(ctx, time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC), time.Date(2100, 1, 1, 0, 0, 0, 0, time.UTC), "", 1000)
+					}
+				}
+				for name, path := range paths {
+					got, err := path()
+					if err != nil {
+						return fmt.Errorf("%s %s: %w", sourceType, name, err)
+					}
+					if has(got) != want {
+						return fmt.Errorf("%s %s (%s): returns the item = %v, want %v", sourceType, name, status, has(got), want)
+					}
+				}
+				origin, err := r.ContentPlace(ctx, "", &ref, "")
+				if err != nil {
+					return err
+				}
+				if (origin != nil) != want {
+					return fmt.Errorf("%s ContentPlace (%s) = %v, want found %v", sourceType, status, origin != nil, want)
+				}
+				cards, err := LoadSourceCards(ctx, tx, []SourceKey{{sourceType, doc.SourceID}})
+				if err != nil {
+					return err
+				}
+				if _, ok := cards[SourceKey{sourceType, doc.SourceID}]; ok != want {
+					return fmt.Errorf("%s card (%s) = %v, want %v", sourceType, status, ok, want)
+				}
+				t.Logf("%s %q %s: chat paths and card follow the status", sourceType, doc.SourceLabel, status)
+				return errRollbackTravelTest
+			})
+			if err != errRollbackTravelTest {
+				t.Fatal(err)
+			}
+		}
+	}
+	// A region document has no publication status: it still passes every chat path that applies the rule.
+	var region struct {
+		SourceID       int64
+		SourceLabel    string
+		Embedding      pgvector.Vector
+		EmbeddingModel string
+	}
+	if err := db.Raw(`SELECT source_id, source_label, embedding, embedding_model FROM faq_knowledge_bases WHERE source_type = 'region' AND is_active AND embedding IS NOT NULL ORDER BY source_id LIMIT 1`).Scan(&region).Error; err != nil || region.SourceID == 0 {
+		t.Fatalf("no region document: %v", err)
+	}
+	r, ctx := NewRetriever(db), context.Background()
+	loaded, err := r.LoadSources(ctx, []SourceRef{{SourceType: "region", SourceID: region.SourceID}})
+	if err != nil || len(loaded) != 1 {
+		t.Fatalf("region LoadSources = %d, err %v", len(loaded), err)
+	}
+	found, err := r.SemanticSearch(ctx, &vectorEmbedder{vector: region.Embedding.Slice(), model: region.EmbeddingModel}, region.SourceLabel, "", 5)
+	if err != nil || len(found) == 0 || pointerString(found[0].SourceType) != "region" || pointerInt64Value(found[0].SourceID) != region.SourceID {
+		t.Fatalf("region semantic search: %d results, err %v", len(found), err)
+	}
+}

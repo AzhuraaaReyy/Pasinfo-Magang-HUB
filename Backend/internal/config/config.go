@@ -48,6 +48,8 @@ type LLMConfig struct {
 	RelevanceThreshold float64
 	// RecommendThreshold is RECOMMEND_RELEVANCE_THRESHOLD (see RecommendThreshold); 0 = unset.
 	RecommendThreshold float64
+	// RecommendRelativeCutoff is RECOMMEND_RELATIVE_CUTOFF (see RecommendRelativeCutoff); 0 = unset.
+	RecommendRelativeCutoff float64
 }
 
 func env(key, fallback string) string {
@@ -91,11 +93,28 @@ func RelevanceThreshold() float64 {
 }
 
 // RecommendThreshold is the similarity a text recommendation (GET /recommendations/travel) needs to be shown
-// (RECOMMEND_RELEVANCE_THRESHOLD, jobdesk 9 Nov point 4, Owner option A). Like EMBED_RELEVANCE_THRESHOLD it belongs
+// (RECOMMEND_RELEVANCE_THRESHOLD, jobdesk 9 Nov point 4, Owner option A); the news article search uses it too
+// (jobdesk 11 Nov point 1: 0.61 also fits news). Like EMBED_RELEVANCE_THRESHOLD it belongs
 // to the embedding model; it is lower because a keyword scores below a question (gemini-embedding-001: "pantai" 0.642).
 // 0 = unset (the services default); NaN = not a number, refused by Validate.
 func RecommendThreshold() float64 {
 	v := env("RECOMMEND_RELEVANCE_THRESHOLD", "")
+	if v == "" {
+		return 0
+	}
+	t, err := strconv.ParseFloat(v, 64)
+	if err != nil {
+		return math.NaN()
+	}
+	return t
+}
+
+// RecommendRelativeCutoff is how far below the first card a text recommendation may be and still be shown
+// (RECOMMEND_RELATIVE_CUTOFF, threshold discussion 2026-11-11, Owner option A): applied after RecommendThreshold, so a
+// list keeps only the cards close to its best one. 1 = no cut. 0 = unset (the services default); NaN = not a number,
+// refused by Validate.
+func RecommendRelativeCutoff() float64 {
+	v := env("RECOMMEND_RELATIVE_CUTOFF", "")
 	if v == "" {
 		return 0
 	}
@@ -165,6 +184,8 @@ func LoadLLM() LLMConfig {
 
 		RelevanceThreshold: RelevanceThreshold(),
 		RecommendThreshold: RecommendThreshold(),
+
+		RecommendRelativeCutoff: RecommendRelativeCutoff(),
 	}
 }
 
@@ -217,6 +238,9 @@ func (c LLMConfig) Validate() error {
 	}
 	if t := c.RecommendThreshold; t != 0 && !(t > 0 && t < 1) {
 		return fmt.Errorf("RECOMMEND_RELEVANCE_THRESHOLD must be a number above 0 and below 1")
+	}
+	if t := c.RecommendRelativeCutoff; t != 0 && !(t > 0 && t <= 1) {
+		return fmt.Errorf("RECOMMEND_RELATIVE_CUTOFF must be a number above 0 and at most 1")
 	}
 	return nil
 }

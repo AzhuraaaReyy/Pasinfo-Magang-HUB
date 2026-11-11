@@ -167,12 +167,12 @@ func pointerInt64Value(value *int64) int64 {
 }
 
 // LoadSources returns the active knowledge documents of the given sources in the given order;
-// sources that are missing or inactive are skipped. No embedding is needed.
+// sources that are missing or inactive, or no longer published (publishedSourceSQL), are skipped. No embedding is needed.
 func (r *Retriever) LoadSources(ctx context.Context, refs []SourceRef) ([]SemanticResult, error) {
 	var out []SemanticResult
 	for _, ref := range refs {
 		var rows []SemanticResult
-		if err := r.DB.WithContext(ctx).Raw(`SELECT id,question,answer,category,source_type,source_id,source_label,metadata,embedding_model FROM faq_knowledge_bases WHERE is_active=true AND embedding IS NOT NULL AND source_type=? AND source_id=? LIMIT 1`, ref.SourceType, ref.SourceID).Scan(&rows).Error; err != nil {
+		if err := r.DB.WithContext(ctx).Raw(`SELECT id,question,answer,category,source_type,source_id,source_label,metadata,embedding_model FROM faq_knowledge_bases WHERE is_active=true AND embedding IS NOT NULL AND source_type=? AND source_id=?`+publishedSourceSQL("")+` LIMIT 1`, ref.SourceType, ref.SourceID).Scan(&rows).Error; err != nil {
 			return nil, err
 		}
 		for _, row := range rows {
@@ -191,7 +191,7 @@ func (r *Retriever) EventsInPeriod(ctx context.Context, from, to time.Time, regi
 	if limit < 1 {
 		limit = defaultListCount
 	}
-	query := `SELECT k.id,k.question,k.answer,k.category,k.source_type,k.source_id,k.source_label,k.metadata,k.embedding_model FROM faq_knowledge_bases k JOIN event_occurrences o ON o.event_id = k.source_id WHERE k.is_active=true AND k.embedding IS NOT NULL AND k.source_type='event' AND (?='' OR k.metadata->>'region'=?) AND (o.ends_at >= ? OR (o.ends_at IS NULL AND (o.starts_at >= ? OR o.status='ongoing')))`
+	query := `SELECT k.id,k.question,k.answer,k.category,k.source_type,k.source_id,k.source_label,k.metadata,k.embedding_model FROM faq_knowledge_bases k JOIN event_occurrences o ON o.event_id = k.source_id WHERE k.is_active=true AND k.embedding IS NOT NULL AND k.source_type='event'` + publishedSourceSQL("k.") + ` AND (?='' OR k.metadata->>'region'=?) AND (o.ends_at >= ? OR (o.ends_at IS NULL AND (o.starts_at >= ? OR o.status='ongoing')))`
 	args := []any{region, region, from.UTC(), from.UTC()}
 	if !to.IsZero() {
 		query += ` AND o.starts_at < ?`
@@ -241,14 +241,14 @@ func (r *Retriever) RegionDocuments(ctx context.Context) ([]SemanticResult, erro
 	return out, nil
 }
 
-// LatestNews returns the active news documents most recently added to the database (news.created_at;
-// published_at is empty in staging), optionally of one categories.slug.
+// LatestNews returns the active news documents of published articles most recently added to the database
+// (news.created_at; published_at is empty in staging), optionally of one categories.slug.
 func (r *Retriever) LatestNews(ctx context.Context, newsCategory string, limit int) ([]SemanticResult, error) {
 	if limit < 1 {
 		limit = defaultListCount
 	}
 	var out []SemanticResult
-	if err := r.DB.WithContext(ctx).Raw(`SELECT k.id,k.question,k.answer,k.category,k.source_type,k.source_id,k.source_label,k.metadata,k.embedding_model FROM faq_knowledge_bases k JOIN news n ON n.id = k.source_id WHERE k.is_active=true AND k.embedding IS NOT NULL AND k.source_type='news' AND (?='' OR k.metadata->>'news_category'=?) ORDER BY n.created_at DESC, k.id DESC LIMIT ?`, newsCategory, newsCategory, limit).Scan(&out).Error; err != nil {
+	if err := r.DB.WithContext(ctx).Raw(`SELECT k.id,k.question,k.answer,k.category,k.source_type,k.source_id,k.source_label,k.metadata,k.embedding_model FROM faq_knowledge_bases k JOIN news n ON n.id = k.source_id WHERE k.is_active=true AND k.embedding IS NOT NULL AND k.source_type='news' AND n.status='published' AND (?='' OR k.metadata->>'news_category'=?) ORDER BY n.created_at DESC, k.id DESC LIMIT ?`, newsCategory, newsCategory, limit).Scan(&out).Error; err != nil {
 		return nil, err
 	}
 	for i := range out {
@@ -258,14 +258,14 @@ func (r *Retriever) LatestNews(ctx context.Context, newsCategory string, limit i
 	return out, nil
 }
 
-// PopularNews returns the active news documents with readers (news.views > 0), most read first,
+// PopularNews returns the active news documents of published articles with readers (news.views > 0), most read first,
 // optionally of one categories.slug. It is empty while no news has been read through the API.
 func (r *Retriever) PopularNews(ctx context.Context, newsCategory string, limit int) ([]SemanticResult, error) {
 	if limit < 1 {
 		limit = defaultListCount
 	}
 	var out []SemanticResult
-	if err := r.DB.WithContext(ctx).Raw(`SELECT k.id,k.question,k.answer,k.category,k.source_type,k.source_id,k.source_label,k.metadata,k.embedding_model FROM faq_knowledge_bases k JOIN news n ON n.id = k.source_id WHERE k.is_active=true AND k.embedding IS NOT NULL AND k.source_type='news' AND n.views > 0 AND (?='' OR k.metadata->>'news_category'=?) ORDER BY n.views DESC, n.created_at DESC LIMIT ?`, newsCategory, newsCategory, limit).Scan(&out).Error; err != nil {
+	if err := r.DB.WithContext(ctx).Raw(`SELECT k.id,k.question,k.answer,k.category,k.source_type,k.source_id,k.source_label,k.metadata,k.embedding_model FROM faq_knowledge_bases k JOIN news n ON n.id = k.source_id WHERE k.is_active=true AND k.embedding IS NOT NULL AND k.source_type='news' AND n.status='published' AND n.views > 0 AND (?='' OR k.metadata->>'news_category'=?) ORDER BY n.views DESC, n.created_at DESC LIMIT ?`, newsCategory, newsCategory, limit).Scan(&out).Error; err != nil {
 		return nil, err
 	}
 	for i := range out {
@@ -293,9 +293,45 @@ func (r *Retriever) SemanticSearchInRegion(ctx context.Context, p LLMProvider, q
 }
 
 // SemanticSearchNews is SemanticSearch restricted to the news of one categories.slug
-// (faq_knowledge_bases.metadata->>'news_category', written by UpsertNews).
+// (faq_knowledge_bases.metadata->>'news_category', written by UpsertNews). Only news still published are compared
+// (eligibleSourceSQL, jobdesk 11 Nov point 1).
 func (r *Retriever) SemanticSearchNews(ctx context.Context, p LLMProvider, q, newsCategory string, limit int) ([]SemanticResult, error) {
-	return r.semanticSearch(ctx, p, q, SearchFilter{Category: "berita", NewsCategory: newsCategory}, limit)
+	return r.semanticSearch(ctx, p, q, SearchFilter{Category: "berita", NewsCategory: newsCategory, EligibleAt: time.Now()}, limit)
+}
+
+// ErrUnknownNewsCategory is returned by SearchNews for a category that is not a categories.slug.
+var ErrUnknownNewsCategory = errors.New("unknown news category")
+
+// SearchNews is the semantic search of news articles for a list shown to visitors (jobdesk 11 Nov point 1): the
+// published news most similar to q (cosine of the query embedding and the stored article embedding, highest first),
+// optionally of one category (categories.slug, any letter case). Unlike SemanticSearchNews, whose candidates the chat
+// judges itself, it keeps only the articles at least as similar as the text-search threshold (recommendThreshold,
+// RECOMMEND_RELEVANCE_THRESHOLD): in the news evaluation (news_threshold_eval_test.go, 17 queries) 0.61 showed no
+// article for the 5 queries no news answers, as for the travel search. The category is checked before the embedding
+// call, so a wrong one costs no quota.
+func (r *Retriever) SearchNews(ctx context.Context, p LLMProvider, q, newsCategory string, limit int) ([]SemanticResult, error) {
+	if newsCategory = strings.TrimSpace(newsCategory); newsCategory != "" {
+		var slug string
+		if err := r.DB.WithContext(ctx).Raw(`SELECT slug FROM categories WHERE lower(slug) = lower(?) LIMIT 1`, newsCategory).Scan(&slug).Error; err != nil {
+			return nil, err
+		}
+		if slug == "" {
+			return nil, ErrUnknownNewsCategory
+		}
+		newsCategory = slug
+	}
+	results, err := r.SemanticSearchNews(ctx, p, q, newsCategory, limit)
+	if err != nil {
+		return nil, err
+	}
+	threshold := recommendThreshold()
+	relevant := results[:0]
+	for _, result := range results {
+		if result.Similarity >= threshold {
+			relevant = append(relevant, result)
+		}
+	}
+	return relevant, nil
 }
 
 // SearchFilter narrows a semantic search. The values are always bound as SQL parameters; the table names come only
@@ -330,7 +366,7 @@ func (r *Retriever) NearestContent(ctx context.Context, sourceType string, from 
 	if table == "" {
 		return nil, fmt.Errorf("nearest: unsupported source type %q", sourceType)
 	}
-	query := `SELECT k.id,k.question,k.answer,k.category,k.source_type,k.source_id,k.source_label,k.metadata,k.embedding_model, d.km AS straight_km, d.lat, d.lng FROM faq_knowledge_bases k JOIN (SELECT x.id, p.latitude AS lat, p.longitude AS lng, ` + straightKmSQL + ` AS km FROM ` + table + ` x JOIN places p ON p.id = x.place_id WHERE p.latitude <> 0 AND p.longitude <> 0) d ON d.id = k.source_id WHERE k.is_active = true AND k.embedding IS NOT NULL AND k.source_type = ? AND d.km <= ?`
+	query := `SELECT k.id,k.question,k.answer,k.category,k.source_type,k.source_id,k.source_label,k.metadata,k.embedding_model, d.km AS straight_km, d.lat, d.lng FROM faq_knowledge_bases k JOIN (SELECT x.id, p.latitude AS lat, p.longitude AS lng, ` + straightKmSQL + ` AS km FROM ` + table + ` x JOIN places p ON p.id = x.place_id WHERE p.latitude <> 0 AND p.longitude <> 0) d ON d.id = k.source_id WHERE k.is_active = true AND k.embedding IS NOT NULL AND k.source_type = ? AND d.km <= ?` + publishedSourceSQL("k.")
 	args := []any{from.Lat, from.Lat, from.Lng, sourceType, maxKm}
 	var excluded []int64
 	for _, ref := range exclude {
@@ -371,8 +407,8 @@ func (r *Retriever) NearestContent(ctx context.Context, sourceType string, from 
 	return out, nil
 }
 
-// contentPlaceSQL joins the active documents of the place-based domains to their place coordinates.
-const contentPlaceSQL = `SELECT k.source_type, k.source_id, k.source_label AS label, p.latitude AS lat, p.longitude AS lng FROM faq_knowledge_bases k JOIN (SELECT 'destination' AS t, id, place_id FROM destinations UNION ALL SELECT 'culinary', id, place_id FROM culinaries UNION ALL SELECT 'culture', id, place_id FROM cultures UNION ALL SELECT 'event', id, place_id FROM events) x ON x.t = k.source_type AND x.id = k.source_id JOIN places p ON p.id = x.place_id WHERE k.is_active = true AND p.latitude <> 0 AND p.longitude <> 0`
+// contentPlaceSQL joins the active documents of the published place-based items to their place coordinates.
+var contentPlaceSQL = `SELECT k.source_type, k.source_id, k.source_label AS label, p.latitude AS lat, p.longitude AS lng FROM faq_knowledge_bases k JOIN (SELECT 'destination' AS t, id, place_id FROM destinations UNION ALL SELECT 'culinary', id, place_id FROM culinaries UNION ALL SELECT 'culture', id, place_id FROM cultures UNION ALL SELECT 'event', id, place_id FROM events) x ON x.t = k.source_type AND x.id = k.source_id JOIN places p ON p.id = x.place_id WHERE k.is_active = true AND p.latitude <> 0 AND p.longitude <> 0` + publishedSourceSQL("k.")
 
 // ContentPlace returns the place of a named content ("Bromo"), or of ref when ref is set; nil when none matches. A name
 // matches a document label exactly, then as its start, then anywhere; the shortest label wins (Owner 2026-11-07: the
@@ -481,8 +517,43 @@ func operatingSQL(alias string) string {
 // eligibleSourceSQL keeps the corpus documents whose source row may be shown (jobdesk 9 Nov point 5): published content,
 // and for an event a schedule still running or upcoming. It is checked in the search itself, before the ordering, so a
 // finished event or a draft never takes a place among the nearest results; it takes the two time arguments of
-// upcomingOccurrenceSQL.
+// upcomingOccurrenceSQL. A news item must still be published (jobdesk 11 Nov point 1, N1): the refresh deactivates the
+// row of a news item that left the published set only after a complete run, so without this check a draft or deleted
+// item stayed searchable while the embedding provider was down.
+// publishedSources are the source types with a publication status and their tables (schema.md §45: draft / published /
+// archived; news: draft / pending / revision / published).
+var publishedSources = []struct{ sourceType, table string }{
+	{"news", "news"}, {"destination", "destinations"}, {"culinary", "culinaries"}, {"culture", "cultures"}, {"event", "events"},
+}
+
+// HasPublicationRule reports whether documents of sourceType are shown only while their source is published.
+func HasPublicationRule(sourceType string) bool {
+	for _, s := range publishedSources {
+		if s.sourceType == sourceType {
+			return true
+		}
+	}
+	return false
+}
+
+// publishedSourceSQL keeps a corpus document only while its source row is published (jobdesk 11 Nov point 5, P5-1, Owner;
+// extended to wisata, kuliner, budaya, and acara by the Owner the same day). The publication rule of Pasuruan Info is a
+// whitelist, status = 'published', so draft, pending, revision, and any later status (archived, inactive) never show. The
+// corpus row is deactivated only by the refresh (every 15 minutes, and only after a complete run), and a status change
+// does not start one, so every corpus read that a visitor can reach checks the source row itself. Only the status is
+// checked: the chat keeps finished events and closed places, which it names as such (eligibleSourceSQL, used by the
+// recommendation search, also drops those). A region document, or a row without source_type, passes (ELSE true). alias
+// is the table alias of faq_knowledge_bases with its dot ("k.") or "".
+func publishedSourceSQL(alias string) string {
+	sql := ` AND CASE ` + alias + `source_type`
+	for _, s := range publishedSources {
+		sql += ` WHEN '` + s.sourceType + `' THEN EXISTS (SELECT 1 FROM ` + s.table + ` x WHERE x.id = ` + alias + `source_id AND x.status = 'published')`
+	}
+	return sql + ` ELSE true END`
+}
+
 var eligibleSourceSQL = ` AND CASE source_type` +
+	` WHEN 'news' THEN EXISTS (SELECT 1 FROM news x WHERE x.id = source_id AND x.status = 'published')` +
 	` WHEN 'destination' THEN EXISTS (SELECT 1 FROM destinations x WHERE x.id = source_id AND x.status = 'published' AND ` + operatingSQL("x") + `)` +
 	` WHEN 'culinary' THEN EXISTS (SELECT 1 FROM culinaries x WHERE x.id = source_id AND x.status = 'published' AND ` + operatingSQL("x") + `)` +
 	` WHEN 'culture' THEN EXISTS (SELECT 1 FROM cultures x WHERE x.id = source_id AND x.status = 'published')` +
@@ -539,24 +610,24 @@ func (r *Retriever) SearchTravelContent(ctx context.Context, p LLMProvider, quer
 		// Any letter case (jobdesk 10 Nov point 5, Owner); the metadata keeps the spelling of the zone list.
 		i := slices.IndexFunc(planZones[1:], func(z string) bool { return strings.EqualFold(z, s.Zone) })
 		if i < 0 {
-			return nil, fmt.Errorf("%w: zona harus Kota Pasuruan, Pasuruan Barat, Pasuruan Timur, Pasuruan Utara, atau Pasuruan Selatan", ErrInvalidTravelFilter)
+			return nil, fmt.Errorf("%w: zone harus Kota Pasuruan, Pasuruan Barat, Pasuruan Timur, Pasuruan Utara, atau Pasuruan Selatan", ErrInvalidTravelFilter)
 		}
 		filter.Region = planZones[1+i]
 	}
 	if s.District = strings.TrimSpace(s.District); s.District != "" {
 		if utf8.RuneCountInString(s.District) > travelSearchDistrictMaxRunes {
-			return nil, fmt.Errorf("%w: kecamatan paling banyak %d karakter", ErrInvalidTravelFilter, travelSearchDistrictMaxRunes)
+			return nil, fmt.Errorf("%w: district paling banyak %d karakter", ErrInvalidTravelFilter, travelSearchDistrictMaxRunes)
 		}
 		// A kecamatan outside Kota and Kabupaten Pasuruan is a wrong input, not a place without data (jobdesk 10 Nov
 		// point 5, Owner): it is refused, while a known kecamatan without content still answers an empty list.
 		if ZoneOfDistrict(s.District) == "" {
-			return nil, fmt.Errorf("%w: kecamatan tidak dikenal, isi kecamatan di Kota atau Kabupaten Pasuruan", ErrInvalidTravelFilter)
+			return nil, fmt.Errorf("%w: district tidak dikenal, isi kecamatan di Kota atau Kabupaten Pasuruan", ErrInvalidTravelFilter)
 		}
 		filter.District = s.District
 	}
 	if s.Category = strings.TrimSpace(s.Category); s.Category != "" {
 		if len(types) != 1 {
-			return nil, fmt.Errorf("%w: kategori hanya bisa dipakai dengan satu domain", ErrInvalidTravelFilter)
+			return nil, fmt.Errorf("%w: category hanya bisa dipakai dengan satu domain", ErrInvalidTravelFilter)
 		}
 		filter.SourceType = types[0]
 		if types[0] == "destination" {
@@ -567,7 +638,7 @@ func (r *Retriever) SearchTravelContent(ctx context.Context, p LLMProvider, quer
 				return nil, err
 			}
 			if name == "" {
-				return nil, fmt.Errorf("%w: kategori %q tidak ada di domain ini", ErrInvalidTravelFilter, s.Category)
+				return nil, fmt.Errorf("%w: category %q tidak ada di domain ini", ErrInvalidTravelFilter, s.Category)
 			}
 			filter.TravelCategory = name
 		} else {
@@ -577,7 +648,7 @@ func (r *Retriever) SearchTravelContent(ctx context.Context, p LLMProvider, quer
 				}
 			}
 			if filter.TypeCode == "" {
-				return nil, fmt.Errorf("%w: kategori %q tidak ada di domain ini", ErrInvalidTravelFilter, s.Category)
+				return nil, fmt.Errorf("%w: category %q tidak ada di domain ini", ErrInvalidTravelFilter, s.Category)
 			}
 		}
 	}
@@ -624,7 +695,7 @@ func (r *Retriever) semanticSearch(ctx context.Context, p LLMProvider, q string,
 		relation, relationArgs := filter.relationClause()
 		args := []any{vec, filter.Category, filter.Category, filter.Region, filter.Region, filter.NewsCategory, filter.NewsCategory, v.Model, v.Model}
 		args = append(append(args, relationArgs...), vec, limit)
-		return tx.Raw(`SELECT id,question,answer,category,source_type,source_id,source_label,metadata,embedding_model,embedding <=> ? distance FROM faq_knowledge_bases WHERE is_active=true AND embedding IS NOT NULL AND (?='' OR category=?) AND (?='' OR metadata->>'region'=?) AND (?='' OR metadata->>'news_category'=?) AND (?='' OR embedding_model=?)`+relation+` ORDER BY embedding <=> ? LIMIT ?`, args...).Scan(&out).Error
+		return tx.Raw(`SELECT id,question,answer,category,source_type,source_id,source_label,metadata,embedding_model,embedding <=> ? distance FROM faq_knowledge_bases WHERE is_active=true AND embedding IS NOT NULL AND (?='' OR category=?) AND (?='' OR metadata->>'region'=?) AND (?='' OR metadata->>'news_category'=?) AND (?='' OR embedding_model=?)`+publishedSourceSQL("")+relation+` ORDER BY embedding <=> ? LIMIT ?`, args...).Scan(&out).Error
 	})
 	if e != nil {
 		return nil, e

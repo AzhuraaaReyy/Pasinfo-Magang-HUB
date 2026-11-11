@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -87,5 +88,32 @@ func TestToMessageDTOUserHasNullMetadata(t *testing.T) {
 	}
 	if got := jsonKeys(t, dto); len(got) != 7 {
 		t.Fatalf("message keys = %v", got)
+	}
+}
+
+// Jobdesk 11 Nov point 5 (P5-2, Owner; travel the same day): a saved answer no longer lists a news, travel, or event
+// source that is not published (LoadSourceCards gives it no card); a region source without a card stays, and when the
+// cards could not load (nil) every source stays as before.
+func TestToMessageDTODropsNewsWithoutCard(t *testing.T) {
+	content := "Jawaban"
+	stored := `{"retrieval_status":"relevant","context_k":3,"sources":[{"source_type":"news","source_id":7,"source_label":"Berita Terbit","similarity":0.7},{"source_type":"news","source_id":8,"source_label":"Berita Ditarik","similarity":0.69},{"source_type":"culture","source_id":1,"source_label":"Budaya A","similarity":0.68},{"source_type":"destination","source_id":9,"source_label":"Wisata Ditarik","similarity":0.67},{"source_type":"region","source_id":4,"source_label":"Kota Pasuruan","similarity":0.66}]}`
+	message := models.ChatMessage{ID: 3, SessionID: 5, Role: "assistant", Status: "complete", Content: &content, Metadata: json.RawMessage(stored), CreatedAt: time.Now()}
+	labels := func(dto chatMessageDTO) string {
+		var out []string
+		for _, s := range dto.Metadata.Sources {
+			out = append(out, s.SourceLabel)
+		}
+		return strings.Join(out, ",")
+	}
+	slug := "berita-terbit"
+	cards := map[services.SourceKey]services.SourceCard{{Type: "news", ID: 7}: {Slug: &slug}, {Type: "culture", ID: 1}: {Slug: &slug}}
+	if got := labels(toMessageDTO(message, cards)); got != "Berita Terbit,Budaya A,Kota Pasuruan" {
+		t.Fatalf("with cards: sources = %s", got)
+	}
+	if got := labels(toMessageDTO(message, nil)); got != "Berita Terbit,Berita Ditarik,Budaya A,Wisata Ditarik,Kota Pasuruan" {
+		t.Fatalf("cards not loaded: sources = %s", got)
+	}
+	if dto := toMessageDTO(message, cards); *dto.Content != "Jawaban" || dto.Metadata.ContextK != 3 {
+		t.Fatalf("answer changed: %+v", dto)
 	}
 }

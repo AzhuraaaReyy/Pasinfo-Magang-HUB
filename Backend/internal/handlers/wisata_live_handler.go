@@ -26,6 +26,7 @@ func (h *WisataLiveHandler) Register(r fiber.Router) {
 	// These routes may call paid external APIs (Google Maps, OpenWeatherMap).
 	r.Get("/wisata/:slug/cuaca", middleware.RateLimiter(20, 60), h.Weather)
 	r.Get("/wisata/:slug/info-tempat", middleware.RateLimiter(20, 60), h.PlaceInfo)
+	// GET /wisata/rute?from=lat,lng&to=<destination slug> (parameter names in English since 2026-11-11, Owner; before: dari, ke).
 	r.Get("/wisata/rute", middleware.RateLimiter(20, 60), h.Route)
 }
 func (h *WisataLiveHandler) dest(c *fiber.Ctx) (models.Destination, error) {
@@ -78,15 +79,15 @@ func (h *WisataLiveHandler) PlaceInfo(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"source": "mock", "place": fiber.Map{"name": d.Place.Name, "formatted_address": d.Place.Address, "rating": d.Rating, "google_maps_uri": d.Place.MapURL, "location": fiber.Map{"lat": d.Place.Latitude, "lng": d.Place.Longitude}}})
 }
 func (h *WisataLiveHandler) Route(c *fiber.Ctx) error {
-	from, slug := c.Query("dari"), c.Query("ke")
+	from, slug := c.Query("from"), c.Query("to")
 	latPart, lngPart, ok := strings.Cut(from, ",")
 	if !ok || slug == "" {
-		return c.Status(400).JSON(fiber.Map{"message": "parameter dari (lat,lng) dan ke (slug destinasi) wajib diisi"})
+		return c.Status(400).JSON(fiber.Map{"message": "parameter from (lat,lng) dan to (slug destinasi) wajib diisi"})
 	}
 	a, e1 := strconv.ParseFloat(strings.TrimSpace(latPart), 64)
 	b, e2 := strconv.ParseFloat(strings.TrimSpace(lngPart), 64)
 	if e1 != nil || e2 != nil || math.Abs(a) > 90 || math.Abs(b) > 180 {
-		return c.Status(400).JSON(fiber.Map{"message": "format dari tidak valid"})
+		return c.Status(400).JSON(fiber.Map{"message": "format from tidak valid"})
 	}
 	var d models.Destination
 	if h.DB.Preload("Place").Where("slug = ? AND status = ?", slug, "published").First(&d).Error != nil {

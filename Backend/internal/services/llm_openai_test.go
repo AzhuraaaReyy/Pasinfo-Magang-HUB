@@ -159,9 +159,14 @@ func TestEmbedSettingsDefaultToChatAPIAndChatProvider(t *testing.T) {
 	t.Setenv("LLM_API_KEY", "one-key")
 	t.Setenv("LLM_CHAT_MODEL", "chat-model")
 	t.Setenv("EMBED_MODEL", "text-embedding-3-small")
+	// Empty = unset (config.env): the machine's own EMBED_* values must not decide this test.
+	for _, key := range []string{"EMBED_PROVIDER", "EMBED_API_BASE_URL", "EMBED_API_KEY", "EMBED_DIMENSIONS"} {
+		t.Setenv(key, "")
+	}
 	c := config.LoadLLM()
 	if c.Embed != config.ProviderOpenAICompatible || c.EmbedURL != "https://api.example/v1" || c.EmbedKey != "one-key" || c.EmbedDims != 768 {
-		t.Fatalf("defaults = %+v", c)
+		// Only the checked fields: the whole config holds API keys and must never reach a test log.
+		t.Fatalf("defaults: embed=%s url=%s key_is_default=%v dims=%d", c.Embed, c.EmbedURL, c.EmbedKey == "one-key", c.EmbedDims)
 	}
 	if err := c.Validate(); err != nil {
 		t.Fatalf("one provider for chat and embeddings must be valid: %v", err)

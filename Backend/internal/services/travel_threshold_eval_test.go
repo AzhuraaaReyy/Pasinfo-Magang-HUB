@@ -49,6 +49,7 @@ func TestTravelRecommendationThresholdEvaluation(t *testing.T) {
 	}
 	// Every candidate threshold is applied here, so the configured one must not cut first.
 	t.Setenv("RECOMMEND_RELEVANCE_THRESHOLD", "0.01")
+	t.Setenv("RECOMMEND_RELATIVE_CUTOFF", "1")
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		t.Fatal(err)

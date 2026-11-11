@@ -99,7 +99,14 @@ func toMessageDTO(m models.ChatMessage, cards map[services.SourceKey]services.So
 		if source.SourceLabel != nil {
 			reference.SourceLabel = *source.SourceLabel
 		}
-		if card, found := cards[services.SourceKey{Type: *source.SourceType, ID: *source.SourceID}]; found {
+		card, found := cards[services.SourceKey{Type: *source.SourceType, ID: *source.SourceID}]
+		if !found && cards != nil && services.HasPublicationRule(*source.SourceType) {
+			// The cards loaded, and this news article, place, or event has none: it is no longer published (or was removed), so a saved answer
+			// does not keep pointing to it (jobdesk 11 Nov point 5, P5-2, Owner). The answer text itself stays as saved.
+			// When the cards could not load (cards == nil), the sources stay as before.
+			continue
+		}
+		if found {
 			reference.Slug, reference.CategoryLabel, reference.ThumbnailURL, reference.Summary = card.Slug, card.CategoryLabel, card.ThumbnailURL, card.Summary
 		}
 		metadata.Sources = append(metadata.Sources, reference)

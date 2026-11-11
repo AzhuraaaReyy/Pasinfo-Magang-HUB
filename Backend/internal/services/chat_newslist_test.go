@@ -57,6 +57,26 @@ func TestNewsListExcerptsKeepFirstSentenceAndFields(t *testing.T) {
 	}
 }
 
+// Jobdesk 11 Nov point 2: the news fetch joins paragraphs without a space ("masyarakat.Namun"); the first sentence still
+// ends there, while an initial, a number, or an acronym inside a sentence does not end it.
+func TestFirstSentenceEndsAtGluedSentence(t *testing.T) {
+	for text, want := range map[string]string{
+		"Jakarta (ANTARA) - Bansos untuk masyarakat.Namun, ada syaratnya. Lagi.":      "Jakarta (ANTARA) - Bansos untuk masyarakat.",
+		"Program BAZNAS.Jika memenuhi syarat, zakat dibayar.":                         "Program BAZNAS.",
+		"Pernahkah melihat takraw tanpa tangan?Itu adalah Sepak Takraw.":              "Pernahkah melihat takraw tanpa tangan?",
+		"Pesan K.H. Hasan dibacakan di Gontor. Lalu acara ditutup.":                   "Pesan K.H. Hasan dibacakan di Gontor.",
+		"Harga naik Rp1.000 per gram hari ini":                                        "Harga naik Rp1.000 per gram hari ini",
+		"Thailand menjadi tuan rumah.SEA Games merupakan ajang terbesar.":             "Thailand menjadi tuan rumah.",
+		"Kantor di Jalan A.Yani nomor 5. Kedua.":                                      "Kantor di Jalan A.Yani nomor 5.",
+		"Tokoh A.W dari Jakarta hadir. Kedua.":                                        "Tokoh A.W dari Jakarta hadir.",
+		"Penambahan anggota keluarga kini dapat diajukan online. Layanan memudahkan.": "Penambahan anggota keluarga kini dapat diajukan online.",
+	} {
+		if got := firstSentence(text, newsListSummaryRunes); got != want {
+			t.Errorf("firstSentence(%q) = %q, want %q", text, got, want)
+		}
+	}
+}
+
 // Jobdesk 30 Okt T1: gemma3:4b used the Ringkasan sentence as the item name of national news lists.
 func TestNewsListPromptAsksForTitles(t *testing.T) {
 	prompt := protectedSystemPrompt(newsListIntent, ragContext{NewsLatest: true}, testToday)

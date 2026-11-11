@@ -30,8 +30,10 @@ func TestWisataLiveIgnoresUnpublishedDestinations(t *testing.T) {
 	for path, want := range map[string]int{
 		"/wisata/draf/cuaca":                   404,
 		"/wisata/draf/info-tempat":             404,
-		"/wisata/rute?dari=-7.6,112.9&ke=draf": 404,
-		"/wisata/terbit/info-tempat":           200,
+		"/wisata/rute?from=-7.6,112.9&to=draf": 404,
+		// The old names dari and ke are no longer read (Owner 2026-11-11).
+		"/wisata/rute?dari=-7.6,112.9&ke=terbit": 400,
+		"/wisata/terbit/info-tempat":             200,
 	} {
 		resp, err := app.Test(httptest.NewRequest("GET", path, nil))
 		if err != nil {

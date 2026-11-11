@@ -14,7 +14,11 @@ type SourceKey struct {
 }
 
 // SourceCard holds the recommendation-card fields read from the source table (K1-04).
-// A field is nil when the database has no value; nothing is derived (K2-03).
+// A news article, place, or event that is not published has no card (jobdesk 11 Nov point 5, P5-2; travel by the Owner
+// the same day).
+// A field is nil when the database has no value; nothing is derived (K2-03), except for news (jobdesk 11 Nov point 2,
+// Owner K1/K2): news has no short description, so the summary is the first sentence of the article (excerpt when set,
+// else the content, as in the corpus), and the category name is written as a word ("TEKNOLOGI" → "Teknologi").
 type SourceCard struct {
 	Slug, CategoryLabel, ThumbnailURL, Summary *string
 }
@@ -53,11 +57,11 @@ type sourceThumbnailRow struct {
 }
 
 var sourceCardQueries = map[string]string{
-	"destination": `SELECT d.id AS id, NULLIF(d.slug, '') AS slug, NULLIF(tc.name, '') AS category_label, NULLIF(d.short_description, '') AS summary FROM destinations d LEFT JOIN travel_categories tc ON tc.id = d.category_id WHERE d.id IN ?`,
-	"culinary":    `SELECT id, NULLIF(slug, '') AS slug, NULLIF(culinary_type, '') AS type_code, NULLIF(short_description, '') AS summary FROM culinaries WHERE id IN ?`,
-	"culture":     `SELECT id, NULLIF(slug, '') AS slug, NULLIF(culture_type, '') AS type_code, NULLIF(short_description, '') AS summary FROM cultures WHERE id IN ?`,
-	"event":       `SELECT id, NULLIF(slug, '') AS slug, NULLIF(event_type, '') AS type_code, NULLIF(short_description, '') AS summary FROM events WHERE id IN ?`,
-	"news":        `SELECT n.id AS id, NULLIF(n.slug, '') AS slug, NULLIF(c.name, '') AS category_label, NULL AS summary FROM news n LEFT JOIN categories c ON c.id = n.category_id WHERE n.id IN ?`,
+	"destination": `SELECT d.id AS id, NULLIF(d.slug, '') AS slug, NULLIF(tc.name, '') AS category_label, NULLIF(d.short_description, '') AS summary FROM destinations d LEFT JOIN travel_categories tc ON tc.id = d.category_id WHERE d.id IN ? AND d.status = 'published'`,
+	"culinary":    `SELECT id, NULLIF(slug, '') AS slug, NULLIF(culinary_type, '') AS type_code, NULLIF(short_description, '') AS summary FROM culinaries WHERE id IN ? AND status = 'published'`,
+	"culture":     `SELECT id, NULLIF(slug, '') AS slug, NULLIF(culture_type, '') AS type_code, NULLIF(short_description, '') AS summary FROM cultures WHERE id IN ? AND status = 'published'`,
+	"event":       `SELECT id, NULLIF(slug, '') AS slug, NULLIF(event_type, '') AS type_code, NULLIF(short_description, '') AS summary FROM events WHERE id IN ? AND status = 'published'`,
+	"news":        `SELECT n.id AS id, NULLIF(n.slug, '') AS slug, NULLIF(c.name, '') AS category_label, COALESCE(NULLIF(n.excerpt, ''), n.content) AS summary FROM news n LEFT JOIN categories c ON c.id = n.category_id WHERE n.id IN ? AND n.status = 'published'`,
 	"region":      `SELECT id, NULLIF(slug, '') AS slug, NULL AS category_label, NULLIF(short_description, '') AS summary FROM regions WHERE id IN ?`,
 }
 
@@ -69,6 +73,23 @@ var sourceThumbnailQueries = map[string]string{
 	"culture":  `SELECT mediable_id AS id, thumbnail_url AS url FROM media WHERE mediable_type = 'Culture' AND mediable_id IN ? AND thumbnail_url <> '' ORDER BY mediable_id, sort_order, id`,
 	"event":    `SELECT mediable_id AS id, thumbnail_url AS url FROM media WHERE mediable_type = 'Event' AND mediable_id IN ? AND thumbnail_url <> '' ORDER BY mediable_id, sort_order, id`,
 	"news":     `SELECT news_id AS id, image_path AS url FROM news_images WHERE news_id IN ? AND image_path <> '' ORDER BY news_id, id`,
+}
+
+// newsCardText writes the category name of a news card as a word and shortens the article text to its first sentence
+// (newsListSummaryRunes, like the news lists of the chat); an empty result is nil.
+func newsCardText(category, text *string) (*string, *string) {
+	var label, summary *string
+	if category != nil {
+		if word := newsCategoryLabel(*category); word != "" {
+			label = &word
+		}
+	}
+	if text != nil {
+		if sentence := firstSentence(*text, newsListSummaryRunes); sentence != "" {
+			summary = &sentence
+		}
+	}
+	return label, summary
 }
 
 // LoadSourceCards reads card fields for the given sources with at most two queries per
@@ -91,7 +112,11 @@ func LoadSourceCards(ctx context.Context, db *gorm.DB, keys []SourceKey) (map[So
 			if row.TypeCode != nil {
 				label = typeLabel(sourceType, row.TypeCode)
 			}
-			cards[SourceKey{sourceType, row.ID}] = SourceCard{Slug: row.Slug, CategoryLabel: label, Summary: row.Summary}
+			summary := row.Summary
+			if sourceType == "news" {
+				label, summary = newsCardText(label, summary)
+			}
+			cards[SourceKey{sourceType, row.ID}] = SourceCard{Slug: row.Slug, CategoryLabel: label, Summary: summary}
 		}
 		query, ok := sourceThumbnailQueries[sourceType]
 		if !ok {

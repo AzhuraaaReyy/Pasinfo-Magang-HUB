@@ -200,12 +200,15 @@ func TestLoadSourcesReturnsActiveDocumentsInOrder(t *testing.T) {
 		`INSERT INTO faq_knowledge_bases (id, question, answer, category, source_type, source_id, source_label, is_active, embedding) VALUES (3, 'Festival Mock', 'Mock.', 'acara', 'event', 1, 'Festival Mock', 0, '[0.1]')`,
 		// A new source still waiting for its vector (jobdesk 5 Nov p4) must not reach the chat.
 		`INSERT INTO faq_knowledge_bases (id, question, answer, category, source_type, source_id, source_label, is_active, embedding_status) VALUES (4, 'Pantai Baru', 'Baru.', 'wisata', 'destination', 37, 'Pantai Baru', 1, 'pending')`,
+		// Point 5 publication rule (Owner 2026-11-11): a draft destination whose corpus row is still active is skipped.
+		`INSERT INTO faq_knowledge_bases (id, question, answer, category, source_type, source_id, source_label, is_active, embedding) VALUES (5, 'Draf', 'Draf.', 'wisata', 'destination', 38, 'Destinasi Draf', 1, '[0.1]')`,
+		`INSERT INTO destinations (id, place_id, name, slug, status) VALUES (35, 1, 'Taman Kota Pasuruan', 'taman', 'published'), (36, 1, 'Hutan Mangrove', 'mangrove', 'published'), (37, 1, 'Pantai Baru', 'pantai-baru', 'published'), (38, 1, 'Destinasi Draf', 'draf', 'draft')`,
 	} {
 		if err := db.Exec(stmt).Error; err != nil {
 			t.Fatal(err)
 		}
 	}
-	got, err := NewRetriever(db).LoadSources(context.Background(), []SourceRef{{"destination", 36}, {"event", 1}, {"destination", 99}, {"destination", 37}, {"destination", 35}})
+	got, err := NewRetriever(db).LoadSources(context.Background(), []SourceRef{{"destination", 36}, {"event", 1}, {"destination", 99}, {"destination", 37}, {"destination", 38}, {"destination", 35}})
 	if err != nil {
 		t.Fatal(err)
 	}

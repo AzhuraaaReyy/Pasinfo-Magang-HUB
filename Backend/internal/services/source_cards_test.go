@@ -17,23 +17,23 @@ func newSourceCardTestDB(t *testing.T) *gorm.DB {
 	}
 	statements := []string{
 		`CREATE TABLE IF NOT EXISTS travel_categories (id INTEGER PRIMARY KEY, name TEXT)`,
-		`CREATE TABLE IF NOT EXISTS destinations (id INTEGER PRIMARY KEY, slug TEXT, short_description TEXT, category_id INTEGER)`,
+		`CREATE TABLE IF NOT EXISTS destinations (id INTEGER PRIMARY KEY, slug TEXT, short_description TEXT, category_id INTEGER, status TEXT)`,
 		`CREATE TABLE IF NOT EXISTS media (id INTEGER PRIMARY KEY, mediable_type TEXT, mediable_id INTEGER, thumbnail_url TEXT, sort_order INTEGER)`,
-		`CREATE TABLE IF NOT EXISTS culinaries (id INTEGER PRIMARY KEY, slug TEXT, short_description TEXT, culinary_type TEXT)`,
-		`CREATE TABLE IF NOT EXISTS cultures (id INTEGER PRIMARY KEY, slug TEXT, short_description TEXT, culture_type TEXT)`,
-		`CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY, slug TEXT, short_description TEXT, event_type TEXT)`,
+		`CREATE TABLE IF NOT EXISTS culinaries (id INTEGER PRIMARY KEY, slug TEXT, short_description TEXT, culinary_type TEXT, status TEXT)`,
+		`CREATE TABLE IF NOT EXISTS cultures (id INTEGER PRIMARY KEY, slug TEXT, short_description TEXT, culture_type TEXT, status TEXT)`,
+		`CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY, slug TEXT, short_description TEXT, event_type TEXT, status TEXT)`,
 		`CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY, name TEXT)`,
-		`CREATE TABLE IF NOT EXISTS news (id INTEGER PRIMARY KEY, slug TEXT, category_id INTEGER)`,
+		`CREATE TABLE IF NOT EXISTS news (id INTEGER PRIMARY KEY, slug TEXT, category_id INTEGER, excerpt TEXT, content TEXT, status TEXT)`,
 		`CREATE TABLE IF NOT EXISTS news_images (id INTEGER PRIMARY KEY, news_id INTEGER, image_path TEXT)`,
 		`CREATE TABLE IF NOT EXISTS regions (id INTEGER PRIMARY KEY, slug TEXT, short_description TEXT)`,
 		`INSERT INTO travel_categories VALUES (2, 'Wisata Sejarah')`,
-		`INSERT INTO destinations VALUES (1, 'destinasi-a', '', 2)`,
+		`INSERT INTO destinations VALUES (1, 'destinasi-a', '', 2, 'published'), (2, 'destinasi-draf', '', 2, 'draft')`,
 		`INSERT INTO media VALUES (10, 'Destination', 1, 'b.thumb.webp', 1), (11, 'Destination', 1, 'a.thumb.webp', 0), (12, 'Destination', 1, '', 0)`,
-		`INSERT INTO cultures VALUES (1, 'budaya-a', '', ''), (2, 'budaya-b', 'Ringkasan budaya', 'situs-sejarah'), (3, 'budaya-c', '', 'lainnya')`,
-		`INSERT INTO culinaries VALUES (5, 'kuliner-a', '', 'camilan-oleh-oleh')`,
-		`INSERT INTO events VALUES (6, 'acara-a', '', 'sejarah')`,
-		`INSERT INTO categories VALUES (3, 'Lokal')`,
-		`INSERT INTO news VALUES (7, NULL, 3)`,
+		`INSERT INTO cultures VALUES (1, 'budaya-a', '', '', 'published'), (2, 'budaya-b', 'Ringkasan budaya', 'situs-sejarah', 'published'), (3, 'budaya-c', '', 'lainnya', 'published'), (4, 'budaya-draf', '', 'tradisi', 'draft')`,
+		`INSERT INTO culinaries VALUES (5, 'kuliner-a', '', 'camilan-oleh-oleh', 'published'), (6, 'kuliner-draf', '', 'seafood', 'draft')`,
+		`INSERT INTO events VALUES (6, 'acara-a', '', 'sejarah', 'published'), (7, 'acara-draf', '', 'tradisi', 'draft')`,
+		`INSERT INTO categories VALUES (3, 'LOKAL')`,
+		`INSERT INTO news VALUES (7, NULL, 3, '', 'Jakarta (ANTARA) - Kalimat pertama berita. Kalimat kedua berita.', 'published'), (8, 'berita-b', 3, 'Ringkasan redaksi.', 'Isi lengkap.', 'published'), (9, 'berita-c', NULL, NULL, '', 'published'), (10, 'berita-draf', 3, 'Draf.', 'Draf.', 'draft'), (11, 'berita-revisi', 3, 'Revisi.', 'Revisi.', 'revision')`,
 		`INSERT INTO news_images VALUES (20, 7, 'https://img.example/x.jpg'), (21, 7, 'https://img.example/y.jpg')`,
 		`INSERT INTO regions VALUES (4, 'wilayah-a', 'Ringkasan wilayah')`,
 	}
@@ -54,7 +54,7 @@ func strValue(p *string) string {
 
 func TestLoadSourceCardsReadsOnlyDatabaseValues(t *testing.T) {
 	db := newSourceCardTestDB(t)
-	keys := []SourceKey{{"destination", 1}, {"culture", 1}, {"news", 7}, {"region", 4}, {"destination", 99}, {"manual", 1}}
+	keys := []SourceKey{{"destination", 1}, {"culture", 1}, {"news", 7}, {"news", 8}, {"news", 9}, {"news", 10}, {"news", 11}, {"destination", 2}, {"culture", 4}, {"culinary", 6}, {"event", 7}, {"region", 4}, {"destination", 99}, {"manual", 1}}
 	cards, err := LoadSourceCards(context.Background(), db, keys)
 	if err != nil {
 		t.Fatal(err)
@@ -68,12 +68,25 @@ func TestLoadSourceCardsReadsOnlyDatabaseValues(t *testing.T) {
 		t.Fatalf("culture card unexpected: %+v", culture)
 	}
 	news := cards[SourceKey{"news", 7}]
-	if news.Slug != nil || strValue(news.CategoryLabel) != "Lokal" || strValue(news.ThumbnailURL) != "https://img.example/x.jpg" || news.Summary != nil {
-		t.Fatalf("news card unexpected: slug:%s cat:%s thumb:%s", strValue(news.Slug), strValue(news.CategoryLabel), strValue(news.ThumbnailURL))
+	// Jobdesk 11 Nov point 2 (Owner K1/K2): the category as a word, the summary = the first sentence of the article.
+	if news.Slug != nil || strValue(news.CategoryLabel) != "Lokal" || strValue(news.ThumbnailURL) != "https://img.example/x.jpg" || strValue(news.Summary) != "Jakarta (ANTARA) - Kalimat pertama berita." {
+		t.Fatalf("news card unexpected: slug:%s cat:%s thumb:%s summary:%s", strValue(news.Slug), strValue(news.CategoryLabel), strValue(news.ThumbnailURL), strValue(news.Summary))
+	}
+	if withExcerpt := cards[SourceKey{"news", 8}]; strValue(withExcerpt.Summary) != "Ringkasan redaksi." {
+		t.Fatalf("news excerpt summary = %s", strValue(withExcerpt.Summary))
+	}
+	if empty := cards[SourceKey{"news", 9}]; empty.Summary != nil || empty.CategoryLabel != nil {
+		t.Fatalf("news without text or category = %+v", empty)
 	}
 	region := cards[SourceKey{"region", 4}]
 	if strValue(region.Slug) != "wilayah-a" || strValue(region.Summary) != "Ringkasan wilayah" || region.CategoryLabel != nil || region.ThumbnailURL != nil {
 		t.Fatalf("region card unexpected: %+v", region)
+	}
+	// Jobdesk 11 Nov point 5 (P5-2): an article that is not published has no card.
+	for _, key := range []SourceKey{{"news", 10}, {"news", 11}, {"destination", 2}, {"culture", 4}, {"culinary", 6}, {"event", 7}} {
+		if _, ok := cards[key]; ok {
+			t.Fatalf("%v is not published and must not have a card", key)
+		}
 	}
 	if _, ok := cards[SourceKey{"destination", 99}]; ok {
 		t.Fatal("missing row must not produce a card")

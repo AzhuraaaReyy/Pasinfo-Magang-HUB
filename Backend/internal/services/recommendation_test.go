@@ -196,6 +196,8 @@ func searchHit(st string, id int64, sim float64) SemanticResult {
 // Jobdesk 9 Nov point 3: semantic search results become cards of the four domains, ordered by similarity only (equal
 // similarity by name); a draft and a finished event are not shown, whatever their similarity.
 func TestRecommendByTextOrdersCardsBySimilarity(t *testing.T) {
+	// These cards span more than the relative cutoff; that cut has its own test.
+	t.Setenv("RECOMMEND_RELATIVE_CUTOFF", "1")
 	db := newRecommendationTestDB(t)
 	r := &Recommender{DB: db, Now: func() time.Time { return recNow }}
 	results := []SemanticResult{
@@ -237,6 +239,8 @@ func TestRecommendByTextOrdersCardsBySimilarity(t *testing.T) {
 // F2, jobdesk 9 Nov point 6: a place that is both a destination and a culture item gets one card, the most similar one;
 // a culinary business on that place stays, and two events at one venue both stay.
 func TestRecommendByTextShowsOnePlaceOnce(t *testing.T) {
+	// These cards span more than the relative cutoff; that cut has its own test.
+	t.Setenv("RECOMMEND_RELATIVE_CUTOFF", "1")
 	db := newRecommendationTestDB(t)
 	var place uint
 	db.Raw(`SELECT place_id FROM destinations WHERE slug = 'jauh-pilihan'`).Scan(&place)
@@ -276,6 +280,8 @@ func TestRecommendByTextShowsOnePlaceOnce(t *testing.T) {
 // Owner 2026-11-09: a closed or temporarily closed destination or culinary place is not recommended (text search and
 // content recommendations); open, unknown, and empty statuses are.
 func TestClosedPlacesAreNotRecommended(t *testing.T) {
+	// These cards span more than the relative cutoff; that cut has its own test.
+	t.Setenv("RECOMMEND_RELATIVE_CUTOFF", "1")
 	db := newRecommendationTestDB(t)
 	db.Exec(`UPDATE culinaries SET operational_status = 'closed' WHERE slug = 'nasi-punel'`)
 	db.Exec(`UPDATE destinations SET operational_status = 'temporarily_closed' WHERE slug = 'sekecamatan'`)
@@ -309,7 +315,25 @@ func TestClosedPlacesAreNotRecommended(t *testing.T) {
 
 // Jobdesk 9 Nov point 4: a result below the recommendation threshold gets no card; the default is 0.61, and
 // RECOMMEND_RELEVANCE_THRESHOLD replaces it.
+// Jobdesk 11 Nov point 2: news search results become news cards (id, title, category, source, no location), ordered by
+// similarity; a draft news item is not shown.
+func TestRecommendByTextBuildsNewsCards(t *testing.T) {
+	db := newRecommendationTestDB(t)
+	db.Model(&models.News{}).Where("slug = ?", "berita-asal").Update("status", "draft")
+	r := &Recommender{DB: db, Now: func() time.Time { return recNow }}
+	got, err := r.RecommendByText(context.Background(), []SemanticResult{searchHit("news", 1, 0.80), searchHit("news", 2, 0.70)}, 6)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].Type != "berita" || got[0].ID != 2 || got[0].Name != "Berita Lain" || got[0].Location != nil ||
+		got[0].Source == nil || *got[0].Source != "Tempo" || got[0].Similarity != 0.7 || got[0].Score != 0.7 || got[0].Reasons == nil {
+		t.Fatalf("news cards = %+v", got)
+	}
+}
+
 func TestRecommendByTextDropsResultsBelowTheThreshold(t *testing.T) {
+	// These cards span more than the relative cutoff; that cut has its own test.
+	t.Setenv("RECOMMEND_RELATIVE_CUTOFF", "1")
 	db := newRecommendationTestDB(t)
 	r := &Recommender{DB: db, Now: func() time.Time { return recNow }}
 	results := []SemanticResult{searchHit("culinary", 1, 0.70), searchHit("destination", 2, 0.61), searchHit("destination", 4, 0.609)}
@@ -334,6 +358,51 @@ func TestRecommendByTextDropsResultsBelowTheThreshold(t *testing.T) {
 	}
 	t.Setenv("RECOMMEND_RELEVANCE_THRESHOLD", "2")
 	if got := names(); got != "Nasi Punel,Sekecamatan" {
+		t.Fatalf("invalid value must keep the default: %s", got)
+	}
+}
+
+// Threshold discussion 2026-11-11 (Owner option A): after the threshold, a card more than the relative cutoff below the
+// first shown card gets no card; the default is 0.04, RECOMMEND_RELATIVE_CUTOFF replaces it, and the gap is measured from
+// the first card that is shown (a hidden draft does not count).
+func TestRecommendByTextKeepsCardsCloseToTheFirst(t *testing.T) {
+	db := newRecommendationTestDB(t)
+	r := &Recommender{DB: db, Now: func() time.Time { return recNow }}
+	results := []SemanticResult{
+		searchHit("destination", 5, 0.95), // Draf: not published, so not the first card
+		searchHit("culinary", 1, 0.70),    // Nasi Punel: first shown card
+		searchHit("event", 2, 0.66),       // Akan Datang: exactly 0.04 below
+		searchHit("destination", 2, 0.65), // Sekecamatan: 0.05 below
+		searchHit("destination", 4, 0.62), // Jauh Pilihan
+	}
+	names := func(limit int) string {
+		got, err := r.RecommendByText(context.Background(), results, limit)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var out []string
+		for _, g := range got {
+			out = append(out, g.Name)
+		}
+		return strings.Join(out, ",")
+	}
+	t.Setenv("RECOMMEND_RELATIVE_CUTOFF", "")
+	if got := names(10); got != "Nasi Punel,Akan Datang" {
+		t.Fatalf("default 0.04: %s", got)
+	}
+	if got := names(1); got != "Nasi Punel" {
+		t.Fatalf("default 0.04, limit 1: %s", got)
+	}
+	t.Setenv("RECOMMEND_RELATIVE_CUTOFF", "0.08")
+	if got := names(10); got != "Nasi Punel,Akan Datang,Sekecamatan,Jauh Pilihan" {
+		t.Fatalf("0.08: %s", got)
+	}
+	t.Setenv("RECOMMEND_RELATIVE_CUTOFF", "1")
+	if got := names(10); got != "Nasi Punel,Akan Datang,Sekecamatan,Jauh Pilihan" {
+		t.Fatalf("1 = no cut: %s", got)
+	}
+	t.Setenv("RECOMMEND_RELATIVE_CUTOFF", "abc")
+	if got := names(10); got != "Nasi Punel,Akan Datang" {
 		t.Fatalf("invalid value must keep the default: %s", got)
 	}
 }

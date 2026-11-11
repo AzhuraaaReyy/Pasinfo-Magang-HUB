@@ -346,8 +346,14 @@ func TestRetrieverEventsInPeriod(t *testing.T) {
 		{EventID: 19, StartsAt: utc(2026, 9, 21), EndsAt: end(2026, 9, 27), Status: status("completed")},
 		{EventID: 31, StartsAt: utc(2026, 9, 2), Status: status("completed")},
 		{EventID: 40, StartsAt: utc(2026, 9, 25), EndsAt: end(2026, 9, 25)},
+		{EventID: 41, StartsAt: utc(2026, 9, 3), EndsAt: end(2026, 9, 3)},
 	}
 	if err := db.Create(&occurrences).Error; err != nil {
+		t.Fatal(err)
+	}
+	// The events rows: published, except 41, a draft whose corpus row is still active (point 5 publication rule, Owner
+	// 2026-11-11), which must not be listed.
+	if err := db.Exec(`INSERT INTO events (id, name, slug, status) VALUES (17, 'Kirab Pataka', 'kirab', 'published'), (18, 'Pameran Tetap', 'pameran', 'published'), (19, 'Pekan Raya', 'pekan', 'published'), (31, 'Haul', 'haul', 'published'), (40, 'Acara mock', 'mock', 'published'), (41, 'Acara Draf', 'draf', 'draft')`).Error; err != nil {
 		t.Fatal(err)
 	}
 	for _, row := range []struct {
@@ -355,7 +361,7 @@ func TestRetrieverEventsInPeriod(t *testing.T) {
 		label  string
 		active bool
 		region string
-	}{{17, "Kirab Pataka", true, "Kota Pasuruan"}, {18, "Pameran Tetap", true, "Pasuruan Barat"}, {19, "Pekan Raya", true, "Pasuruan Utara"}, {31, "Haul", true, ""}, {40, "Acara mock", false, ""}} {
+	}{{17, "Kirab Pataka", true, "Kota Pasuruan"}, {18, "Pameran Tetap", true, "Pasuruan Barat"}, {19, "Pekan Raya", true, "Pasuruan Utara"}, {31, "Haul", true, ""}, {40, "Acara mock", false, ""}, {41, "Acara Draf", true, ""}} {
 		// A source without a zone has NULL metadata, as written by the upsert (regionMetadata).
 		var metadata any
 		if row.region != "" {

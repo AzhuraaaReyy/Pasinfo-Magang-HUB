@@ -234,8 +234,35 @@ func cutAtSentence(text string, maxRunes int) string {
 // firstSentence is a short database excerpt used by the grounded fallback answer.
 func firstSentence(text string, maxRunes int) string {
 	line := strings.TrimSpace(strings.SplitN(strings.TrimSpace(text), "\n", 2)[0])
-	if i := strings.Index(line, ". "); i > 0 {
-		line = line[:i+1]
+	if i := sentenceEnd(line); i > 0 {
+		line = line[:i]
 	}
 	return cutAtSentence(line, maxRunes)
+}
+
+// sentenceEnd returns the index just after the first sentence of line, or -1. A sentence ends at ".", "?", or "!"
+// followed by a space, or directly by a capitalised word ("masyarakat.Namun", "BAZNAS.Jika"): the news fetch joined the
+// paragraphs of 146 of 270 articles without a space (jobdesk 11 Nov point 2, 2026-11-11), so their summary ran past the
+// first sentence. Two letters must precede a mark without a space, so an initial ("A.W") or a number ("Rp1.000") is no
+// end; the period of an initial before a space ("K.H. Hasan") is no end either. The next sentence may start with an
+// acronym ("tuan rumah.SEA Games").
+func sentenceEnd(line string) int {
+	letter := func(c byte) bool { return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' }
+	for i := 1; i+1 < len(line); i++ {
+		c := line[i]
+		if c != '.' && c != '?' && c != '!' {
+			continue
+		}
+		next := line[i+1]
+		if next == ' ' {
+			if initial := c == '.' && letter(line[i-1]) && (i < 2 || line[i-2] == ' ' || line[i-2] == '.'); !initial {
+				return i + 1
+			}
+			continue
+		}
+		if i >= 2 && letter(line[i-1]) && letter(line[i-2]) && next >= 'A' && next <= 'Z' && i+2 < len(line) && letter(line[i+2]) {
+			return i + 1
+		}
+	}
+	return -1
 }

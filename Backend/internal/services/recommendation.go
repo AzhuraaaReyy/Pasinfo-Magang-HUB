@@ -70,7 +70,7 @@ type Recommendation struct {
 	ThumbnailURL       *string                 `json:"thumbnail_url"`
 	Location           *RecommendationLocation `json:"location"`
 	Source             *string                 `json:"source"`
-	VerificationStatus string                  `json:"verification_status"`
+	VerificationStatus string                  `json:"verification_status"` // "" for news: news has no verification record (Owner K3, jobdesk 11 Nov)
 	Score              float64                 `json:"score"`
 	Similarity         float64                 `json:"similarity"`
 	Reasons            []string                `json:"reasons"`
@@ -242,9 +242,39 @@ func recommendThreshold() float64 {
 	return DefaultRecommendThreshold
 }
 
-// RecommendByText turns the results of a travel semantic search (Retriever.SearchTravelContent) into recommendation
-// cards, ordered by the cosine similarity of each item to the user's text, highest first (jobdesk 9 Nov point 3; Owner:
-// order by similarity only). Each card reads the item's own published row, so it carries the same public fields as
+// DefaultRecommendRelativeCutoff is how far below the first card a text recommendation may be when
+// RECOMMEND_RELATIVE_CUTOFF is unset: chosen in the threshold discussion (Owner option A, 2026-11-11) from
+// TestSearchQualityEvaluation (65 news and travel queries, labels from SQL). After the 0.61 threshold, a 0.04 cut raised
+// card precision from 69% to 83% while the labelled queries with a relevant card went from 91% to 89%; 0.06 gave 77%.
+const DefaultRecommendRelativeCutoff = 0.04
+
+// recommendRelativeCutoff is RECOMMEND_RELATIVE_CUTOFF when it is valid, otherwise DefaultRecommendRelativeCutoff.
+func recommendRelativeCutoff() float64 {
+	if t := config.RecommendRelativeCutoff(); t > 0 && t <= 1 {
+		return t
+	}
+	return DefaultRecommendRelativeCutoff
+}
+
+// closeToFirst keeps the items of an ordered list whose similarity is at most cutoff below the first one.
+func closeToFirst(list []rankedItem, cutoff float64) []rankedItem {
+	if len(list) == 0 {
+		return list
+	}
+	// Rounded to 1e-9 so a gap of exactly the cutoff stays despite float error (0.65 - 0.61 > 0.04 in float64).
+	floor := math.Round((list[0].sim-cutoff)*1e9) / 1e9
+	out := list[:0]
+	for _, s := range list {
+		if s.sim >= floor {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+// RecommendByText turns the results of a text semantic search (Retriever.SearchTravelContent, or Retriever.SearchNews
+// for news, jobdesk 11 Nov point 2) into recommendation cards, ordered by the cosine similarity of each item to the
+// user's text, highest first (jobdesk 9 Nov point 3; Owner: order by similarity only). Each card reads the item's own published row, so it carries the same public fields as
 // the item recommendations (name, slug, summary, category, thumbnail, location, source, verification). Only items that
 // loadCandidates accepts are kept: published content, events still running or upcoming. A place that is both a
 // destination and a culture item gets one card (onePlaceCard).
@@ -268,8 +298,8 @@ func (r *Recommender) RecommendByText(ctx context.Context, results []SemanticRes
 		}
 	}
 	var list []rankedItem
-	for _, d := range travelSearchDomains {
-		domain := recDomains[d.Name]
+	// Every domain the results came from, news included; sortRanked orders the cards afterwards.
+	for _, domain := range recDomains {
 		found := sims[domain.SourceType]
 		if len(found) == 0 {
 			continue
@@ -290,6 +320,9 @@ func (r *Recommender) RecommendByText(ctx context.Context, results []SemanticRes
 	}
 	sortRanked(list)
 	list = onePlaceCard(list)
+	// Measured from the first card that is shown, after the published and one-place filters, as in the evaluation; the
+	// pages of one search (offset) share that first card, so they stay consistent.
+	list = closeToFirst(list, recommendRelativeCutoff())
 	// The count bound is set by the caller (point 4); a limit below 1 cuts nothing rather than panicking.
 	if limit > 0 && len(list) > limit {
 		list = list[:limit]

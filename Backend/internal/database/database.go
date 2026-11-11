@@ -345,6 +345,8 @@ func SeedDatabase() {
 		{Name: "TEKNOLOGI", Slug: "teknologi"},
 		{Name: "HIBURAN", Slug: "hiburan"},
 		{Name: "KESEHATAN", Slug: "kesehatan"},
+		// prd navbar category (Lokal, Nasional, Internasional, Inspiratif, Politik); jobdesk 11 Nov point 4, P4-2, Owner.
+		{Name: "INTERNASIONAL", Slug: "internasional"},
 	}
 
 	for _, cat := range categories {

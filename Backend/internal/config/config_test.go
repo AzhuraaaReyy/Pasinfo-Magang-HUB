@@ -138,3 +138,16 @@ func TestRecommendThreshold(t *testing.T) {
 		}
 	}
 }
+
+// Threshold discussion 2026-11-11 (Owner option A): RECOMMEND_RELATIVE_CUTOFF is above 0 and at most 1 (1 = no cut);
+// empty means the default.
+func TestRecommendRelativeCutoff(t *testing.T) {
+	t.Setenv("LLM_PROVIDER", "ollama")
+	t.Setenv("EMBED_PROVIDER", "")
+	for value, wantErr := range map[string]bool{"": false, "0.04": false, "1": false, "0": false, "1.5": true, "-0.1": true, "abc": true} {
+		t.Setenv("RECOMMEND_RELATIVE_CUTOFF", value)
+		if err := LoadLLM().Validate(); (err != nil) != wantErr {
+			t.Errorf("RECOMMEND_RELATIVE_CUTOFF=%q → error %v, want error %v", value, err, wantErr)
+		}
+	}
+}

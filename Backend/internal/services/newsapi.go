@@ -258,9 +258,18 @@ func FetchAndSaveNews() (FetchResult, error) {
 		{url: beritaBaseURL + "/antara-news/humaniora", category: "INSPIRATIF"},
 		{url: beritaBaseURL + "/antara-news/politik", category: "POLITIK"},
 		// Added 2026-10-31 for empty categories after a feed check (content matched, HTTP 200). No feed
-		// carries Pasuruan news, so LOKAL stays without a feed; WISATA and KESEHATAN have no matching feed.
+		// carries Pasuruan news, so LOKAL stays without a feed (2026-11-11: 22 feeds checked, no Pasuruan title); WISATA
+		// has no current feed (tempo/tribun travel answer HTTP 400; republika-news/leisure stopped in January 2018), so
+		// both are filled by the editors through POST /news.
 		{url: beritaBaseURL + "/antara-news/tekno", category: "TEKNOLOGI"},
 		{url: beritaBaseURL + "/antara-news/hiburan", category: "HIBURAN"},
+		// Added 2026-11-11 for the INTERNASIONAL category (jobdesk 11 Nov point 4, P4-2, Owner): world news, HTTP 200 with
+		// 20 articles; tempo-news/dunia answers HTTP 400.
+		{url: beritaBaseURL + "/antara-news/dunia", category: "INTERNASIONAL"},
+		// Added 2026-11-11 for the empty KESEHATAN category (Owner, option A): current health articles (about 17 of 20
+		// titles on health on 2026-11-11); the feed is named lifestyle, so a few other lifestyle articles are labelled
+		// Kesehatan too, as the backend keeps the feed's category instead of sorting articles by their words.
+		{url: beritaBaseURL + "/antara-news/lifestyle", category: "KESEHATAN"},
 	}
 
 	client := &http.Client{Timeout: 20 * time.Second}
