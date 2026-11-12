@@ -688,7 +688,7 @@ func (r *Retriever) semanticSearch(ctx context.Context, p LLMProvider, q string,
 	// return unrelated documents without any error.
 	e = r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if tx.Dialector.Name() == "postgres" {
-			if err := setHNSWSearch(tx); err != nil {
+			if err := exactVectorScan(tx); err != nil {
 				return err
 			}
 		}
@@ -721,20 +721,16 @@ func (r *Retriever) semanticSearch(ctx context.Context, p LLMProvider, q string,
 	return filtered, nil
 }
 
-// hnswEfSearch is hnsw.ef_search for the vector searches (F1, jobdesk 9 Nov point 6). With the default 40 the live
-// index missed the nearest document of short keywords ("pantai": Pantai Lekok 0.642 by exact scan, not returned; "candi"
-// 0.599 → 0.545); with 100 every measured query (5 scenarios, 6 keywords) returned the exact-scan result.
-const hnswEfSearch = 100
-
-// setHNSWSearch sets the HNSW search of the current transaction (SET LOCAL lasts for this transaction only; PostgreSQL
-// only). HNSW reads only hnsw.ef_search neighbours before the WHERE filters; without iterative scan a filtered search
-// (zone, news category, model) can return no rows once the planner uses the index (2026-11-02: forced HNSW, zone
-// "Pasuruan Selatan" → 0 of 15 rows).
-func setHNSWSearch(tx *gorm.DB) error {
-	if err := tx.Exec("SET LOCAL hnsw.iterative_scan = strict_order").Error; err != nil {
-		return err
-	}
-	return tx.Exec(fmt.Sprintf("SET LOCAL hnsw.ef_search = %d", hnswEfSearch)).Error
+// exactVectorScan makes the vector searches of the current transaction read every candidate (SET LOCAL lasts for this
+// transaction only; PostgreSQL only), so the order is the exact cosine order whatever the limit and filters (jobdesk
+// 12 Nov point 3, P3-1, Owner option A). The HNSW index is approximate: with the corpus filters (travel is 130 of 470
+// documents, news 335) its graph walk could stop before the nearest documents. "candi" with LIMIT 10 returned D'Jadul
+// 0.538 first and missed every candi document (0.573–0.597), while LIMIT 50, planned as a sequential scan, was right;
+// hnsw.ef_search up to 1000 did not help. pgvector serves HNSW only through an ordered index scan, so turning index
+// scans off leaves the exact scan (34 evaluation queries: median 3.9 ms, against 5.0 ms through the index); bitmap
+// scans of the other indexes stay on. The index stays for a much larger corpus.
+func exactVectorScan(tx *gorm.DB) error {
+	return tx.Exec("SET LOCAL enable_indexscan = off").Error
 }
 
 // corpusRefreshLock is the PostgreSQL advisory lock key held during a corpus refresh (F2, 2026-11-03), so the API job

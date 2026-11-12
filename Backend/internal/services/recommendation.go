@@ -16,7 +16,8 @@ import (
 
 // Recommendation engine, Sprint 1 Tahap A (Owner 2026-11-03, plan docs/2 November 2026/RENCANA_MESIN_REKOMENDASI_SPRINT1.md):
 // related content for one item, scored from content similarity (corpus vectors), location (kecamatan/zone), category,
-// and editor signals. No LLM call. Popularity is not scored yet: there is no real visitor data (R1).
+// and editor signals. No LLM call. Popularity is not scored yet: there is no real visitor data (R1). The text search
+// only orders by it on request (GET /recommendations/travel?sort=popular, RecommendByTextPopular, jobdesk 12 Nov point 1).
 
 // Score weights of the plan. For news, location is replaced by recency.
 const (
@@ -90,6 +91,7 @@ type recRow struct {
 	SourceName  string
 	CreatedAt   time.Time
 	PlaceID     int64 // places.id of a travel item; 0 for news or an item without a place
+	Views       int64 // detail page views (countView), the popularity of GET /recommendations/travel?sort=popular
 }
 
 func (r recRow) zone() string {
@@ -138,7 +140,7 @@ func (r *Recommender) Recommend(ctx context.Context, source, key, target string,
 	if err != nil {
 		return nil, err
 	}
-	candidates, err := r.loadCandidates(ctx, dst, sims, now)
+	candidates, err := r.loadCandidates(ctx, dst, sims, now, false)
 	if err != nil {
 		return nil, err
 	}
@@ -279,6 +281,18 @@ func closeToFirst(list []rankedItem, cutoff float64) []rankedItem {
 // loadCandidates accepts are kept: published content, events still running or upcoming. A place that is both a
 // destination and a culture item gets one card (onePlaceCard).
 func (r *Recommender) RecommendByText(ctx context.Context, results []SemanticResult, limit int) ([]Recommendation, error) {
+	return r.recommendByText(ctx, results, limit, false)
+}
+
+// RecommendByTextPopular is RecommendByText ordered by popularity (jobdesk 12 Nov point 1, P1-1, Owner option A): the
+// same cards (threshold, published and one-place filters, relative cutoff), so popularity only reorders what is
+// relevant to the text, most detail page views first and equal views by similarity. Pages of one search share the
+// order, since it is set before the count bound.
+func (r *Recommender) RecommendByTextPopular(ctx context.Context, results []SemanticResult, limit int) ([]Recommendation, error) {
+	return r.recommendByText(ctx, results, limit, true)
+}
+
+func (r *Recommender) recommendByText(ctx context.Context, results []SemanticResult, limit int, byViews bool) ([]Recommendation, error) {
 	now := time.Now()
 	if r.Now != nil {
 		now = r.Now()
@@ -304,7 +318,7 @@ func (r *Recommender) RecommendByText(ctx context.Context, results []SemanticRes
 		if len(found) == 0 {
 			continue
 		}
-		candidates, err := r.loadCandidates(ctx, domain, found, now)
+		candidates, err := r.loadCandidates(ctx, domain, found, now, true)
 		if err != nil {
 			return nil, err
 		}
@@ -323,6 +337,10 @@ func (r *Recommender) RecommendByText(ctx context.Context, results []SemanticRes
 	// Measured from the first card that is shown, after the published and one-place filters, as in the evaluation; the
 	// pages of one search (offset) share that first card, so they stay consistent.
 	list = closeToFirst(list, recommendRelativeCutoff())
+	if byViews {
+		// Stable: equal views keep the similarity order.
+		sort.SliceStable(list, func(i, j int) bool { return list[i].row.Views > list[j].row.Views })
+	}
 	// The count bound is set by the caller (point 4); a limit below 1 cuts nothing rather than panicking.
 	if limit > 0 && len(list) > limit {
 		list = list[:limit]
@@ -398,7 +416,7 @@ func scoreRecommendation(origin, c recRow, similarity float64, sameDomain, news 
 // recSelect returns the scoring columns of a domain table aliased t.
 func recSelect(d recDomain) string {
 	if d.SourceType == "news" {
-		return `SELECT t.id, COALESCE(t.slug,'') AS slug, t.title AS name, CAST(t.category_id AS TEXT) AS category_key, false AS featured, '' AS keyakinan, '' AS district, '' AS regency, '' AS region_name, COALESCE(t.source,'') AS source_name, t.created_at, 0 AS place_id FROM news t WHERE t.status = 'published'`
+		return `SELECT t.id, COALESCE(t.slug,'') AS slug, t.title AS name, CAST(t.category_id AS TEXT) AS category_key, false AS featured, '' AS keyakinan, '' AS district, '' AS regency, '' AS region_name, COALESCE(t.source,'') AS source_name, t.created_at, 0 AS place_id, t.views FROM news t WHERE t.status = 'published'`
 	}
 	keyakinan, region, join := "COALESCE(t.keyakinan,'')", "''", ""
 	switch d.SourceType {
@@ -407,7 +425,7 @@ func recSelect(d recDomain) string {
 	case "destination":
 		region, join = "COALESCE(r.name,'')", " LEFT JOIN regions r ON r.id = t.region_id"
 	}
-	return `SELECT t.id, t.slug, t.name, CAST(t.` + d.CategoryColumn + ` AS TEXT) AS category_key, t.featured, ` + keyakinan + ` AS keyakinan, COALESCE(p.district,'') AS district, COALESCE(p.regency,'') AS regency, ` + region + ` AS region_name, '' AS source_name, t.created_at, COALESCE(t.place_id, 0) AS place_id FROM ` + d.Table + ` t LEFT JOIN places p ON p.id = t.place_id` + join + ` WHERE t.status = 'published'`
+	return `SELECT t.id, t.slug, t.name, CAST(t.` + d.CategoryColumn + ` AS TEXT) AS category_key, t.featured, ` + keyakinan + ` AS keyakinan, COALESCE(p.district,'') AS district, COALESCE(p.regency,'') AS regency, ` + region + ` AS region_name, '' AS source_name, t.created_at, COALESCE(t.place_id, 0) AS place_id, t.views FROM ` + d.Table + ` t LEFT JOIN places p ON p.id = t.place_id` + join + ` WHERE t.status = 'published'`
 }
 
 func (r *Recommender) loadSource(ctx context.Context, d recDomain, key string) (recRow, error) {
@@ -430,14 +448,17 @@ func (r *Recommender) loadSource(ctx context.Context, d recDomain, key string) (
 	return rows[0], nil
 }
 
-// loadCandidates reads the published items of the target domain: news only among the nearest vectors (the table
-// grows every fetch), travel domains completely (tens of rows). Events must still run or be upcoming; destinations and
-// culinary places must not be closed (operatingSQL).
-func (r *Recommender) loadCandidates(ctx context.Context, d recDomain, sims map[int64]float64, now time.Time) ([]recRow, error) {
+// loadCandidates reads the published items of the target domain. News is read only among the nearest vectors (the
+// table grows every fetch), and so is every domain when onlyFound is set: the text search and the chat ranking keep
+// only the items of their search results, so reading the rest of the table (and its verification rows) was waste
+// (jobdesk 12 Nov point 6: a zone search read 110 travel rows and their verifications for 16 results). The item
+// recommendations (Recommend) score every item of the domain, also those without a vector neighbour, so they read the
+// domain completely. Events must still run or be upcoming; destinations and culinary places must not be closed
+// (operatingSQL).
+func (r *Recommender) loadCandidates(ctx context.Context, d recDomain, sims map[int64]float64, now time.Time, onlyFound bool) ([]recRow, error) {
 	q := recSelect(d)
 	var args []any
-	switch d.SourceType {
-	case "news":
+	if onlyFound || d.SourceType == "news" {
 		ids := make([]int64, 0, len(sims))
 		for id := range sims {
 			ids = append(ids, id)
@@ -447,6 +468,8 @@ func (r *Recommender) loadCandidates(ctx context.Context, d recDomain, sims map[
 		}
 		q += ` AND t.id IN ?`
 		args = append(args, ids)
+	}
+	switch d.SourceType {
 	case "event":
 		q += ` AND ` + upcomingOccurrenceSQL("t.id")
 		args = append(args, now, now)
@@ -512,14 +535,14 @@ func (r *Recommender) sourceNames(ctx context.Context, d recDomain, rows []recRo
 }
 
 // vectorSimilarity compares the corpus document of the source item with the documents of the target source type
-// (cosine, HNSW, same embedding model). A source without an active embedded document gives no similarity.
+// (cosine, exact scan: exactVectorScan, same embedding model). A source without an active embedded document gives no similarity.
 func (r *Recommender) vectorSimilarity(ctx context.Context, sourceType string, sourceID int64, targetType string, limit int) (map[int64]float64, error) {
 	out := map[int64]float64{}
 	if r.DB.Dialector.Name() != "postgres" {
 		return out, nil
 	}
 	err := r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := setHNSWSearch(tx); err != nil {
+		if err := exactVectorScan(tx); err != nil {
 			return err
 		}
 		var origin []struct {
@@ -587,7 +610,7 @@ func (r *Recommender) RankChatCandidates(ctx context.Context, docs []SemanticRes
 		if st == "event" {
 			cutoff = now.Add(-chatEventGrace)
 		}
-		candidates, err := r.loadCandidates(ctx, d, sims, cutoff)
+		candidates, err := r.loadCandidates(ctx, d, sims, cutoff, true)
 		if err != nil {
 			return nil, info, err
 		}

@@ -525,3 +525,51 @@ func TestTravelPublicationRuleOnPostgres(t *testing.T) {
 		t.Fatalf("region semantic search: %d results, err %v", len(found), err)
 	}
 }
+
+// Jobdesk 12 Nov point 3 (P3-1, Owner option A) on a real corpus (read-only, TRAVEL_SEARCH_DSN): a small LIMIT made the
+// planner walk the approximate HNSW index, which missed the nearest documents of a filtered search ("candi", LIMIT 10).
+// The query here is the semanticSearch query of a travel search with LIMIT 10. Without exactVectorScan the planner
+// takes the HNSW index; with it, a sequential scan, so the setting, not the data, keeps the index out. When the planner
+// no longer takes the index even without the setting, the test cannot show anything and is skipped.
+func TestVectorSearchesUseAnExactScan(t *testing.T) {
+	dsn := os.Getenv("TRAVEL_SEARCH_DSN")
+	if dsn == "" {
+		t.Skip("TRAVEL_SEARCH_DSN not set")
+	}
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc struct {
+		Embedding      pgvector.Vector
+		EmbeddingModel string
+	}
+	if err := db.Raw(`SELECT embedding, embedding_model FROM faq_knowledge_bases WHERE source_type = 'culture' AND is_active AND embedding IS NOT NULL ORDER BY source_id LIMIT 1`).Scan(&doc).Error; err != nil || doc.Embedding.Slice() == nil {
+		t.Fatalf("no culture vector: %v", err)
+	}
+	filter := SearchFilter{SourceTypes: []string{"destination", "culinary", "culture", "event"}, EligibleAt: time.Now()}
+	relation, relationArgs := filter.relationClause()
+	plan := func(exact bool) string {
+		var lines []string
+		err := db.Transaction(func(tx *gorm.DB) error {
+			if exact {
+				if err := exactVectorScan(tx); err != nil {
+					return err
+				}
+			}
+			args := []any{doc.Embedding, "", "", "", "", "", "", doc.EmbeddingModel, doc.EmbeddingModel}
+			args = append(append(args, relationArgs...), doc.Embedding, 10)
+			return tx.Raw(`EXPLAIN SELECT id,embedding <=> ? distance FROM faq_knowledge_bases WHERE is_active=true AND embedding IS NOT NULL AND (?='' OR category=?) AND (?='' OR metadata->>'region'=?) AND (?='' OR metadata->>'news_category'=?) AND (?='' OR embedding_model=?)`+publishedSourceSQL("")+relation+` ORDER BY embedding <=> ? LIMIT ?`, args...).Scan(&lines).Error
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return strings.Join(lines, "\n")
+	}
+	if p := plan(false); !strings.Contains(p, "hnsw") {
+		t.Skipf("the planner does not take the HNSW index even without exactVectorScan:\n%s", p)
+	}
+	if p := plan(true); strings.Contains(p, "hnsw") || !strings.Contains(p, "Seq Scan on faq_knowledge_bases") {
+		t.Fatalf("exactVectorScan still plans the HNSW index:\n%s", p)
+	}
+}

@@ -331,3 +331,77 @@ func TestPageCutsTheWindow(t *testing.T) {
 		}
 	}
 }
+
+// Jobdesk 12 Nov point 1 (P1-1, Owner option A): sort is relevance (empty, any letter case) or popular on the travel
+// route; another value is refused before the embedding call (503 = it reached the provider). P1-4: the news route does
+// not read sort.
+func TestTravelRecommendationSort(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open("file:"+t.Name()+"?mode=memory&cache=shared"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&models.TravelCategory{}, &models.Category{}, &models.News{}); err != nil {
+		t.Fatal(err)
+	}
+	app := fiber.New()
+	h := NewRecommendationHandler(services.NewRecommender(db))
+	h.Search, h.LLM = services.NewRetriever(db), failingChatProvider{err: errors.New("provider down")}
+	h.Register(app)
+	for _, tc := range []struct {
+		path string
+		code int
+	}{
+		{travelRecommendationPath + "?query=pantai&sort=popular", 503},
+		{travelRecommendationPath + "?query=pantai&sort=Popular", 503},
+		{travelRecommendationPath + "?query=pantai&sort=relevance", 503},
+		{travelRecommendationPath + "?query=pantai&sort=", 503},
+		{travelRecommendationPath + "?query=pantai&domain=wisata&district=Prigen&sort=popular", 503},
+		{travelRecommendationPath + "?query=pantai&sort=views", 400},
+		{travelRecommendationPath + "?query=pantai&sort=populer", 400},
+		{newsRecommendationPath + "?query=pantai&sort=views", 503},
+	} {
+		resp, err := app.Test(httptest.NewRequest("GET", tc.path, nil))
+		if err != nil {
+			t.Fatal(err)
+		}
+		raw, _ := io.ReadAll(resp.Body)
+		if resp.StatusCode != tc.code {
+			t.Fatalf("%s: status %d, want %d (%s)", tc.path, resp.StatusCode, tc.code, raw)
+		}
+		var body map[string]any
+		if json.Unmarshal(raw, &body); tc.code == 400 && body["message"] != "sort harus relevance atau popular" {
+			t.Fatalf("%s: body %s", tc.path, raw)
+		}
+	}
+}
+
+// Jobdesk 12 Nov point 5 (P5-1, Owner option A): a first page without cards keeps 200, recommendations: [] and the
+// other fields, and adds a message and suggestions built from the filters the visitor sent; a later page and a page
+// with cards get none.
+func TestEmptyRecommendationHint(t *testing.T) {
+	body := func() fiber.Map { return fiber.Map{"success": true, "recommendations": []services.Recommendation{}} }
+	got := withEmptyHint(body(), 0, 0, []string{"a"})
+	if got["message"] != "Rekomendasi tidak ditemukan untuk pencarian ini." || strings.Join(got["suggestions"].([]string), "|") != "a" || got["success"] != true {
+		t.Fatalf("empty first page = %+v", got)
+	}
+	for _, tc := range []struct{ cards, offset int }{{0, 6}, {3, 0}} {
+		if got := withEmptyHint(body(), tc.cards, tc.offset, []string{"a"}); got["message"] != nil || got["suggestions"] != nil {
+			t.Fatalf("cards %d offset %d = %+v, want no hint", tc.cards, tc.offset, got)
+		}
+	}
+	query := "Coba gunakan kata pencarian lain yang lebih umum."
+	for _, tc := range []struct {
+		got  []string
+		want []string
+	}{
+		{travelEmptySuggestions(nil, "", "", ""), []string{query}},
+		{travelEmptySuggestions([]string{"kuliner"}, "", "Kraton", ""), []string{"Coba pilih kecamatan lain atau hapus filter kecamatan.", "Coba pilih jenis konten lain atau hapus filter jenis konten.", query}},
+		{travelEmptySuggestions([]string{"wisata"}, "Wisata Alam", "", "Pasuruan Selatan"), []string{"Coba pilih wilayah lain atau hapus filter wilayah.", "Coba hapus filter kategori.", "Coba pilih jenis konten lain atau hapus filter jenis konten.", query}},
+		{newsEmptySuggestions(""), []string{query}},
+		{newsEmptySuggestions("lokal"), []string{"Coba pilih kategori berita lain atau hapus filter kategori.", query}},
+	} {
+		if strings.Join(tc.got, "|") != strings.Join(tc.want, "|") {
+			t.Fatalf("suggestions = %q, want %q", tc.got, tc.want)
+		}
+	}
+}

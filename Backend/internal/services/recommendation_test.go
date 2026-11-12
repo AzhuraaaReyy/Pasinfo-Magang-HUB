@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -404,5 +405,82 @@ func TestRecommendByTextKeepsCardsCloseToTheFirst(t *testing.T) {
 	t.Setenv("RECOMMEND_RELATIVE_CUTOFF", "abc")
 	if got := names(10); got != "Nasi Punel,Akan Datang" {
 		t.Fatalf("invalid value must keep the default: %s", got)
+	}
+}
+
+// Jobdesk 12 Nov point 1 (P1-1, Owner option A): sort=popular reorders the same cards as the similarity order, most
+// detail page views first and equal views by similarity; an item under the threshold stays out whatever its views,
+// and the count bound comes after the order.
+func TestRecommendByTextPopularOrdersTheSameCardsByViews(t *testing.T) {
+	db := newRecommendationTestDB(t)
+	t.Setenv("RECOMMEND_RELATIVE_CUTOFF", "1")
+	db.Exec(`UPDATE culinaries SET views = 5 WHERE slug = 'nasi-punel'`)
+	db.Exec(`UPDATE events SET views = 40 WHERE slug = 'datang'`)
+	db.Exec(`UPDATE destinations SET views = 40 WHERE slug = 'sekecamatan'`)
+	db.Exec(`UPDATE destinations SET views = 900 WHERE slug = 'jauh-pilihan'`)
+	r := &Recommender{DB: db, Now: func() time.Time { return recNow }}
+	results := []SemanticResult{
+		searchHit("culinary", 1, 0.70),    // Nasi Punel, 5 views
+		searchHit("event", 2, 0.66),       // Akan Datang, 40 views
+		searchHit("destination", 2, 0.65), // Sekecamatan, 40 views
+		searchHit("destination", 4, 0.60), // Jauh Pilihan, 900 views but under the 0.61 threshold
+	}
+	names := func(popular bool, limit int) string {
+		recommend := r.RecommendByText
+		if popular {
+			recommend = r.RecommendByTextPopular
+		}
+		got, err := recommend(context.Background(), results, limit)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var out []string
+		for _, g := range got {
+			out = append(out, g.Name)
+		}
+		return strings.Join(out, ",")
+	}
+	if got := names(false, 10); got != "Nasi Punel,Akan Datang,Sekecamatan" {
+		t.Fatalf("relevance: %s", got)
+	}
+	if got := names(true, 10); got != "Akan Datang,Sekecamatan,Nasi Punel" {
+		t.Fatalf("popular: %s", got)
+	}
+	if got := names(true, 1); got != "Akan Datang" {
+		t.Fatalf("popular, limit 1: %s", got)
+	}
+}
+
+// Jobdesk 12 Nov point 6: the text search and the chat ranking read only the items of their search results
+// (onlyFound); the item recommendations read the whole published domain, since they score items without a vector
+// neighbour too. The published and open rules hold either way.
+func TestLoadCandidatesReadsOnlyTheFoundItems(t *testing.T) {
+	db := newRecommendationTestDB(t)
+	r := &Recommender{DB: db, Now: func() time.Time { return recNow }}
+	d := recDomains["wisata"]
+	names := func(rows []recRow) string {
+		var out []string
+		for _, row := range rows {
+			out = append(out, row.Name)
+		}
+		sort.Strings(out)
+		return strings.Join(out, ",")
+	}
+	all, err := r.loadCandidates(context.Background(), d, map[int64]float64{2: 0.7}, recNow, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(all) < 3 {
+		t.Fatalf("item recommendations read %d destinations, want the whole published domain: %s", len(all), names(all))
+	}
+	found, err := r.loadCandidates(context.Background(), d, map[int64]float64{2: 0.7, 5: 0.9}, recNow, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if names(found) != "Sekecamatan" {
+		t.Fatalf("onlyFound read %s, want only the found and published Sekecamatan (5 is a draft)", names(found))
+	}
+	if none, err := r.loadCandidates(context.Background(), d, nil, recNow, true); err != nil || len(none) != 0 {
+		t.Fatalf("onlyFound without results read %d rows, err %v", len(none), err)
 	}
 }

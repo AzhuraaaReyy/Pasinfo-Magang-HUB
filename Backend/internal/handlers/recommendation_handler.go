@@ -61,6 +61,62 @@ func queryOffset(c *fiber.Ctx, limit int) (int, bool) {
 	return n, true
 }
 
+// querySort reads ?sort= of GET /recommendations/travel (jobdesk 12 Nov point 1, P1-1, Owner option A): empty or
+// relevance = most similar first, popular = most viewed first among the same cards; any letter case. It returns
+// false for another value, refused before the embedding call.
+func querySort(c *fiber.Ctx) (popular, ok bool) {
+	switch strings.ToLower(strings.TrimSpace(c.Query("sort"))) {
+	case "", "relevance":
+		return false, true
+	case "popular":
+		return true, true
+	}
+	return false, false
+}
+
+// emptyMessage is the message of a text recommendation without any card (jobdesk 12 Nov point 5, P5-1, Owner option A).
+const emptyMessage = "Rekomendasi tidak ditemukan untuk pencarian ini."
+
+// withEmptyHint adds message and suggestions to a text recommendation response whose first page has no card
+// (P5-1, Owner option A): the response stays 200 with recommendations: [] and its other fields (P3-2), and the hint
+// tells the visitor to change or widen the search. A later page (offset > 0) gets no hint: has_more of the page before
+// already said that the results ended.
+func withEmptyHint(body fiber.Map, cards, offset int, suggestions []string) fiber.Map {
+	if cards == 0 && offset == 0 {
+		body["message"] = emptyMessage
+		body["suggestions"] = suggestions
+	}
+	return body
+}
+
+// travelEmptySuggestions names, for each filter the visitor sent, how to widen it, most specific first, then the
+// search text. It reads only the request parameters, never the words of the query (AGENTS §22).
+func travelEmptySuggestions(domains []string, category, district, zone string) []string {
+	var out []string
+	if district != "" {
+		out = append(out, "Coba pilih kecamatan lain atau hapus filter kecamatan.")
+	}
+	if zone != "" {
+		out = append(out, "Coba pilih wilayah lain atau hapus filter wilayah.")
+	}
+	if category != "" {
+		out = append(out, "Coba hapus filter kategori.")
+	}
+	if len(domains) > 0 {
+		out = append(out, "Coba pilih jenis konten lain atau hapus filter jenis konten.")
+	}
+	return append(out, "Coba gunakan kata pencarian lain yang lebih umum.")
+}
+
+// newsEmptySuggestions is travelEmptySuggestions for the news search, whose only filter is the news category.
+func newsEmptySuggestions(category string) []string {
+	var out []string
+	if category != "" {
+		out = append(out, "Coba pilih kategori berita lain atau hapus filter kategori.")
+	}
+	return append(out, "Coba gunakan kata pencarian lain yang lebih umum.")
+}
+
 // offsetMessage is the 400 message of an unusable offset.
 const offsetMessage = "offset harus 0 atau lebih, dan offset + limit paling banyak 48"
 
@@ -145,9 +201,10 @@ const (
 	textSearchTimeout = 30 * time.Second
 )
 
-// handleText answers GET /recommendations/travel?query=tempat+sejuk+di+pegunungan&domain=wisata,kuliner&zone=Pasuruan+Selatan&district=Tosari&category=Wisata+Alam&limit=6&offset=0:
+// handleText answers GET /recommendations/travel?query=tempat+sejuk+di+pegunungan&domain=wisata,kuliner&zone=Pasuruan+Selatan&district=Tosari&category=Wisata+Alam&sort=popular&limit=6&offset=0:
 // recommendation cards of the travel domains (wisata, kuliner, budaya, acara; empty = all) ordered by the meaning
-// similarity of each item to the query, one page at a time.
+// similarity of each item to the query, or with sort=popular by popularity among the same cards, one page at a time.
+// Every filter and sort works alone or with the others; the query stays required (P1-3, Owner: a meaning search).
 func (h *RecommendationHandler) handleText(c *fiber.Ctx) error {
 	q, message := textQuery(c)
 	if message != "" {
@@ -160,6 +217,10 @@ func (h *RecommendationHandler) handleText(c *fiber.Ctx) error {
 	offset, ok := queryOffset(c, limit)
 	if !ok {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": offsetMessage})
+	}
+	popular, ok := querySort(c)
+	if !ok {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "sort harus relevance atau popular"})
 	}
 	var domains []string
 	for _, d := range strings.Split(c.Query("domain"), ",") {
@@ -185,13 +246,18 @@ func (h *RecommendationHandler) handleText(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"success": false, "message": "layanan rekomendasi sedang tidak tersedia, silakan coba lagi"})
 	}
 	// The cards before the page are built too (their order places the page), and one card after it tells has_more.
-	items, err := h.Rec.RecommendByText(ctx, results, offset+limit+1)
+	recommend := h.Rec.RecommendByText
+	if popular {
+		recommend = h.Rec.RecommendByTextPopular
+	}
+	items, err := recommend(ctx, results, offset+limit+1)
 	if err != nil {
 		log.Printf("[Recommendation] text cards failed: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "gagal memuat rekomendasi"})
 	}
 	cards, info := page(items, offset, limit)
-	return c.JSON(fiber.Map{"success": true, "query": q, "recommendations": cards, "pagination": info})
+	return c.JSON(withEmptyHint(fiber.Map{"success": true, "query": q, "recommendations": cards, "pagination": info}, len(cards), offset,
+		travelEmptySuggestions(domains, strings.TrimSpace(search.Category), strings.TrimSpace(search.District), strings.TrimSpace(search.Zone))))
 }
 
 // handleNews answers GET /recommendations/news?query=harga+emas&category=ekonomi&limit=6&offset=0: news article cards
@@ -238,7 +304,8 @@ func (h *RecommendationHandler) handleNews(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "message": "gagal memuat rekomendasi"})
 	}
 	cards, info := page(items, offset, limit)
-	return c.JSON(fiber.Map{"success": true, "query": q, "recommendations": cards, "pagination": info})
+	return c.JSON(withEmptyHint(fiber.Map{"success": true, "query": q, "recommendations": cards, "pagination": info}, len(cards), offset,
+		newsEmptySuggestions(strings.TrimSpace(c.Query("category")))))
 }
 
 // handle answers GET …/rekomendasi?limit=6&domain=kuliner. domain picks another travel domain for a travel item
