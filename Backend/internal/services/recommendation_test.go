@@ -484,3 +484,28 @@ func TestLoadCandidatesReadsOnlyTheFoundItems(t *testing.T) {
 		t.Fatalf("onlyFound without results read %d rows, err %v", len(none), err)
 	}
 }
+
+// Jobdesk 13 Nov point 4 (P4-1, Owner option C): news items with the same title (letter case and spacing ignored) give
+// one card, the most similar; other cards keep their order.
+func TestRecommendByTextShowsOneNewsTitle(t *testing.T) {
+	db := newRecommendationTestDB(t)
+	t.Setenv("RECOMMEND_RELATIVE_CUTOFF", "1")
+	var lain models.News
+	db.Where("slug = ?", "berita-lain").First(&lain)
+	twin := models.News{Title: "  berita   LAIN ", Slug: "berita-lain-2", Status: "published", CategoryID: lain.CategoryID, AuthorID: lain.AuthorID, Source: "Tempo", SourceURL: "u3"}
+	if err := db.Create(&twin).Error; err != nil {
+		t.Fatal(err)
+	}
+	r := &Recommender{DB: db, Now: func() time.Time { return recNow }}
+	got, err := r.RecommendByText(context.Background(), []SemanticResult{searchHit("news", int64(twin.ID), 0.80), searchHit("news", 1, 0.75), searchHit("news", int64(lain.ID), 0.79)}, 6)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var ids []int64
+	for _, g := range got {
+		ids = append(ids, g.ID)
+	}
+	if len(ids) != 2 || ids[0] != int64(twin.ID) || ids[1] != 1 {
+		t.Fatalf("cards = %v, want the most similar of the twins (%d) then news 1", ids, twin.ID)
+	}
+}

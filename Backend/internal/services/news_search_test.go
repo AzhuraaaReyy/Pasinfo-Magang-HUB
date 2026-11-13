@@ -32,6 +32,13 @@ func TestSearchNewsRefusesUnknownCategoryBeforeEmbedding(t *testing.T) {
 	if !errors.Is(err, ErrUnknownNewsCategory) {
 		t.Fatalf("err = %v, want ErrUnknownNewsCategory", err)
 	}
+	// Jobdesk 13 Nov point 2 (P2-2): a NUL byte or invalid UTF-8 is an unknown category, refused before the database
+	// (nil DB) instead of a database error.
+	for _, category := range []string{"teknologi" + string([]byte{0}), "teknologi" + string([]byte{0xff})} {
+		if _, err := NewRetriever(nil).SearchNews(context.Background(), &failingEmbedder{}, "smartphone", category, 6); !errors.Is(err, ErrUnknownNewsCategory) {
+			t.Fatalf("category %q: err = %v, want ErrUnknownNewsCategory", category, err)
+		}
+	}
 }
 
 // Jobdesk 11 Nov point 1 on a real corpus (TRAVEL_SEARCH_DSN): SearchNews compares the query embedding with the stored

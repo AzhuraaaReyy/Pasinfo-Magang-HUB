@@ -299,6 +299,13 @@ func (r *Retriever) SemanticSearchNews(ctx context.Context, p LLMProvider, q, ne
 	return r.semanticSearch(ctx, p, q, SearchFilter{Category: "berita", NewsCategory: newsCategory, EligibleAt: time.Now()}, limit)
 }
 
+// storableText reports whether a filter value from a request can be compared in PostgreSQL: valid UTF-8 without a NUL
+// byte. PostgreSQL refuses both (invalid byte sequence), so such a value used to come back as a database error, 503
+// "layanan … tidak tersedia", instead of the 400 of an unknown value (jobdesk 13 Nov point 2, P2-2).
+func storableText(s string) bool {
+	return utf8.ValidString(s) && !strings.ContainsRune(s, 0)
+}
+
 // ErrUnknownNewsCategory is returned by SearchNews for a category that is not a categories.slug.
 var ErrUnknownNewsCategory = errors.New("unknown news category")
 
@@ -311,6 +318,9 @@ var ErrUnknownNewsCategory = errors.New("unknown news category")
 // call, so a wrong one costs no quota.
 func (r *Retriever) SearchNews(ctx context.Context, p LLMProvider, q, newsCategory string, limit int) ([]SemanticResult, error) {
 	if newsCategory = strings.TrimSpace(newsCategory); newsCategory != "" {
+		if !storableText(newsCategory) {
+			return nil, ErrUnknownNewsCategory
+		}
 		var slug string
 		if err := r.DB.WithContext(ctx).Raw(`SELECT slug FROM categories WHERE lower(slug) = lower(?) LIMIT 1`, newsCategory).Scan(&slug).Error; err != nil {
 			return nil, err
@@ -630,6 +640,9 @@ func (r *Retriever) SearchTravelContent(ctx context.Context, p LLMProvider, quer
 			return nil, fmt.Errorf("%w: category hanya bisa dipakai dengan satu domain", ErrInvalidTravelFilter)
 		}
 		filter.SourceType = types[0]
+		if !storableText(s.Category) {
+			return nil, fmt.Errorf("%w: category %q tidak ada di domain ini", ErrInvalidTravelFilter, s.Category)
+		}
 		if types[0] == "destination" {
 			// A destination category is a travel_categories row; like the other domains, an unknown name is refused and
 			// any letter case is accepted (jobdesk 10 Nov point 5, Owner).

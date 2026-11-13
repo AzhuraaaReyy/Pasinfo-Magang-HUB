@@ -334,6 +334,7 @@ func (r *Recommender) recommendByText(ctx context.Context, results []SemanticRes
 	}
 	sortRanked(list)
 	list = onePlaceCard(list)
+	list = oneNewsTitle(list)
 	// Measured from the first card that is shown, after the published and one-place filters, as in the evaluation; the
 	// pages of one search (offset) share that first card, so they stay consistent.
 	list = closeToFirst(list, recommendRelativeCutoff())
@@ -346,6 +347,25 @@ func (r *Recommender) recommendByText(ctx context.Context, results []SemanticRes
 		list = list[:limit]
 	}
 	return r.buildCards(ctx, list)
+}
+
+// oneNewsTitle keeps, of the news items with the same title (letter case and spacing ignored), only the first of list
+// (ordered, so the most similar); other items keep their order. A feed can publish one article under several URLs
+// (jobdesk 13 Nov point 4, P4-1, Owner option C: 9 identical Tempo articles, ids 56–78, came back as 9 identical cards).
+func oneNewsTitle(list []rankedItem) []rankedItem {
+	seen := map[string]bool{}
+	out := list[:0]
+	for _, s := range list {
+		if s.domain.SourceType == "news" {
+			title := strings.ToLower(strings.Join(strings.Fields(s.row.Name), " "))
+			if seen[title] {
+				continue
+			}
+			seen[title] = true
+		}
+		out = append(out, s)
+	}
+	return out
 }
 
 // samePlaceDomains are the domains that describe a place itself: one site can be both a destination and a culture

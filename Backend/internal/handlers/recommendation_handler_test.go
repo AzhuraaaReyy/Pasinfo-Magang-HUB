@@ -258,6 +258,7 @@ func TestTextRecommendationOffsetAndParameterNames(t *testing.T) {
 			{"?query=pantai&offset=42", 503},
 			{"?query=pantai&offset=", 503},
 			{"?q=pantai", 400},
+			{"?query=pantai&offset=9223372036854775807", 400}, // jobdesk 13 Nov point 2 (P2-1): offset+limit overflowed
 		} {
 			resp, err := app.Test(httptest.NewRequest("GET", path+tc.query, nil))
 			if err != nil {

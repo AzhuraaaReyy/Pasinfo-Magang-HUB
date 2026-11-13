@@ -6,6 +6,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/glebarez/sqlite"
+	"gorm.io/gorm"
+	"wildan-news-backend/internal/models"
 )
 
 // Article links come from a third-party API, so the server must not fetch
@@ -54,5 +58,34 @@ func TestArticleClientRefusesPrivateAddress(t *testing.T) {
 	_, err := newArticleClient().Get(srv.URL)
 	if err == nil || !strings.Contains(err.Error(), "blocked") {
 		t.Fatalf("expected blocked dial to %s, got %v", srv.URL, err)
+	}
+}
+
+// Jobdesk 13 Nov point 4 (P4-1, Owner option C): an article with the title and text of a saved news item is a duplicate
+// whatever its URL; the same title with another text is another article.
+func TestDuplicateNews(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open("file:"+t.Name()+"?mode=memory&cache=shared"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&models.User{}, &models.Category{}, &models.News{}); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&models.News{Title: "PT Pertamina Buka Tender", Slug: "tender", Content: "Isi artikel yang sama.", Status: "published", SourceURL: "https://contoh/1"}).Error; err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		title, content string
+		want           bool
+	}{
+		{"PT Pertamina Buka Tender", "Isi artikel yang sama.", true},
+		{"  pt pertamina buka TENDER ", "Isi artikel yang sama.\n", true},
+		{"PT Pertamina Buka Tender", "Isi artikel yang lain.", false},
+		{"Judul lain", "Isi artikel yang sama.", false},
+	} {
+		got, err := duplicateNews(db, tc.title, tc.content)
+		if err != nil || got != tc.want {
+			t.Fatalf("duplicateNews(%q, %q) = %v, err %v, want %v", tc.title, tc.content, got, err, tc.want)
+		}
 	}
 }

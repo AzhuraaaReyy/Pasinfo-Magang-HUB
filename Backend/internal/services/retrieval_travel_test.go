@@ -49,6 +49,11 @@ func TestSearchTravelContentRefusesInvalidFilters(t *testing.T) {
 		{Domains: []string{"wisata", "kuliner"}, Category: "Wisata Alam"},
 		{Domains: []string{"kuliner"}, Category: "Wisata Alam"}, // not a kuliner category
 		{District: "Bandung"}, // jobdesk 10 Nov point 5: not a kecamatan of Pasuruan
+		// Jobdesk 13 Nov point 2 (P2-2): a value PostgreSQL cannot compare is refused before the database (the nil DB
+		// here would panic) instead of coming back as a database error, 503.
+		{Domains: []string{"wisata"}, Category: "Wisata Alam" + string([]byte{0})},
+		{Domains: []string{"wisata"}, Category: "Wisata Alam" + string([]byte{0xff})},
+		{Domains: []string{"kuliner"}, Category: "Tradisional" + string([]byte{0})},
 	}
 	for i, s := range cases {
 		p := &recordingEmbedder{}

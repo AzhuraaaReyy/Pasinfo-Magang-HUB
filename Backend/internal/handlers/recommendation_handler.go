@@ -55,7 +55,9 @@ func queryOffset(c *fiber.Ctx, limit int) (int, bool) {
 		return 0, true
 	}
 	n, err := strconv.Atoi(raw)
-	if err != nil || n < 0 || n+limit > textSearchWindow {
+	// n > window-limit, not n+limit > window: a huge offset made n+limit overflow to a negative number and pass
+	// (jobdesk 13 Nov point 2, P2-1: offset=9223372036854775807 answered 200 with has_more true).
+	if err != nil || n < 0 || n > textSearchWindow-limit {
 		return 0, false
 	}
 	return n, true

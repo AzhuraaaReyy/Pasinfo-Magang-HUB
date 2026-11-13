@@ -573,3 +573,183 @@ func TestVectorSearchesUseAnExactScan(t *testing.T) {
 		t.Fatalf("exactVectorScan still plans the HNSW index:\n%s", p)
 	}
 }
+
+// Jobdesk 13 Nov point 3 on a real corpus (read-only, TRAVEL_SEARCH_DSN): content whose corpus row has no embedding yet
+// (a new source is saved pending, without a vector, until the refresh embeds it; knowledge_refresh.go). It works on a
+// TEMP copy of faq_knowledge_bases inside a rolled-back transaction, so the real corpus does not change. By design:
+//   - the text recommendations (travel and news) and the chat's latest news skip it, without an error;
+//   - the item recommendations still recommend it through the other signals (location, category, editor) with
+//     similarity 0, and an item without an embedding still gets travel recommendations the same way; a news item
+//     without an embedding gets none (news candidates are its vector neighbours only), again without an error.
+func TestRecommendationsWithoutEmbeddingOnPostgres(t *testing.T) {
+	dsn := os.Getenv("TRAVEL_SEARCH_DSN")
+	if dsn == "" {
+		t.Skip("TRAVEL_SEARCH_DSN not set")
+	}
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	type corpusDoc struct {
+		ID             int64
+		SourceID       int64
+		SourceLabel    string
+		Slug           string
+		Embedding      pgvector.Vector
+		EmbeddingModel string
+	}
+	pending := `UPDATE faq_knowledge_bases SET embedding = NULL, embedding_model = NULL, embedding_status = 'pending' WHERE id = ?`
+	ctx := context.Background()
+	err = db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec(`CREATE TEMP TABLE faq_knowledge_bases ON COMMIT DROP AS SELECT * FROM public.faq_knowledge_bases`).Error; err != nil {
+			return err
+		}
+		pick := func(sql string) (corpusDoc, error) {
+			var d corpusDoc
+			err := tx.Raw(sql).Scan(&d).Error
+			if err == nil && d.ID == 0 {
+				err = fmt.Errorf("no row for %s", sql)
+			}
+			return d, err
+		}
+		r, rec := NewRetriever(tx), NewRecommender(tx)
+		has := func(cards []Recommendation, name string) *Recommendation {
+			for i := range cards {
+				if cards[i].Name == name {
+					return &cards[i]
+				}
+			}
+			return nil
+		}
+		embeddedDestinations := `SELECT k.id, k.source_id, k.source_label, d.slug, k.embedding, k.embedding_model FROM faq_knowledge_bases k JOIN destinations d ON d.id = k.source_id WHERE k.source_type = 'destination' AND k.is_active AND k.embedding IS NOT NULL AND d.status = 'published' ORDER BY k.source_id`
+
+		// A. Travel text recommendation: a destination found first by its own vector is skipped once pending.
+		dest, err := pick(embeddedDestinations + ` LIMIT 1`)
+		if err != nil {
+			return err
+		}
+		// The origin of the item recommendations (C, F) keeps its embedding.
+		origin, err := pick(embeddedDestinations + ` OFFSET 1 LIMIT 1`)
+		if err != nil {
+			return err
+		}
+		destQuery := &vectorEmbedder{vector: dest.Embedding.Slice(), model: dest.EmbeddingModel}
+		travelCards := func() ([]Recommendation, error) {
+			results, err := r.SearchTravelContent(ctx, destQuery, dest.SourceLabel, TravelSearch{Domains: []string{"wisata"}}, 50)
+			if err != nil {
+				return nil, err
+			}
+			return rec.RecommendByText(ctx, results, 12)
+		}
+		if cards, err := travelCards(); err != nil || len(cards) == 0 || cards[0].Name != dest.SourceLabel {
+			return fmt.Errorf("A: with its embedding %s must be the first card: %d cards, err %v", dest.SourceLabel, len(cards), err)
+		}
+
+		// B. News text recommendation: the same for a news article (the newest, so G checks the latest list too).
+		news, err := pick(`SELECT k.id, k.source_id, k.source_label, '' AS slug, k.embedding, k.embedding_model FROM faq_knowledge_bases k JOIN news n ON n.id = k.source_id WHERE k.source_type = 'news' AND k.is_active AND k.embedding IS NOT NULL AND n.status = 'published' ORDER BY n.created_at DESC, k.id DESC LIMIT 1`)
+		if err != nil {
+			return err
+		}
+		newsQuery := &vectorEmbedder{vector: news.Embedding.Slice(), model: news.EmbeddingModel}
+		newsCards := func() ([]Recommendation, error) {
+			results, err := r.SearchNews(ctx, newsQuery, news.SourceLabel, "", 50)
+			if err != nil {
+				return nil, err
+			}
+			return rec.RecommendByText(ctx, results, 12)
+		}
+		if cards, err := newsCards(); err != nil || len(cards) == 0 || cards[0].ID != news.SourceID {
+			return fmt.Errorf("B: with its embedding news %d must be the first card: %d cards, err %v", news.SourceID, len(cards), err)
+		}
+		if latest, err := r.LatestNews(ctx, "", 1); err != nil || len(latest) == 0 || latest[0].ID != news.ID {
+			return fmt.Errorf("G: the newest news must lead the latest list before: %v", err)
+		}
+
+		// C. A culinary item that is about to lose its embedding.
+		food, err := pick(`SELECT k.id, k.source_id, k.source_label, c.slug, k.embedding, k.embedding_model FROM faq_knowledge_bases k JOIN culinaries c ON c.id = k.source_id WHERE k.source_type = 'culinary' AND k.is_active AND k.embedding IS NOT NULL AND c.status = 'published' ORDER BY k.source_id LIMIT 1`)
+		if err != nil {
+			return err
+		}
+
+		for _, id := range []int64{dest.ID, news.ID, food.ID} {
+			if err := tx.Exec(pending, id).Error; err != nil {
+				return err
+			}
+		}
+		if cards, err := travelCards(); err != nil || has(cards, dest.SourceLabel) != nil {
+			return fmt.Errorf("A: pending %s must be skipped without an error: err %v", dest.SourceLabel, err)
+		}
+		t.Logf("A travel text: pending %q skipped, no error", dest.SourceLabel)
+		cards, err := newsCards()
+		if err != nil {
+			return fmt.Errorf("B: %v", err)
+		}
+		for _, c := range cards {
+			if c.ID == news.SourceID {
+				return fmt.Errorf("B: pending news %d still a card", news.SourceID)
+			}
+		}
+		t.Logf("B news text: pending news %d skipped, %d other cards, no error", news.SourceID, len(cards))
+		latest, err := r.LatestNews(ctx, "", 5)
+		if err != nil {
+			return fmt.Errorf("G: %v", err)
+		}
+		for _, l := range latest {
+			if l.ID == news.ID {
+				return fmt.Errorf("G: pending news still in the latest list")
+			}
+		}
+		t.Logf("G chat latest news: pending news %d skipped, no error", news.SourceID)
+
+		foods, err := rec.Recommend(ctx, "wisata", origin.Slug, "kuliner", 100)
+		if err != nil {
+			return fmt.Errorf("C: %v", err)
+		}
+		if c := has(foods, food.SourceLabel); c == nil || c.Similarity != 0 {
+			return fmt.Errorf("C: culinary %s without an embedding must stay an item recommendation with similarity 0: %+v", food.SourceLabel, c)
+		}
+		t.Logf("C item recommendation: %q without an embedding still recommended (similarity 0) among %d", food.SourceLabel, len(foods))
+
+		// D. The pending destination as the origin: still travel recommendations, all with similarity 0.
+		places, err := rec.Recommend(ctx, "wisata", dest.Slug, "wisata", 6)
+		if err != nil || len(places) == 0 {
+			return fmt.Errorf("D: origin without an embedding: %d cards, err %v", len(places), err)
+		}
+		for _, p := range places {
+			if p.Similarity != 0 {
+				return fmt.Errorf("D: %s similarity %v, want 0 (no origin vector)", p.Name, p.Similarity)
+			}
+		}
+		t.Logf("D item recommendation: origin %q without an embedding → %d cards by location/category/editor, no error", dest.SourceLabel, len(places))
+
+		// E. The pending news article as the origin: no news recommendation, no error.
+		if items, err := rec.Recommend(ctx, "berita", fmt.Sprint(news.SourceID), "berita", 6); err != nil || len(items) != 0 {
+			return fmt.Errorf("E: news origin without an embedding: %d cards, err %v (want 0, no error)", len(items), err)
+		}
+		t.Logf("E item recommendation: news %d without an embedding → 0 cards, no error", news.SourceID)
+
+		// F. No embedding at all: the text recommendations answer empty, the item recommendations still answer.
+		if err := tx.Exec(`UPDATE faq_knowledge_bases SET embedding = NULL, embedding_status = 'pending'`).Error; err != nil {
+			return err
+		}
+		if cards, err := travelCards(); err != nil || len(cards) != 0 {
+			return fmt.Errorf("F: travel text without any embedding: %d cards, err %v", len(cards), err)
+		}
+		if cards, err := newsCards(); err != nil || len(cards) != 0 {
+			return fmt.Errorf("F: news text without any embedding: %d cards, err %v", len(cards), err)
+		}
+		if places, err := rec.Recommend(ctx, "wisata", origin.Slug, "wisata", 6); err != nil || len(places) == 0 {
+			return fmt.Errorf("F: item recommendation without any embedding: %d cards, err %v", len(places), err)
+		}
+		t.Log("F no embedding at all: text recommendations 0 cards, item recommendations still answer, no error")
+		return errRollbackTravelTest
+	})
+	if err != errRollbackTravelTest {
+		t.Fatal(err)
+	}
+	var stillEmbedded int64
+	db.Raw(`SELECT count(*) FROM faq_knowledge_bases WHERE embedding IS NOT NULL`).Scan(&stillEmbedded)
+	if stillEmbedded == 0 {
+		t.Fatal("the real corpus lost its embeddings")
+	}
+}

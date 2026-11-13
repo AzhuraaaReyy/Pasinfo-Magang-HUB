@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"gorm.io/gorm"
 	"wildan-news-backend/internal/database"
 	"wildan-news-backend/internal/models"
 	"wildan-news-backend/internal/utils"
@@ -156,6 +157,15 @@ func fetchFromBeritaIndo(client, articleClient *http.Client, apiURL string, cate
 		if content == "" {
 			content = article.Title
 		}
+		// The same article under another URL (P4-1, Owner option C): same title and same text as a saved news item.
+		if duplicate, err := duplicateNews(database.DB, article.Title, content); err != nil {
+			log.Printf("[BeritaIndo] Gagal cek duplikat %s: %v", article.Title, err)
+			result.Errors++
+			continue
+		} else if duplicate {
+			result.Skipped++
+			continue
+		}
 
 		// Gambar: prioritas large → small → fallback
 		imageURL := article.Image.Large
@@ -199,6 +209,23 @@ func fetchFromBeritaIndo(client, articleClient *http.Client, apiURL string, cate
 		}
 		result.Saved++
 	}
+}
+
+// duplicateNews reports whether a news item with this title and this text is already saved, whatever its URL and
+// status: Tempo published one article under 9 URLs (ids 56–78, August 2026), which the source_url check let through
+// (jobdesk 13 Nov point 4, P4-1, Owner option C). The title is compared without letter case and outer spaces, the text
+// without outer white space; a different text under the same title is another article and is saved.
+func duplicateNews(db *gorm.DB, title, content string) (bool, error) {
+	var contents []string
+	if err := db.Model(&models.News{}).Where("lower(trim(title)) = lower(?)", strings.TrimSpace(title)).Pluck("content", &contents).Error; err != nil {
+		return false, err
+	}
+	for _, saved := range contents {
+		if strings.TrimSpace(saved) == strings.TrimSpace(content) {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // sourceName mengekstrak nama sumber dari URL endpoint
