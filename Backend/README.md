@@ -564,9 +564,17 @@ Health:
 Rekomendasi (Sprint 1, tanpa LLM; skor = kemiripan konten 0,5 + lokasi kecamatan/zona 0,25 + kategori 0,15 + sinyal editor 0,10; berita: lokasi diganti kebaruan):
 
 - `GET /wisata/:slug/rekomendasi`, `/kuliner/:slug/rekomendasi`, `/budaya/:slug/rekomendasi`, `/acara/:slug/rekomendasi` — `?limit=1..12` (default 6), `?domain=wisata|kuliner|budaya|acara` untuk lintas domain
-- `GET /news/:id/rekomendasi`
+- `GET /news/:id/rekomendasi` — `?limit=1..12` (default 6); hanya berita
 
-GET detail wisata/kuliner/budaya/acara menambah penghitung `views` internal (sinyal popularitas, belum dipakai skor).
+Rekomendasi dari teks pencarian (satu embedding query per request; cosine similarity ≥ `RECOMMEND_RELEVANCE_THRESHOLD`, default 0,61; rate limit 20 request/menit):
+
+- `GET /recommendations/travel?query=…` — `domain` (wisata,kuliner,budaya,acara; koma), `zone`, `district`, `category` (dengan tepat satu domain), `sort=relevance|popular`, `limit=1..12` (default 6), `offset` (offset + limit ≤ 48)
+- `GET /recommendations/news?query=…` — `category` (slug kategori berita), `limit`, `offset`
+- Respons: `{success, query, recommendations, pagination{offset, limit, has_more}}`; hasil kosong tetap 200 dengan `message` dan `suggestions`; parameter salah 400; provider/pencarian gagal 503
+
+Kontrak lengkap: `docs/28 Oktober 2026/api/openapi.yaml` (v0.3.0) dan panduan dengan contoh request/response: `docs/14 November 2026/DOKUMENTASI_ENDPOINT_REKOMENDASI_14_NOVEMBER_2026.md` (folder `docs/` tidak di-commit).
+
+GET detail wisata/kuliner/budaya/acara menambah penghitung `views` internal. `views` tidak masuk skor; hanya dipakai untuk urutan `sort=popular` di `/recommendations/travel`.
 
 Domain publik yang tersedia antara lain wisata, kuliner, budaya, acara, articles, news, wilayah, dan ads. Endpoint lengkap dan middleware-nya adalah sumber kebenaran di `internal/routes/routes.go`.
 
