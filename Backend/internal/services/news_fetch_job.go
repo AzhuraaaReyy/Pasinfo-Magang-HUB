@@ -6,8 +6,9 @@ import (
 	"time"
 )
 
-// NewsFetchInterval is how often the API fetches new articles (berita-indo-api: the Tempo/Antara
-// endpoints listed in FetchAndSaveNews, no API key). Owner decision 2026-10-31: news is fetched automatically, not by hand.
+// NewsFetchInterval is how often the API fetches new articles (FetchAndSaveNews: freenewsapi.io and berita-indo-api,
+// each the backup of the other). Owner decision 2026-10-31: news is fetched automatically, not by hand. One freenewsapi
+// run is about 77 requests (7 topics × 1 list + 10 details) of its 5,000 a day.
 const NewsFetchInterval = 12 * time.Hour
 
 // newsFetchFirstDelay lets the API, the database, and Ollama settle after startup; it also keeps the
