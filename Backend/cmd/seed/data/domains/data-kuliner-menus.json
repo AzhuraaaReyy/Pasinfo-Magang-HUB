@@ -4253,17 +4253,6 @@
       "image": null,
       "is_featured": false,
       "sort_order": 3
-    },
-    {
-      "id": "kafetaria-taman-edelweiss-wonokitri-menu-4",
-      "name": "Tiket Masuk (Inc. Voucher Makan)",
-      "category": "",
-      "price": 10000,
-      "price_label": "Rp 10.000",
-      "description": null,
-      "image": null,
-      "is_featured": false,
-      "sort_order": 4
     }
   ],
   "omah-tutur": [

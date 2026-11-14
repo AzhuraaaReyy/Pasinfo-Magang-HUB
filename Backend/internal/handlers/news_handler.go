@@ -72,7 +72,7 @@ func GetNewsByCategory(c *fiber.Ctx) error {
 	category := c.Params("category")
 	var cat models.Category
 	if err := database.DB.Where("slug = ? OR name = ?", category, category).First(&cat).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"success": false, "message": "Category not found"})
+		return c.Status(404).JSON(fiber.Map{"success": false, "message": "Kategori berita tidak ditemukan"})
 	}
 
 	var news []models.News
@@ -127,7 +127,7 @@ func GetNewsDetail(c *fiber.Ctx) error {
 	if !ok || result.Error != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"success": false,
-			"message": "News not found",
+			"message": "Berita tidak ditemukan",
 		})
 	}
 
@@ -255,9 +255,9 @@ func newsStatusError(role, status string) int {
 
 func newsStatusResponse(c *fiber.Ctx, code int) error {
 	if code == fiber.StatusBadRequest {
-		return c.Status(code).JSON(fiber.Map{"success": false, "message": "Invalid status"})
+		return c.Status(code).JSON(fiber.Map{"success": false, "message": "Status berita tidak valid"})
 	}
-	return c.Status(code).JSON(fiber.Map{"success": false, "message": "Forbidden: status not allowed for your role"})
+	return c.Status(code).JSON(fiber.Map{"success": false, "message": "Status ini tidak diizinkan untuk peran Anda"})
 }
 
 type CreateNewsRequest struct {
@@ -281,13 +281,13 @@ func CreateNews(c *fiber.Ctx) error {
 	}
 	var req CreateNewsRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"success": false, "message": "Invalid request payload"})
+		return c.Status(400).JSON(fiber.Map{"success": false, "message": "Format data permintaan tidak valid"})
 	}
 
 	// The token must belong to an existing user; never attribute the article to someone else
 	var authorUser models.User
 	if err := database.DB.First(&authorUser, authorID).Error; err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"success": false, "message": "User not found"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"success": false, "message": "Pengguna tidak ditemukan"})
 	}
 
 	// Validate Category ID exists in DB, fallback to ID 1 if invalid
@@ -314,7 +314,7 @@ func CreateNews(c *fiber.Ctx) error {
 
 	slug, err := utils.UniqueNewsSlug(database.DB, req.Title)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Failed to create news"})
+		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Berita gagal disimpan"})
 	}
 
 	news := models.News{
@@ -334,7 +334,7 @@ func CreateNews(c *fiber.Ctx) error {
 
 	if err := database.DB.Create(&news).Error; err != nil {
 		log.Printf("[CreateNews DB Error] %v", err)
-		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Failed to create news"})
+		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Berita gagal disimpan"})
 	}
 
 	log.Printf("[CreateNews Request] news_id=%d Images count: %d, Captions count: %d", news.ID, len(req.Images), len(req.ImageCaptions))
@@ -408,7 +408,7 @@ func CreateNews(c *fiber.Ctx) error {
 	requestCorpusRefresh() // P4-1: the AI corpus follows this news change now
 	return c.Status(201).JSON(fiber.Map{
 		"success": true,
-		"message": "News created successfully",
+		"message": "Berita berhasil dibuat",
 		"data":    news,
 	})
 }
@@ -446,11 +446,11 @@ type UpdateStatusRequest struct {
 func UpdateNewsStatus(c *fiber.Ctx) error {
 	id, ok := idParam(c)
 	if !ok {
-		return c.Status(404).JSON(fiber.Map{"success": false, "message": "News not found"})
+		return c.Status(404).JSON(fiber.Map{"success": false, "message": "Berita tidak ditemukan"})
 	}
 	var req UpdateStatusRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"success": false, "message": "Invalid request"})
+		return c.Status(400).JSON(fiber.Map{"success": false, "message": "Format data permintaan tidak valid"})
 	}
 
 	userRole := ""
@@ -463,14 +463,14 @@ func UpdateNewsStatus(c *fiber.Ctx) error {
 
 	var news models.News
 	if err := database.DB.Preload("Author").Preload("Category").First(&news, id).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"success": false, "message": "News not found"})
+		return c.Status(404).JSON(fiber.Map{"success": false, "message": "Berita tidak ditemukan"})
 	}
 
 	// Writers may only change the status of their own articles
 	if userRole == "penulis" {
 		callerID, _ := c.Locals("user_id").(float64)
 		if news.AuthorID != uint(callerID) {
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"success": false, "message": "Forbidden"})
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"success": false, "message": "Anda tidak memiliki akses ke berita ini"})
 		}
 	}
 	if code := newsStatusError(userRole, req.Status); code != 0 {
@@ -481,7 +481,7 @@ func UpdateNewsStatus(c *fiber.Ctx) error {
 	news.Status = req.Status
 	if err := database.DB.Save(&news).Error; err != nil {
 		log.Printf("[UpdateNewsStatus DB Error] news_id=%d: %v", news.ID, err)
-		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Failed to update news status"})
+		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Status berita gagal diperbarui"})
 	}
 
 	// Create Notification based on status change
@@ -569,18 +569,18 @@ func UpdateNewsStatus(c *fiber.Ctx) error {
 	requestCorpusRefresh() // P4-1: the AI corpus follows this news change now
 	return c.JSON(fiber.Map{
 		"success": true,
-		"message": fmt.Sprintf("Status changed from %s to %s", oldStatus, req.Status),
+		"message": fmt.Sprintf("Status berita diubah dari %s menjadi %s", oldStatus, req.Status),
 	})
 }
 
 func DeleteNews(c *fiber.Ctx) error {
 	id, ok := idParam(c)
 	if !ok {
-		return c.Status(404).JSON(fiber.Map{"success": false, "message": "News not found"})
+		return c.Status(404).JSON(fiber.Map{"success": false, "message": "Berita tidak ditemukan"})
 	}
 	var news models.News
 	if err := database.DB.Preload("Author").Preload("Category").First(&news, id).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"success": false, "message": "News not found"})
+		return c.Status(404).JSON(fiber.Map{"success": false, "message": "Berita tidak ditemukan"})
 	}
 
 	userRole := ""
@@ -605,7 +605,7 @@ func DeleteNews(c *fiber.Ctx) error {
 		return tx.Delete(&news).Error
 	}); err != nil {
 		log.Printf("[DeleteNews DB Error] news_id=%d: %v", news.ID, err)
-		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Failed to delete news"})
+		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Berita gagal dihapus"})
 	}
 
 	// If deleted by admin and author has email, send deletion notice
@@ -621,7 +621,7 @@ func DeleteNews(c *fiber.Ctx) error {
 	}
 
 	requestCorpusRefresh() // P4-1: the AI corpus follows this news change now
-	return c.JSON(fiber.Map{"success": true, "message": "News deleted successfully"})
+	return c.JSON(fiber.Map{"success": true, "message": "Berita berhasil dihapus"})
 }
 
 func DeleteAllNews(c *fiber.Ctx) error {
@@ -640,7 +640,7 @@ func DeleteAllNews(c *fiber.Ctx) error {
 		return nil
 	}); err != nil {
 		log.Printf("[DeleteAllNews DB Error] %v", err)
-		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Failed to delete all news"})
+		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Semua berita gagal dihapus"})
 	}
 
 	requestCorpusRefresh() // P4-1: the AI corpus follows this news change now
@@ -666,7 +666,7 @@ type UpdateNewsRequest struct {
 func UpdateNews(c *fiber.Ctx) error {
 	id, ok := idParam(c)
 	if !ok {
-		return c.Status(404).JSON(fiber.Map{"success": false, "message": "News not found"})
+		return c.Status(404).JSON(fiber.Map{"success": false, "message": "Berita tidak ditemukan"})
 	}
 	authorID, ok := currentUserID(c)
 	if !ok {
@@ -674,17 +674,17 @@ func UpdateNews(c *fiber.Ctx) error {
 	}
 	var req UpdateNewsRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"success": false, "message": "Invalid request"})
+		return c.Status(400).JSON(fiber.Map{"success": false, "message": "Format data permintaan tidak valid"})
 	}
 
 	var news models.News
 	if err := database.DB.Preload("Author").Preload("Category").First(&news, id).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"success": false, "message": "News not found"})
+		return c.Status(404).JSON(fiber.Map{"success": false, "message": "Berita tidak ditemukan"})
 	}
 
 	userRole, _ := c.Locals("role").(string)
 	if news.AuthorID != authorID && userRole != "admin" && userRole != "editor" {
-		return c.Status(403).JSON(fiber.Map{"success": false, "message": "Forbidden"})
+		return c.Status(403).JSON(fiber.Map{"success": false, "message": "Anda tidak memiliki akses ke berita ini"})
 	}
 	if req.Status != "" {
 		if code := newsStatusError(userRole, req.Status); code != 0 {
@@ -710,14 +710,14 @@ func UpdateNews(c *fiber.Ctx) error {
 	}
 
 	if err := database.DB.Save(&news).Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Failed to update news"})
+		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Berita gagal diperbarui"})
 	}
 
 	log.Printf("[UpdateNews Request] news_id=%d Images count: %d, Captions count: %d", news.ID, len(req.Images), len(req.ImageCaptions))
 	if req.Images != nil {
 		if err := database.DB.Where("news_id = ?", news.ID).Delete(&models.NewsImage{}).Error; err != nil {
 			log.Printf("[UpdateNews DB Error] news_id=%d delete images: %v", news.ID, err)
-			return c.Status(500).JSON(fiber.Map{"success": false, "message": "Failed to update news images"})
+			return c.Status(500).JSON(fiber.Map{"success": false, "message": "Gambar berita gagal diperbarui"})
 		}
 		for i, imgPath := range req.Images {
 			caption := ""
@@ -798,7 +798,7 @@ func UpdateNews(c *fiber.Ctx) error {
 	requestCorpusRefresh() // P4-1: the AI corpus follows this news change now
 	return c.JSON(fiber.Map{
 		"success": true,
-		"message": "News updated successfully",
+		"message": "Berita berhasil diperbarui",
 		"data":    news,
 	})
 }

@@ -13,5 +13,5 @@ func currentUserID(c *fiber.Ctx) (id uint, ok bool) {
 }
 
 func unauthorizedResponse(c *fiber.Ctx) error {
-	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"success": false, "message": "Unauthorized"})
+	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"success": false, "message": "Silakan masuk terlebih dahulu."})
 }

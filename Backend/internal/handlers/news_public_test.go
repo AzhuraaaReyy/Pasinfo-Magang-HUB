@@ -85,3 +85,27 @@ func TestPublicNewsDetailHidesUnpublished(t *testing.T) {
 		t.Fatalf("draft views = %d; reading an unpublished article must not count", draft.Views)
 	}
 }
+
+// P4-2 (jobdesk 14 Nov, Owner): the public news routes answer in Indonesian, like the travel routes (before: "News not
+// found", "Category not found").
+func TestPublicNewsMessagesAreIndonesian(t *testing.T) {
+	app, _ := setupPublicNewsTest(t)
+	for path, want := range map[string]string{
+		"/news/999999":             "Berita tidak ditemukan",
+		"/news/bukan-angka":        "Berita tidak ditemukan",
+		"/news/category/tidak-ada": "Kategori berita tidak ditemukan",
+	} {
+		resp, err := app.Test(httptest.NewRequest("GET", path, nil))
+		if err != nil {
+			t.Fatal(err)
+		}
+		raw, _ := io.ReadAll(resp.Body)
+		var body struct {
+			Message string `json:"message"`
+		}
+		_ = json.Unmarshal(raw, &body)
+		if resp.StatusCode != 404 || body.Message != want {
+			t.Errorf("GET %s = %d %q, want 404 %q", path, resp.StatusCode, body.Message, want)
+		}
+	}
+}
