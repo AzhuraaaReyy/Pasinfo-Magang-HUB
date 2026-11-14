@@ -118,10 +118,13 @@ func GetNewsByCategory(c *fiber.Ctx) error {
 }
 
 func GetNewsDetail(c *fiber.Ctx) error {
-	id := c.Params("id")
+	id, ok := idParam(c)
 	var n models.News
-	result := database.DB.Preload("Author").Preload("Category").Preload("Images").Where("status = ?", "published").First(&n, id)
-	if result.Error != nil {
+	var result *gorm.DB
+	if ok {
+		result = database.DB.Preload("Author").Preload("Category").Preload("Images").Where("status = ?", "published").First(&n, id)
+	}
+	if !ok || result.Error != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"success": false,
 			"message": "News not found",
@@ -441,7 +444,10 @@ type UpdateStatusRequest struct {
 }
 
 func UpdateNewsStatus(c *fiber.Ctx) error {
-	id := c.Params("id")
+	id, ok := idParam(c)
+	if !ok {
+		return c.Status(404).JSON(fiber.Map{"success": false, "message": "News not found"})
+	}
 	var req UpdateStatusRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"success": false, "message": "Invalid request"})
@@ -568,7 +574,10 @@ func UpdateNewsStatus(c *fiber.Ctx) error {
 }
 
 func DeleteNews(c *fiber.Ctx) error {
-	id := c.Params("id")
+	id, ok := idParam(c)
+	if !ok {
+		return c.Status(404).JSON(fiber.Map{"success": false, "message": "News not found"})
+	}
 	var news models.News
 	if err := database.DB.Preload("Author").Preload("Category").First(&news, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"success": false, "message": "News not found"})
@@ -655,7 +664,10 @@ type UpdateNewsRequest struct {
 }
 
 func UpdateNews(c *fiber.Ctx) error {
-	id := c.Params("id")
+	id, ok := idParam(c)
+	if !ok {
+		return c.Status(404).JSON(fiber.Map{"success": false, "message": "News not found"})
+	}
 	authorID, ok := currentUserID(c)
 	if !ok {
 		return unauthorizedResponse(c)

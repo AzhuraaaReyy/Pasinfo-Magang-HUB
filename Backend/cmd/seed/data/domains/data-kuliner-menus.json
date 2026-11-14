@@ -4173,5 +4173,235 @@
       "is_featured": false,
       "sort_order": 15
     }
+  ],
+  "warung-pak-slamet-bromo": [
+    {
+      "id": "warung-pak-slamet-bromo-menu-1",
+      "name": "Nasi Campur",
+      "category": "",
+      "price": 20000,
+      "price_label": "Rp 20.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 1
+    },
+    {
+      "id": "warung-pak-slamet-bromo-menu-2",
+      "name": "Rawon",
+      "category": "",
+      "price": 25000,
+      "price_label": "Rp 25.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 2
+    },
+    {
+      "id": "warung-pak-slamet-bromo-menu-3",
+      "name": "Soto Ayam",
+      "category": "",
+      "price": 20000,
+      "price_label": "Rp 20.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 3
+    },
+    {
+      "id": "warung-pak-slamet-bromo-menu-4",
+      "name": "Kopi Panas",
+      "category": "",
+      "price": 8000,
+      "price_label": "Rp 8.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 4
+    }
+  ],
+  "kafetaria-taman-edelweiss-wonokitri": [
+    {
+      "id": "kafetaria-taman-edelweiss-wonokitri-menu-1",
+      "name": "Mie Goreng Wonokitri",
+      "category": "",
+      "price": 20000,
+      "price_label": "Rp 20.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 1
+    },
+    {
+      "id": "kafetaria-taman-edelweiss-wonokitri-menu-2",
+      "name": "Kopi Tengger",
+      "category": "",
+      "price": 15000,
+      "price_label": "Rp 15.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 2
+    },
+    {
+      "id": "kafetaria-taman-edelweiss-wonokitri-menu-3",
+      "name": "Teh Rempah",
+      "category": "",
+      "price": 12000,
+      "price_label": "Rp 12.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 3
+    },
+    {
+      "id": "kafetaria-taman-edelweiss-wonokitri-menu-4",
+      "name": "Tiket Masuk (Inc. Voucher Makan)",
+      "category": "",
+      "price": 10000,
+      "price_label": "Rp 10.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 4
+    }
+  ],
+  "omah-tutur": [
+    {
+      "id": "omah-tutur-menu-1",
+      "name": "Kopi Omah",
+      "category": "",
+      "price": 18000,
+      "price_label": "Rp 18.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 1
+    },
+    {
+      "id": "omah-tutur-menu-2",
+      "name": "Wedang Rempah",
+      "category": "",
+      "price": 15000,
+      "price_label": "Rp 15.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 2
+    },
+    {
+      "id": "omah-tutur-menu-3",
+      "name": "Nasi Goreng Nusantara",
+      "category": "",
+      "price": 25000,
+      "price_label": "Rp 25.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 3
+    },
+    {
+      "id": "omah-tutur-menu-4",
+      "name": "Snack Platter",
+      "category": "",
+      "price": 20000,
+      "price_label": "Rp 20.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 4
+    }
+  ],
+  "bakso-mangguan-mak-fina": [
+    {
+      "id": "bakso-mangguan-mak-fina-menu-1",
+      "name": "Bakso Halus",
+      "category": "",
+      "price": 15000,
+      "price_label": "Rp 15.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 1
+    },
+    {
+      "id": "bakso-mangguan-mak-fina-menu-2",
+      "name": "Bakso Kasar (Urat)",
+      "category": "",
+      "price": 18000,
+      "price_label": "Rp 18.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 2
+    },
+    {
+      "id": "bakso-mangguan-mak-fina-menu-3",
+      "name": "Bakso Campur",
+      "category": "",
+      "price": 20000,
+      "price_label": "Rp 20.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 3
+    },
+    {
+      "id": "bakso-mangguan-mak-fina-menu-4",
+      "name": "Es Jeruk",
+      "category": "",
+      "price": 6000,
+      "price_label": "Rp 6.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 4
+    }
+  ],
+  "cafe-kangen-nongkojajar": [
+    {
+      "id": "cafe-kangen-nongkojajar-menu-1",
+      "name": "Wedang Uwuh",
+      "category": "",
+      "price": 15000,
+      "price_label": "Rp 15.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 1
+    },
+    {
+      "id": "cafe-kangen-nongkojajar-menu-2",
+      "name": "Wedang Kuwuh",
+      "category": "",
+      "price": 15000,
+      "price_label": "Rp 15.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 2
+    },
+    {
+      "id": "cafe-kangen-nongkojajar-menu-3",
+      "name": "Kopi Hitam",
+      "category": "",
+      "price": 12000,
+      "price_label": "Rp 12.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 3
+    },
+    {
+      "id": "cafe-kangen-nongkojajar-menu-4",
+      "name": "Pisang Goreng",
+      "category": "",
+      "price": 15000,
+      "price_label": "Rp 15.000",
+      "description": null,
+      "image": null,
+      "is_featured": false,
+      "sort_order": 4
+    }
   ]
 }

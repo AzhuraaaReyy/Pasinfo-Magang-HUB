@@ -112,7 +112,10 @@ func UpdateAd(c *fiber.Ctx) error {
 		return c.Status(403).JSON(fiber.Map{"success": false, "message": "Forbidden"})
 	}
 
-	id := c.Params("id")
+	id, ok := idParam(c)
+	if !ok {
+		return c.Status(404).JSON(fiber.Map{"success": false, "message": "Ad not found"})
+	}
 	var ad models.Ad
 	if err := database.DB.First(&ad, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"success": false, "message": "Ad not found"})
@@ -157,7 +160,11 @@ func DeleteAd(c *fiber.Ctx) error {
 		return c.Status(403).JSON(fiber.Map{"success": false, "message": "Forbidden"})
 	}
 
-	id := c.Params("id")
+	// A string id here was SQL in the WHERE clause: id=(1=1) deleted every ad (P4-1, jobdesk 14 Nov).
+	id, ok := idParam(c)
+	if !ok {
+		return c.Status(404).JSON(fiber.Map{"success": false, "message": "Ad not found"})
+	}
 	if err := database.DB.Delete(&models.Ad{}, id).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Failed to delete ad"})
 	}

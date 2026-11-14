@@ -41,9 +41,9 @@ func CreateCategory(c *fiber.Ctx) error {
 }
 
 func UpdateCategory(c *fiber.Ctx) error {
-	id := c.Params("id")
+	id, ok := idParam(c)
 	var cat models.Category
-	if err := database.DB.First(&cat, id).Error; err != nil {
+	if !ok || database.DB.First(&cat, id).Error != nil {
 		return c.Status(404).JSON(fiber.Map{"success": false, "message": "Category not found"})
 	}
 	type Request struct {
@@ -69,9 +69,9 @@ func UpdateCategory(c *fiber.Ctx) error {
 }
 
 func DeleteCategory(c *fiber.Ctx) error {
-	id := c.Params("id")
+	id, ok := idParam(c)
 	var cat models.Category
-	if err := database.DB.First(&cat, id).Error; err != nil {
+	if !ok || database.DB.First(&cat, id).Error != nil {
 		return c.Status(404).JSON(fiber.Map{"success": false, "message": "Category not found"})
 	}
 
