@@ -13,7 +13,9 @@ import (
 	"wildan-news-backend/internal/config"
 )
 
-const EmbeddingDimensions = 768
+// EmbeddingDimensions is config.EmbeddingDimensions, the size of faq_knowledge_bases.embedding (vector(768)), so the
+// value is defined once (P2-3, jobdesk 14 Nov).
+const EmbeddingDimensions = config.EmbeddingDimensions
 
 var ErrProviderNotConfigured = errors.New("provider not configured")
 

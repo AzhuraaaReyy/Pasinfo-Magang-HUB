@@ -67,6 +67,21 @@ func sqlLogLevel(appEnv string) logger.LogLevel {
 	return logger.Info
 }
 
+// sqliteRefused reports whether the SQLite fallback is refused: in production the travel and AI tables exist only on
+// PostgreSQL, so a missing DB_DRIVER/DB_HOST served empty data and 503s while /health answered 200 (P2-1, jobdesk 14
+// Nov, Owner 2026-11-14). Development keeps the fallback (removing it is an open Owner item).
+func sqliteRefused(appEnv string) bool { return appEnv == "production" }
+
+// postgresDSN builds the key/value connection string with every value quoted (libpq: inside single quotes, \ and '
+// are escaped), so a password with a space is no longer cut at the space (P2-4, jobdesk 14 Nov).
+func postgresDSN(host, user, password, dbname, port, sslmode string) string {
+	quote := func(v string) string {
+		return "'" + strings.ReplaceAll(strings.ReplaceAll(v, `\`, `\\`), `'`, `\'`) + "'"
+	}
+	return fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
+		quote(host), quote(user), quote(password), quote(dbname), quote(port), quote(sslmode))
+}
+
 func isPostgres() bool {
 	driver := strings.ToLower(os.Getenv("DB_DRIVER"))
 	return driver == "postgres" || driver == "postgresql" || os.Getenv("DB_HOST") != ""
@@ -89,12 +104,11 @@ func ConnectDB() {
 		if user == "" {
 			user = "postgres"
 		}
+		// No built-in password in the source (P2-5, jobdesk 14 Nov, Owner 2026-11-14: was "postgres" outside production);
+		// docker-compose.yml and .env.example already require DB_PASSWORD.
 		password := os.Getenv("DB_PASSWORD")
 		if password == "" {
-			if os.Getenv("APP_ENV") == "production" {
-				log.Fatal("[FATAL] DB_PASSWORD environment variable is not set in production mode. Refusing to start.")
-			}
-			password = "postgres"
+			log.Fatal("[FATAL] DB_PASSWORD environment variable is not set. Refusing to start.")
 		}
 		dbname := os.Getenv("DB_NAME")
 		if dbname == "" {
@@ -105,14 +119,16 @@ func ConnectDB() {
 			sslmode = "disable"
 		}
 
-		dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
-			host, user, password, dbname, port, sslmode)
+		dsn := postgresDSN(host, user, password, dbname, port, sslmode)
 
 		log.Printf("[Database] Connecting to PostgreSQL at %s:%s (db=%s)...", utils.SafeLogValue(host), utils.SafeLogValue(port), utils.SafeLogValue(dbname))
 		DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 			Logger: logger.Default.LogMode(sqlLogLevel(os.Getenv("APP_ENV"))),
 		})
 	} else {
+		if sqliteRefused(os.Getenv("APP_ENV")) {
+			log.Fatal("[FATAL] PostgreSQL is not configured (set DB_DRIVER=postgres or DB_HOST); production does not run on the SQLite fallback. Refusing to start.")
+		}
 		dbPath := os.Getenv("DB_PATH")
 		if dbPath == "" {
 			dbPath = "./internal/data/wildan-news.db"

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"wildan-news-backend/internal/config"
 )
@@ -57,5 +58,29 @@ func TestUnavailableProviderHealthIsNotConfigured(t *testing.T) {
 	err := ProviderHealth(context.Background(), NewUnavailableProvider(errors.New("missing key")))
 	if !errors.Is(err, ErrProviderNotConfigured) {
 		t.Fatalf("err = %v", err)
+	}
+}
+
+// P2-2 (jobdesk 14 Nov): with LLM_HTTP_TIMEOUT_SEC=0 the HTTP client has no timeout; the corpus job's health check has
+// its own deadline, so a provider that never answers no longer keeps the job waiting for good.
+func TestKnowledgeProviderReadyHasItsOwnDeadline(t *testing.T) {
+	block := make(chan struct{})
+	hanging := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { <-block }))
+	defer func() { close(block); hanging.Close() }()
+	p := NewProvider(config.LLMConfig{OllamaURL: hanging.URL, OllamaChat: "chat", OllamaEmbed: "embed", Timeout: 0}, config.ProviderOllama)
+	done := make(chan bool, 1)
+	go func() { done <- knowledgeProviderReady(p, 200*time.Millisecond) }()
+	select {
+	case ready := <-done:
+		if ready {
+			t.Fatal("a provider that never answered was reported ready")
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("health check still waiting: no deadline")
+	}
+	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte(`{"models":[]}`)) }))
+	defer up.Close()
+	if !knowledgeProviderReady(ollamaAt(up.URL), time.Second) {
+		t.Fatal("a healthy provider was not reported ready")
 	}
 }

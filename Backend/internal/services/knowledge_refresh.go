@@ -555,8 +555,18 @@ func RequestKnowledgeRefresh() {
 	}
 }
 
-// knowledgeProviderWait is how often the job checks whether the embedding provider is reachable.
+// knowledgeProviderWait is how often the job checks whether the embedding provider is reachable; one check also
+// waits at most this long.
 const knowledgeProviderWait = 30 * time.Second
+
+// knowledgeProviderReady checks the embedding provider with its own deadline: LLM_HTTP_TIMEOUT_SEC=0 (or a negative
+// value) gives the HTTP client no timeout, and a provider that never answered kept the job waiting for good, with no
+// refresh at all (P2-2, jobdesk 14 Nov).
+func knowledgeProviderReady(p LLMProvider, limit time.Duration) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), limit)
+	defer cancel()
+	return ProviderHealth(ctx, p) == nil
+}
 
 // RefreshKnowledge builds the corpus from the domain tables and embeds only new or changed documents.
 // It refuses to run when a seed region file cannot be read: culinary, culture, and event documents
@@ -598,7 +608,7 @@ func refreshOnce(db *gorm.DB, p LLMProvider, seedRoot string) (stats RefreshStat
 func StartKnowledgeRefreshJob(db *gorm.DB, p LLMProvider, seedRoot string) {
 	go func() {
 		for {
-			for ProviderHealth(context.Background(), p) != nil {
+			for !knowledgeProviderReady(p, knowledgeProviderWait) {
 				time.Sleep(knowledgeProviderWait)
 			}
 			started := time.Now()
