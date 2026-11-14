@@ -37,3 +37,19 @@ func TestRunPeriodicallyWaitsFirstThenRepeatsUntilCanceled(t *testing.T) {
 		t.Fatal("ran after cancel")
 	}
 }
+
+// P1-2 (jobdesk 14 Nov): a panic in one run (e.g. parsing a news page) must not end the API process; the job is run
+// again at its next turn. Without runRecovered this test binary exits with "panic: simulated parser panic".
+func TestRunPeriodicallySurvivesAPanickingRun(t *testing.T) {
+	var runs atomic.Int32
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go runPeriodically(ctx, 10*time.Millisecond, 20*time.Millisecond, func() {
+		runs.Add(1)
+		panic("simulated parser panic")
+	})
+	time.Sleep(300 * time.Millisecond)
+	if runs.Load() < 2 {
+		t.Fatalf("runs = %d, want the job to run again after a panic", runs.Load())
+	}
+}

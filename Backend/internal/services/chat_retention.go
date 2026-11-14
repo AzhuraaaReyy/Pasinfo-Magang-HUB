@@ -67,11 +67,11 @@ func StartChatRetentionJob(db *gorm.DB, retentionDays int) {
 		log.Printf("[ChatRetention] Purged sessions=%d messages=%d (retention=%d days)", sessions, messages, retentionDays)
 	}
 	go func() {
-		run()
+		runRecovered(run)
 		ticker := time.NewTicker(ChatPurgeInterval)
 		defer ticker.Stop()
 		for range ticker.C {
-			run()
+			runRecovered(run)
 		}
 	}()
 }

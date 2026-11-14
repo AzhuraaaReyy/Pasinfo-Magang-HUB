@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// NewsFetchInterval is how often the API fetches new articles (berita-indo-api: 9 Tempo/Antara
-// endpoints, no API key). Owner decision 2026-10-31: news is fetched automatically, not by hand.
+// NewsFetchInterval is how often the API fetches new articles (berita-indo-api: the Tempo/Antara
+// endpoints listed in FetchAndSaveNews, no API key). Owner decision 2026-10-31: news is fetched automatically, not by hand.
 const NewsFetchInterval = 12 * time.Hour
 
 // newsFetchFirstDelay lets the API, the database, and Ollama settle after startup; it also keeps the
@@ -15,8 +15,9 @@ const NewsFetchInterval = 12 * time.Hour
 const newsFetchFirstDelay = 5 * time.Minute
 
 // StartNewsFetchJob fetches news in the background: newsFetchFirstDelay after startup, then every
-// NewsFetchInterval. Duplicates are skipped by source_url; new articles are published and reach the AI
-// corpus at the next knowledge refresh.
+// NewsFetchInterval. Duplicates are skipped by source_url and by the same title and content (duplicateNews); new
+// articles are published, and the fetch asks the knowledge job for an early refresh (RequestKnowledgeRefresh), so
+// they reach the AI corpus without waiting for its next turn.
 func StartNewsFetchJob() {
 	go runPeriodically(context.Background(), newsFetchFirstDelay, NewsFetchInterval, func() {
 		result, err := FetchAndSaveNews()
@@ -37,8 +38,20 @@ func runPeriodically(ctx context.Context, first, interval time.Duration, run fun
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			run()
+			runRecovered(run)
 			timer.Reset(interval)
 		}
 	}
+}
+
+// runRecovered calls one run of a background job and logs a panic instead of letting it end the API process: these
+// goroutines have no other recover (P1-2, jobdesk 14 Nov, Owner 2026-11-14; the corpus job has refreshOnce since W1).
+// The job goes on at its next turn.
+func runRecovered(run func()) {
+	defer func() {
+		if v := recover(); v != nil {
+			log.Printf("[Job] background run panicked, next run as scheduled: %v", v)
+		}
+	}()
+	run()
 }
